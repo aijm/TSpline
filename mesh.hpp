@@ -23,9 +23,10 @@ namespace t_mesh{
             int loadMesh(string);
             int saveMesh(string);
 			T eval(double s,double t);
-			void drawTmesh(igl::opengl::glfw::Viewer &view);
-			void drawControlpolygon(igl::opengl::glfw::Viewer &view);
+			void drawTmesh(igl::opengl::glfw::Viewer &viewer);
+			void drawControlpolygon(igl::opengl::glfw::Viewer &viewer);
 			void drawSurface(igl::opengl::glfw::Viewer &view, double resolution = 0.01);
+			void draw(igl::opengl::glfw::Viewer &viewer, bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			int get_num() const { return nodes.size(); }
             /*int savePoints(string);
             int saveLog(string);
@@ -126,11 +127,11 @@ namespace t_mesh{
 			 typedef typename map<double, map<double, Node<T>*> >::iterator   map_t;
 			 typedef typename map<double, Node<T>*>::iterator             map2_t;
 			
-			 cout << "1" << endl;
+			 //cout << "1" << endl;
 			 for (int i = 0; i < nodes.size(); i++) {
 				 nodes_st.row(i) << nodes[i]->s[2], nodes[i]->t[2];
 			 }
-			 cout << "2" << endl;
+			 //cout << "2" << endl;
 			 for (auto iter = s_map.begin(); iter != s_map.end(); ++iter) {
 				 for (auto iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
 					 if ((iter1->second)->adj[2]) {
@@ -173,7 +174,7 @@ namespace t_mesh{
 					  if ((iter1->second)->adj[2]) {
 						  array2matrixd(iter1->second->data, P1);
 						  array2matrixd((iter1->second->adj[2])->data, P2);
-						  viewer.data().add_edges(P1, P2, white);
+						  viewer.data().add_edges(P1, P2, green);
 					  }
 				  }
 			  }
@@ -183,7 +184,7 @@ namespace t_mesh{
 					  if ((iter1->second)->adj[1]) {
 						  array2matrixd(iter1->second->data, P1);
 						  array2matrixd((iter1->second->adj[1])->data, P2);
-						  viewer.data().add_edges(P1, P2, white);
+						  viewer.data().add_edges(P1, P2, blue);
 					  }
 				  }
 			  }
@@ -196,12 +197,16 @@ namespace t_mesh{
 	      void Mesh<T>::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution) {
 			  // cut apart the parameter domain
 			  double u_low = (s_map.begin())->first;
+			  //u_low = 1.0;
 			  double u_high = (s_map.rbegin())->first;
+			  //u_high = 2.0;
 			  const int uspan = (u_high - u_low) / resolution;
 			  double u_resolution = (u_high - u_low) / uspan;
-
+			  
 			  double v_low = (t_map.begin())->first;
+			  //v_low = 1.0;
 			  double v_high = (t_map.rbegin())->first;
+			  //v_high = 2.0;
 			  const int vspan = (v_high - v_low) / resolution;
 			  double v_resolution = (v_high - v_low) / vspan;
 
@@ -212,9 +217,10 @@ namespace t_mesh{
 			  for (int j = 0; j <= vspan; j++)
 				  for (int i = 0; i <= uspan; i++){
 					  Eigen::MatrixXd curvePoint;
-
+					  double u = u_low + i*u_resolution;
+					  double v = v_low + j*v_resolution;
 					  array2matrixd(eval(u_low + i*u_resolution, v_low + j*v_resolution), curvePoint);
-					  //cout << "point: \n" << curvePoint << endl;
+					  //cout << "u, v, point: \n" <<u<<" "<<v<<" "<< curvePoint << endl;
 					  mesh_V.row(j*(uspan + 1) + i) = curvePoint;
 				  }
 
@@ -227,6 +233,22 @@ namespace t_mesh{
 				  }
 			  viewer.data().set_mesh(mesh_V, mesh_F);
 		  }
+
+		  template<class T>
+		  void Mesh<T>::draw(igl::opengl::glfw::Viewer & viewer,bool tmesh, bool polygon, bool surface, double resolution){
+			  if (tmesh) {
+				  drawTmesh(viewer);
+				  return;
+			  }
+			  if (polygon) {
+				  drawControlpolygon(viewer);
+			  }
+			  if (surface) {
+				  drawSurface(viewer, resolution);
+			  }
+		  }
+
+		  
 	  
 //    template<class T>
 //        void Mesh<T>::test(int threads){
@@ -716,7 +738,7 @@ namespace t_mesh{
                     break;
             }
             while(offset>0)
-                node.s[--offset]=0;
+                node.s[--offset]=-1.0;
 
             // calculate t3,t4 by judging whether [s2,t2+a] (a>0)intersects with t-edge
             offset=2;
@@ -766,7 +788,7 @@ namespace t_mesh{
                     break;
             }
             while(offset>0)
-                node.t[--offset]=0;
+                node.t[--offset]=-1.0;
 
             return node;
         }
