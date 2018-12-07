@@ -20,7 +20,7 @@ void insert_loop(igl::opengl::glfw::Viewer &viewer) {
 		cout << "insert kont, format: s t" << endl;
 		
 		if (!(cin >> s >> t)) {
-			cin.clear(); //清空缓冲区
+			cin.clear(); //锟斤拷栈锟斤拷锟斤拷锟�
 			cin.get();
 			cout << "error! please use right format!" << endl;
 			continue;
@@ -85,7 +85,7 @@ int main(int argc,char** argv){
 	//testMesh(viewer);
 
 	//t_mesh::Mesh3d mesh;
-	if (mesh.loadMesh("../out10.cfg") == 0) {
+	if (mesh.loadMesh("out10.cfg") == 0) {
 		cout << "num of nodes: " << mesh.get_num() << endl;
 	}
 	else {

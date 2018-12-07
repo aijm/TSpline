@@ -9,6 +9,7 @@
 #include<string>
 #include<sstream>
 #include<fstream>
+#include"draw.h"
 //#include<boost/thread/thread.hpp>
 //#include<boost/bind.hpp>
 //#include<boost/progress.hpp>
@@ -44,7 +45,7 @@ namespace t_mesh{
             void solve3();
             void solve4();
             double get_error();*/
-            void init_mesh();
+            // void init_mesh();
             //void test(int threads);
 
             Node<T>*    new_node();
@@ -76,11 +77,11 @@ namespace t_mesh{
 
 			double width = 3.0;
 			double height = 3.0;
-            /*int             iter_num;
+            // int             iter_num;
             string          iter_str;
-            int             width;
-            int             height;
-            Array<int,2>    offset;*/
+            // int             width;
+            // int             height;
+            // Array<int,2>    offset;
             /*double          error;
             ostringstream   logger;*/
 			
@@ -94,7 +95,7 @@ namespace t_mesh{
 			 for (int i = 0; i < nodes.size(); i++) {
 				 if (nodes[i]->is_ok(s, t)) {
 					 double blend = B(nodes[i]->s, s)*B(nodes[i]->t, t);
-					 //T temp = nodes[i]->data; Ã»ÓÐ¸³ÖµÔËËã·û
+					 //T temp = nodes[i]->data; Ã»ï¿½Ð¸ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½
 					 T temp(nodes[i]->data);
 					 //temp.output(cout);
 					 temp.scale(blend);
@@ -151,7 +152,7 @@ namespace t_mesh{
 						 P1(0, 1) = iter->first;
 						 P2(0, 0) = (iter1->second)->adj[1]->s[2];
 						 P2(0, 1) = iter->first;
-						 viewer.data().add_edges(P1, P2, white);
+						 viewer.data().add_edges(P1, P2,white);
 					 }
 				 }
 			 }
@@ -802,25 +803,25 @@ namespace t_mesh{
             return 0;
         }*/
 
-    template<class T>
-        void Mesh<T>::init_mesh(){
-            for(int y=0;y<height;y+=100){
-                for(int x=0;x<width;x+=100){
-                    Node<T> tmp=get_knot(x+1,y+1);
-                    insert_helper(tmp.s[1],tmp.t[2]);
-                    merge_all();
-                    insert_helper(tmp.s[2],tmp.t[1]);
-                    merge_all();
-                    insert_helper(tmp.s[3],tmp.t[2]);
-                    merge_all();
-                    insert_helper(tmp.s[2],tmp.t[3]);
-                    merge_all();
-                    insert_helper(tmp.s[2],tmp.t[2]);
-                    merge_all();
-                }
-            }
-            init();
-        }
+    // template<class T>
+    //     void Mesh<T>::init_mesh(){
+    //         for(int y=0;y<height;y+=100){
+    //             for(int x=0;x<width;x+=100){
+    //                 Node<T> tmp=get_knot(x+1,y+1);
+    //                 insert_helper(tmp.s[1],tmp.t[2]);
+    //                 merge_all();
+    //                 insert_helper(tmp.s[2],tmp.t[1]);
+    //                 merge_all();
+    //                 insert_helper(tmp.s[3],tmp.t[2]);
+    //                 merge_all();
+    //                 insert_helper(tmp.s[2],tmp.t[3]);
+    //                 merge_all();
+    //                 insert_helper(tmp.s[2],tmp.t[2]);
+    //                 merge_all();
+    //             }
+    //         }
+    //         init();
+    //     }
 
     //template<class T>
     //    void Mesh<T>::fit_thread(int current,int thread_num){
@@ -1003,65 +1004,65 @@ namespace t_mesh{
             cout<<endl;
             return 1;
         }
-    template<class T>
-        bool Mesh<T>::check_valid(){
-            for(size_t i=0;i<nodes.size();++i){
-                if(nodes[i]->s[2]==0||nodes[i]->t[2]==0||nodes[i]->s[2]>=width||nodes[i]->t[2]>=height)
-                    continue;
-                Node<T> tmp=get_knot(nodes[i]->s[2],nodes[i]->t[2]);
-                if(tmp.s!=nodes[i]->s){
-                    tmp.save(cout);
-                    nodes[i]->save(cout);
-                    outMesh("error");
-                    return false;
-                }
-                if(tmp.t!=nodes[i]->t){
-                    tmp.save(cout);
-                    nodes[i]->save(cout);
-                    outMesh("error");
-                    return false;
-                }
-                if(nodes[i]->adj[0]!=get_node(nodes[i]->s[2],nodes[i]->t[1])){
-                    nodes[i]->save(cout);                   
-                    return false;
-                }
-                if(nodes[i]->adj[1]!=get_node(nodes[i]->s[3],nodes[i]->t[2])){
-                    nodes[i]->save(cout);                   
-                    return false;
-                }
-                if(nodes[i]->adj[2]!=get_node(nodes[i]->s[2],nodes[i]->t[3])){
-                    nodes[i]->save(cout);                   
-                    return false;
-                }
-                if(nodes[i]->adj[3]!=get_node(nodes[i]->s[1],nodes[i]->t[2])){
-                    nodes[i]->save(cout);                   
-                    return false;
-                }
-            }
-            return true;
-        }
+    // template<class T>
+    //     bool Mesh<T>::check_valid(){
+    //         for(size_t i=0;i<nodes.size();++i){
+    //             if(nodes[i]->s[2]==0||nodes[i]->t[2]==0||nodes[i]->s[2]>=width||nodes[i]->t[2]>=height)
+    //                 continue;
+    //             Node<T> tmp=get_knot(nodes[i]->s[2],nodes[i]->t[2]);
+    //             if(tmp.s!=nodes[i]->s){
+    //                 tmp.save(cout);
+    //                 nodes[i]->save(cout);
+    //                 outMesh("error");
+    //                 return false;
+    //             }
+    //             if(tmp.t!=nodes[i]->t){
+    //                 tmp.save(cout);
+    //                 nodes[i]->save(cout);
+    //                 outMesh("error");
+    //                 return false;
+    //             }
+    //             if(nodes[i]->adj[0]!=get_node(nodes[i]->s[2],nodes[i]->t[1])){
+    //                 nodes[i]->save(cout);                   
+    //                 return false;
+    //             }
+    //             if(nodes[i]->adj[1]!=get_node(nodes[i]->s[3],nodes[i]->t[2])){
+    //                 nodes[i]->save(cout);                   
+    //                 return false;
+    //             }
+    //             if(nodes[i]->adj[2]!=get_node(nodes[i]->s[2],nodes[i]->t[3])){
+    //                 nodes[i]->save(cout);                   
+    //                 return false;
+    //             }
+    //             if(nodes[i]->adj[3]!=get_node(nodes[i]->s[1],nodes[i]->t[2])){
+    //                 nodes[i]->save(cout);                   
+    //                 return false;
+    //             }
+    //         }
+    //         return true;
+    //     }
     template<class T>
         void Mesh<T>::merge_all(){
             while(!pool.empty()){
                 Node<T> tmp=pool.back();
                 pool.pop_back();
 
-				// »ñÈ¡poolÖÐ´ý´¦ÀíÁÙÊ±node¶ÔÓ¦µÄÕæÊµnode
+				// ï¿½ï¿½È¡poolï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±nodeï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½Êµnode
                 Node<T>* m_node=get_node(tmp.s[2],tmp.t[2]);
-				// Èç¹ûÁÙÊ±node²»´æÔÚ£¬Ôò²åÈëÕâ¸önode
+				// ï¿½ï¿½ï¿½ï¿½ï¿½Ê±nodeï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½node
                 if(!m_node){
                     pool.push_back(tmp);
                     insert_helper(tmp.s[2],tmp.t[2]);
                     continue;
                 }
-				// ÈôÁÙÊ±nodeÓëÕæÊµnode ÍêÈ«Ò»ÖÂ,ÔòºÏ²¢µ½ÕæÊµnode
+				// ï¿½ï¿½ï¿½ï¿½Ê±nodeï¿½ï¿½ï¿½ï¿½Êµnode ï¿½ï¿½È«Ò»ï¿½ï¿½,ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½Êµnode
                 if(m_node->s==tmp.s&&m_node->t==tmp.t){
                     m_node->data.add(tmp.data);
                     continue;
                 }
-				// ÈôÕæÊµnodeÎª [s0,s1,s2,s3,s4]
-				// ÈôÁÙÊ±nodeÎª[a,b,c,d,e], ÆäÖÐÔÚ[s0,s1,s2,s3,s4]µÄÐÂ½Úµã´¦£¬²åÈëÐÂµÄnode
-				// Í¬Ê±ÐÂµÄnodeµÄknot vectorÖ®ºó¿ÉÄÜ»á±ä£¬ÐèÒªÏÈ¼ÓÈëpool
+				// ï¿½ï¿½ï¿½ï¿½ÊµnodeÎª [s0,s1,s2,s3,s4]
+				// ï¿½ï¿½ï¿½ï¿½Ê±nodeÎª[a,b,c,d,e], ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½[s0,s1,s2,s3,s4]ï¿½ï¿½ï¿½Â½Úµã´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½node
+				// Í¬Ê±ï¿½Âµï¿½nodeï¿½ï¿½knot vectorÖ®ï¿½ï¿½ï¿½ï¿½Ü»ï¿½ä£¬ï¿½ï¿½Òªï¿½È¼ï¿½ï¿½ï¿½pool
                 bool check=0;
                 for(int i=0;i<5;++i){
                     if(i==2)
@@ -1077,8 +1078,8 @@ namespace t_mesh{
                     }
                 }
                 if(check)
-                    continue; // ²»Í£²åÈëÐÂµÄnode
-				// t·½ÏòÍ¬Àí
+                    continue; // ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½node
+				// tï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½
                 for(int i=0;i<5;++i){
                     if(i==2)
                         continue;
@@ -1095,9 +1096,9 @@ namespace t_mesh{
                 if(check)
                     continue;
 
-				// ÈôÃ»ÓÐ²åÈëÈÎºÎµã£¬ÉèÕæÊµnodeÎª [s0,s1,s2,s3,s4]
-				// ÔòÁÙÊ±nodeÎªÀàËÆ [s0,s2,s4,a,b],[s0,s1,s2,s4,a] ÕâÑùµÄÐÎÊ½£¬
-				// ÐèÒª°´ÕæÊµnodeÖÐµÄknot¼ÓÏ¸
+				// ï¿½ï¿½Ã»ï¿½Ð²ï¿½ï¿½ï¿½ï¿½ÎºÎµã£¬ï¿½ï¿½ï¿½ï¿½ÊµnodeÎª [s0,s1,s2,s3,s4]
+				// ï¿½ï¿½ï¿½ï¿½Ê±nodeÎªï¿½ï¿½ï¿½ï¿½ [s0,s2,s4,a,b],[s0,s1,s2,s4,a] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½
+				// ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Êµnodeï¿½Ðµï¿½knotï¿½ï¿½Ï¸
                 if(m_node->merge(&tmp,pool)!=0){
                     pool.push_back(tmp);
                 }
@@ -1109,17 +1110,17 @@ namespace t_mesh{
             if(!n)
                 return;
             double knots[4]={n->t[2],n->s[2],n->t[2],n->s[2]};
-			// ÔÚ4¸ö·½ÏòµÄ8¸öµãÉÏ£¬½øÐÐ blending function refinement
+			// ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½8ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ blending function refinement
 		    // for example: N[s0,s1,s2,s3,s4](s) = c1*N[k,s1,s2,s3,s4](s)+c2*N[s0,k,s1,s2,s3](s)
 			// B(s2,t2) = N[s0,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
 			//          =    c1*N[k,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
 			//    		   + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
 			//			= c1*B(s2,t2) + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
-			// ÓÉÓÚ[s2,t2]´¦µÄblending function ¼ÓÏ¸ºó·ÖÅä¸øÁË [s2,t2] ºÍ [s1,t2]
-			// ¶ø[s1,t2] ´¦µÄkont vector Óë[t0,t1,t2,t3,t4] ²»Í¬£¬
-			// ÐèÒª½øÐÐ violation test
-			// violation1: Èô[t0,t1,t2,t3,t4] ¸²¸ÇÁË [s1,t2] ´¦µÄkont vector,Ôò¼ÌÐø¼ÓÏ¸
-			// violation2: Èô[t0,t1,t2,t3,t4] ÖÐ´æÔÚ [s1,t2] ´¦ knot vectorÃ»ÓÐµÄ½Úµã£¬Ôò²åÈëÐÂµÄµã
+			// ï¿½ï¿½ï¿½ï¿½[s2,t2]ï¿½ï¿½ï¿½ï¿½blending function ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ [s2,t2] ï¿½ï¿½ [s1,t2]
+			// ï¿½ï¿½[s1,t2] ï¿½ï¿½ï¿½ï¿½kont vector ï¿½ï¿½[t0,t1,t2,t3,t4] ï¿½ï¿½Í¬ï¿½ï¿½
+			// ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ violation test
+			// violation1: ï¿½ï¿½[t0,t1,t2,t3,t4] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ [s1,t2] ï¿½ï¿½ï¿½ï¿½kont vector,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸
+			// violation2: ï¿½ï¿½[t0,t1,t2,t3,t4] ï¿½Ð´ï¿½ï¿½ï¿½ [s1,t2] ï¿½ï¿½ knot vectorÃ»ï¿½ÐµÄ½Úµã£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÂµÄµï¿½
             for(int i=0;i<4;++i){
                 if(n->adj[i]){
                     Node<T> tmp2;
@@ -1139,7 +1140,7 @@ namespace t_mesh{
             typedef typename map<double,map<double,Node<T>*> >::iterator   map_t;
             typedef typename map<double,Node<T>*>::iterator             map2_t;
             typedef typename set<Node<T>*>::iterator                 set_t;
-			// ÕÒ³ös·½ÏòÉÏËùÓÐknot vector¿ÉÄÜ²»ÕýÈ·µÄnode,¼ÓÈënode_set
+			// ï¿½Ò³ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½knot vectorï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½È·ï¿½ï¿½node,ï¿½ï¿½ï¿½ï¿½node_set
             for(map_t iter=s_map.begin();iter!=s_map.end();++iter){
                 if(iter->first<n->s[1])
                     continue;
@@ -1153,7 +1154,7 @@ namespace t_mesh{
                     node_set.insert(iter1->second);
                 }
             }
-			// ÕÒ³ös·½ÏòÉÏËùÓÐknot vector¿ÉÄÜ²»ÕýÈ·µÄnode, ¼ÓÈënode_set
+			// ï¿½Ò³ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½knot vectorï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½È·ï¿½ï¿½node, ï¿½ï¿½ï¿½ï¿½node_set
             for(map_t iter=t_map.begin();iter!=t_map.end();++iter){
                 if(iter->first<n->t[1])
                     continue;
@@ -1167,7 +1168,7 @@ namespace t_mesh{
                     node_set.insert(iter1->second);
                 }
             }
-			//¶ÔÃ¿¸öblending functionÐèÒª¼ÓÏ¸µÄnode,  ½øÐÐ¼ÓÏ¸ 
+			//ï¿½ï¿½Ã¿ï¿½ï¿½blending functionï¿½ï¿½Òªï¿½ï¿½Ï¸ï¿½ï¿½node,  ï¿½ï¿½ï¿½Ð¼ï¿½Ï¸ 
             for(set_t iter=node_set.begin();iter!=node_set.end();++iter){
                 Node<T> tmp=get_knot((*iter)->s[2],(*iter)->t[2]);
                 if(tmp.s!=(*iter)->s){
@@ -1175,7 +1176,7 @@ namespace t_mesh{
                     for(int j=0;j<5;++j){
                         if(j==2)
                             continue;
-						// ÔÚÕýÈ·µÄget_knotµÄ½ÚµãÉÏ£¬¶¼¼ÓÏ¸ 
+						// ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½get_knotï¿½Ä½Úµï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ 
                         if(!(*iter)->s.have(tmp.s[j])){
                             Node<T> tmp2;
                             int dir=j>2?1:3;
