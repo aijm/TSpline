@@ -249,9 +249,16 @@ namespace t_mesh{
 			  }
 		  }
 
+		  // nasri 2012 local T-spline skinning
 		  template<class T>
 		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
 		  {
+			  // 1. construct basis T-mesh 
+
+
+			  // 2. insert intermediate vertices by knot insertion
+
+			  // 3. update coordinates of cross-sectional NURBS curves by the formula from (nasri 2012)
 
 		  }
 
