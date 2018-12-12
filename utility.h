@@ -32,6 +32,30 @@ namespace t_mesh{
 
 namespace t_mesh{
     // Blending function N[s0,s1,s2,s3,s4](p)
+	double Basis(const Eigen::MatrixXd &knotvector, double t,int i=0, int p=4)
+	{
+		//cout << "knotvector:\n" << knotvector.transpose() << endl;
+		//int p = knotvector.size() - 1;
+		assert(p >= 1);
+		if (p == 1) {
+			if (t >= knotvector(i) && t < knotvector(i + 1)) {
+				return 1.0;
+			}
+			else {
+				return 0.0;
+			}
+		}
+
+		double a = knotvector(i + p - 1) - knotvector(i);
+		double b = knotvector(i + p) - knotvector(i + 1);
+		a = (a == 0.0) ? 0.0 : (t - knotvector(i)) / a;
+		b = (b == 0.0) ? 0.0 : (knotvector(i + p) - t) / b;
+		return a*Basis(knotvector, t,i, p - 1) + b*Basis(knotvector, t, i + 1, p - 1);
+	}
+
+
+
+
     template<class T>
     double B(const T& s,double p){
         if(p<=s[0])

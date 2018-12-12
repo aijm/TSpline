@@ -20,7 +20,7 @@ void insert_loop(igl::opengl::glfw::Viewer &viewer) {
 		cout << "insert kont, format: s t" << endl;
 		
 		if (!(cin >> s >> t)) {
-			cin.clear(); //锟斤拷栈锟斤拷锟斤拷锟�
+			cin.clear(); //clear the buffer
 			cin.get();
 			cout << "error! please use right format!" << endl;
 			continue;
@@ -61,12 +61,20 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
 }
 
 void testArray() {
-	t_mesh::Point3d A;
+	/*t_mesh::Point3d A;
+	A.input(cin);
+	A.output(cout);*/
+	/*Eigen::MatrixXd m;
+	t_mesh::array2matrixd(A, m);
+	cout << "tomatrix: \n" << m << endl;*/
+	t_mesh::Array<double, 5> A;
 	A.input(cin);
 	A.output(cout);
-	Eigen::MatrixXd m;
-	t_mesh::array2matrixd(A, m);
-	cout << "tomatrix: \n" << m << endl;
+	double t = 0.0;
+	cin >> t;
+	
+	cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
+
 }
 void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	
@@ -82,27 +90,18 @@ void testMesh(igl::opengl::glfw::Viewer &viewer) {
 int main(int argc,char** argv){
 	igl::opengl::glfw::Viewer viewer;
 	//testArray();
-	//testMesh(viewer);
-
-	//t_mesh::Mesh3d mesh;
-	if (mesh.loadMesh("out10.cfg") == 0) {
+	
+	if (mesh.loadMesh("../surface1.cfg") == 0) {
 		cout << "num of nodes: " << mesh.get_num() << endl;
 	}
 	else {
 		cout << "load failing!" << endl;
 	}
-	//mesh.drawTmesh(viewer);
 
-	
-	//mesh.insert(1.5, 1.5);
-	//mesh.drawSurface(viewer, 0.01);
-	//mesh.drawControlpolygon(viewer);
-	
 	viewer.callback_key_down = &key_down;
 	mesh.draw(viewer, showmesh, showpolygon, showsurface);
 	viewer.launch();
-	//insert_loop(viewer, mesh);
-	//viewer.launch();
+	
     return 0;
 }
 

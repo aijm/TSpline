@@ -13,6 +13,13 @@ namespace t_mesh{
 					data[i] = a[i];
 				}
 			}
+			Eigen::VectorXd toVectorXd() const{
+				Eigen::VectorXd vec_data(num);
+				for (int i = 0; i < num; i++) {
+					vec_data(i) = 1.0*data[i];
+				}
+				return vec_data;
+			}
             typedef T ValueType;
             enum{SIZE=num};
             T& operator[](int index){

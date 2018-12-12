@@ -10,6 +10,8 @@
 #include<sstream>
 #include<fstream>
 #include"draw.h"
+#include"NURBSCurve.h"
+#include"NURBSSurface.h"
 //#include<boost/thread/thread.hpp>
 //#include<boost/bind.hpp>
 //#include<boost/progress.hpp>
@@ -29,6 +31,7 @@ namespace t_mesh{
 			void drawSurface(igl::opengl::glfw::Viewer &view, double resolution = 0.01);
 			void draw(igl::opengl::glfw::Viewer &viewer, bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			int get_num() const { return nodes.size(); }
+			void skinning(const vector<NURBSCurve> &curves);
             /*int savePoints(string);
             int saveLog(string);
             int loadPoints(string);
@@ -59,7 +62,7 @@ namespace t_mesh{
             int insert_helper(double s,double t);
             void adjust(Node<T>* n);
             void merge_all();
-            bool check_valid();
+            //bool check_valid();
             /*void update_iter();
             void update_log();
             void pia_thread(int c,int a);
@@ -90,17 +93,13 @@ namespace t_mesh{
 	 template<class T>
 		 T Mesh<T>::eval(double s, double t) {
 			 T result;
-			
-
 			 for (int i = 0; i < nodes.size(); i++) {
 				 if (nodes[i]->is_ok(s, t)) {
-					 double blend = B(nodes[i]->s, s)*B(nodes[i]->t, t);
-					 //T temp = nodes[i]->data; û�и�ֵ�����
+					 double blend = Basis((nodes[i]->s).toVectorXd(), s)*Basis((nodes[i]->t).toVectorXd(), t);
 					 T temp(nodes[i]->data);
 					 //temp.output(cout);
 					 temp.scale(blend);
 					 result.add(temp);
-					 //.output(cout);
 				 }
 			 }
 
@@ -111,7 +110,7 @@ namespace t_mesh{
 					 if (it1->second->t[0] > t)
 						 break;
 					 if (it1->second->is_ok(s, t)) {
-						 double blend = B(it1->second->s, s)*B(it1->second->t, t);
+						 double blend = Basis((it1->second->s).toVectorXd(), s)*Basis((it1->second->t).toVectorXd(), t);
 						 T temp = it1->second->data;
 						 temp.scale(blend);
 						 result.add(temp);
@@ -172,7 +171,7 @@ namespace t_mesh{
 			  
 			  for (auto iter = s_map.begin(); iter != s_map.end(); ++iter) {
 				  for (auto iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
-					  if ((iter1->second)->adj[2]) {
+					  if ((iter1->second)->adj[2]) { 
 						  array2matrixd(iter1->second->data, P1);
 						  array2matrixd((iter1->second->adj[2])->data, P2);
 						  viewer.data().add_edges(P1, P2, green);
@@ -197,16 +196,16 @@ namespace t_mesh{
 	  template<class T>
 	      void Mesh<T>::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution) {
 			  // cut apart the parameter domain
-			  double u_low = (s_map.begin())->first;
+			  double u_low = (++s_map.begin())->first;
 			  //u_low = 1.0;
-			  double u_high = (s_map.rbegin())->first;
+			  double u_high = (++s_map.rbegin())->first;
 			  //u_high = 2.0;
 			  const int uspan = (u_high - u_low) / resolution;
 			  double u_resolution = (u_high - u_low) / uspan;
 			  
-			  double v_low = (t_map.begin())->first;
+			  double v_low = (++t_map.begin())->first;
 			  //v_low = 1.0;
-			  double v_high = (t_map.rbegin())->first;
+			  double v_high = (++t_map.rbegin())->first;
 			  //v_high = 2.0;
 			  const int vspan = (v_high - v_low) / resolution;
 			  double v_resolution = (v_high - v_low) / vspan;
@@ -214,7 +213,8 @@ namespace t_mesh{
 			  mesh_V = Eigen::MatrixXd((uspan + 1)*(vspan + 1), 3);
 			  mesh_F = Eigen::MatrixXi(2 * uspan*vspan, 3);
 			  // discretize T-Spline Surface into triangular mesh(V,F) in libigl mesh structure
-			  // calculate mesh_V
+			  // calculate 
+			  
 			  for (int j = 0; j <= vspan; j++)
 				  for (int i = 0; i <= uspan; i++){
 					  Eigen::MatrixXd curvePoint;
@@ -247,6 +247,12 @@ namespace t_mesh{
 			  if (surface) {
 				  drawSurface(viewer, resolution);
 			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
+		  {
+
 		  }
 
 		  
