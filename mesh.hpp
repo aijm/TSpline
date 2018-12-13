@@ -59,6 +59,7 @@ namespace t_mesh{
 			Eigen::MatrixXd mesh_V;
 			Eigen::MatrixXi mesh_F;
         private:
+			void basis_split(const map<double, Node<T>*> &fewer_map, const map<double, Node<T>*> &more_map, map<double,T> &coeff);
             int insert_helper(double s,double t,bool changedata=true);
 			void adjust(Node<T>* n, bool changedata = true);
             void merge_all();
@@ -337,8 +338,15 @@ namespace t_mesh{
 				  cout << "skinning: invalid T-mesh!" << endl;
 				  return;
 			  }
-			  // 4. update coordinates of cross-sectional NURBS curves by the formula from (nasri 2012)
+			  // 4. update coordinates of control points by the formula from (nasri 2012)
+			  // aX' + bW + cY' = V
+			  map<double, T> coeff_X; // X'
+			  map<double, T> coeff_Y; // Y'
+			  
+			  for (int i = 0; i <= curves_num - 2; i++) {
+				  double s_now = s_knots(i);
 
+			  }
 		  }
 
 		  
@@ -1063,7 +1071,51 @@ namespace t_mesh{
             insert_helper(tmp.s[2],tmp.t[2]);
             merge_all();
         }
-    template<class T>
+		template<class T>
+		inline void Mesh<T>::basis_split(const map<double, Node<T>*>& fewer_map, const map<double, Node<T>*>& more_map, map<double, T>& coeff)
+		{
+			vector<Node<T>> split_pool;
+			// 1. copy node of fewer_map to new map
+			//vector<Node<T>> fewer_nodes;
+			map<double, Node<T>*> new_map;
+			for (auto it = fewer_map.begin(); it != fewer_map.end(); ++it) {
+				Node<T>* node = new Node<T>();
+				*node = *(it->second);
+				new_map[it->first] = node;
+			}
+			for (auto it = more_map.begin(); it != more_map.end(); ++it) {
+				if (new_map.find(it->first) == new_map.end()) {
+					// split basis function by knot (it->first)
+					for (auto it1 = new_map.begin(); it1 != new_map.end(); ++it1) {
+						Node<T> temp;
+						if (it1->second->split(0, it->first, &temp, true)) {
+							split_pool.push_back(temp);
+						}
+					}
+					// merge same node from split_pool to new_map
+					for (int i = 0; i < split_pool.size(); i++) {
+						double t = split_pool[i].t[2];
+						if (new_map.find(t) != new_map.end()) {
+							(new_map[t]->data).add(split_pool[i].data);
+						}
+						else {
+							Node<T>* node = new Node<T>();
+							*node = split_pool[i];
+							new_map[t] = node;
+						}
+					}
+				}
+			}
+
+			// return data after spliting by reference and delete node
+			coeff.clear();
+			for (auto it = new_map.begin(); it != new_map.end(); ++it) {
+				coeff[it->first] = it->second->data;
+				delete it->second;
+			}
+
+		}
+		template<class T>
         int Mesh<T>::insert_helper(double s,double t,bool changedata){
             if(get_node(s,t)!=0)
                 return 0;
