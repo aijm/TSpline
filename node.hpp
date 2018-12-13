@@ -17,7 +17,7 @@ namespace t_mesh{
             std::istream& load(istream& in,Mesh<T>& m);
             std::ostream& save(ostream& out) const;
             int get_order(){return order;}
-            int split(int dir,double k,Node<T>* tmp);
+            int split(int dir,double k,Node<T>* tmp,bool changedata=true);
             int merge(Node<T>* tmp,list<Node<T> >&pool);
 			bool is_ok(double x, double y) {
 				return (x >= s[0] && x <= s[4] && y >= t[0] && y <= t[4]);
@@ -104,7 +104,7 @@ namespace t_mesh{
     }
     // insert k to [s0,s1,s2,s3,s4] or [t0,t1,t2,t3,t4], get temp node
     template<class T>
-    int Node<T>::split(int dir,double k,Node<T>* tmp){
+    int Node<T>::split(int dir,double k,Node<T>* tmp,bool changedata){
         // dir=1,3, s-direction; dir=0,2, t-direction
         //valid=false;
         Array<double,5>& this_st=dir%2?this->s:this->t;
@@ -120,7 +120,10 @@ namespace t_mesh{
         // [s0,k,s1,s2,s3,s4]
         if(k<this_st[1]){
             double s1=1.0*(k-this_st[0])/(this_st[3]-this_st[0]);
-            tmp->data.scale(s1);
+			if (changedata) {
+				tmp->data.scale(s1);
+			}
+            
             tmp_st[0]=this_st[0];
             tmp_st[1]=k;
             tmp_st[2]=this_st[1];
@@ -131,8 +134,11 @@ namespace t_mesh{
         }else if(k<this_st[2]){
             double s1=1.0*(k-this_st[0])/(this_st[3]-this_st[0]);
             double s2=1.0*(this_st[4]-k)/(this_st[4]-this_st[1]);
-            tmp->data.scale(s1);
-            this->data.scale(s2);
+			if (changedata) {
+				tmp->data.scale(s1);
+				this->data.scale(s2);
+			}
+            
             tmp_st[0]=this_st[0];
             tmp_st[1]=this_st[1];
             tmp_st[2]=k;
@@ -144,8 +150,11 @@ namespace t_mesh{
         }else if(k<this_st[3]){
             double s1=1.0*(this_st[4]-k)/(this_st[4]-this_st[1]);
             double s2=1.0*(k-this_st[0])/(this_st[3]-this_st[0]);
-            tmp->data.scale(s1);
-            this->data.scale(s2);
+			if (changedata) {
+				tmp->data.scale(s1);
+				this->data.scale(s2);
+			}
+            
             tmp_st[0]=this_st[1];
             tmp_st[1]=this_st[2];
             tmp_st[2]=k;
@@ -156,7 +165,10 @@ namespace t_mesh{
         // [s0,s1,s2,s3,k,s4]
         }else if(k<this_st[4]){
             double s1=1.0*(this_st[4]-k)/(this_st[4]-this_st[1]);
-            tmp->data.scale(s1);
+			if (changedata) {
+				tmp->data.scale(s1);
+			}
+            
             tmp_st[0]=this_st[1];
             tmp_st[1]=this_st[2];
             tmp_st[2]=this_st[3];

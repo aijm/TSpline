@@ -59,8 +59,8 @@ namespace t_mesh{
 			Eigen::MatrixXd mesh_V;
 			Eigen::MatrixXi mesh_F;
         private:
-            int insert_helper(double s,double t);
-            void adjust(Node<T>* n);
+            int insert_helper(double s,double t,bool changedata=true);
+			void adjust(Node<T>* n, bool changedata = true);
             void merge_all();
             bool check_valid();
             /*void update_iter();
@@ -281,17 +281,29 @@ namespace t_mesh{
 			  // 2. construct basis T-mesh 
 			  //add 0 and 1
 			  for(int j=0;j<=curves[0].n;j++){
-				  insert_helper(0.0, curves[0].knots(j + 2));
+				  insert_helper(0.0, curves[0].knots(j + 2),false);
+				  Node<T>* node = get_node(0.0, curves[0].knots(j + 2));
+				  (node->data).fromVectorXd(curves[0].controlPw.row(j));
+				  (node->data).output(cout);
+				  cout << endl;
 			  }
 
 			  for (int i = 0; i < curves_num; i++) {
 				  for (int j = 0; j <= curves[i].n; j++) {
-					  insert_helper(s_knots(i), curves[i].knots(j + 2));
+					  insert_helper(s_knots(i), curves[i].knots(j + 2),false);
+					  Node<T>* node = get_node(s_knots(i), curves[i].knots(j + 2));
+					  (node->data).fromVectorXd(curves[i].controlPw.row(j));
+					  (node->data).output(cout);
+					  cout << endl;
 					  //merge_all();
 				  }
 			  }
 			  for (int j = 0; j <= curves[curves_num-1].n; j++) {
-				  insert_helper(1.0, curves[curves_num-1].knots(j + 2));
+				  insert_helper(1.0, curves[curves_num-1].knots(j + 2),false);
+				  Node<T>* node = get_node(1.0, curves[curves_num - 1].knots(j + 2));
+				  (node->data).fromVectorXd(curves[curves_num - 1].controlPw.row(j));
+				  (node->data).output(cout);
+				  cout << endl;
 			  }
 			  
 			  cout <<"pool size:" <<pool.size() << endl;
@@ -301,30 +313,30 @@ namespace t_mesh{
 				  cout << "skinning: invalid T-mesh!" << endl;
 				  return;
 			  }
-			  for (int j = 0; j <= curves[0].n; j++) {
-				  Node<T>* node = get_node(0.0, curves[0].knots(j + 2));
-				  (node->data).fromVectorXd(curves[0].controlPw.row(j));
-				  (node->data).output(cout);
-				  cout << endl;
-			  }
-			  for (int i = 0; i < curves_num; i++) {
-				  for (int j = 0; j <= curves[i].n; j++) {
-					  Node<T>* node = get_node(s_knots(i), curves[i].knots(j + 2));
-					  (node->data).fromVectorXd(curves[i].controlPw.row(j));
-					  (node->data).output(cout);
-					  cout << endl;
+			  // 3. insert intermediate vertices
+			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
+			  assert(curves_num >= 3);
+			  for (int i = 0; i <= curves_num-2; i++) {
+				  double s_now = s_knots(i);
+				  auto s_nodes = s_map[s_now];
+				  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
+					  if (it->second->adj[1]) {
+						  double s_mid = (s_now + s_knots(i + 1)) / 2;
+						  insert_helper(s_mid, it->first, false);
+						  Node<T>* node = get_node(s_mid, it->first);
+						  //(node->data).add(it->second->data);
+						  //(node->data).add(it->second->adj[1]->data);
+						  // bug, it->second->adj[1] has changed to current node
+						  (node->data).add(node->adj[1]->data);
+						  (node->data).add(node->adj[3]->data);
+						  (node->data).scale(0.5);
+					  }
 				  }
-			  }	
-
-			  for (int j = 0; j <= curves[curves_num-1].n; j++) {
-				  Node<T>* node = get_node(1.0, curves[curves_num-1].knots(j + 2));
-				  (node->data).fromVectorXd(curves[curves_num-1].controlPw.row(j));
-				  (node->data).output(cout);
-				  cout << endl;
 			  }
-
-			  // 3. insert intermediate vertices by knot insertion
-
+			  if (!check_valid()) {
+				  cout << "skinning: invalid T-mesh!" << endl;
+				  return;
+			  }
 			  // 4. update coordinates of cross-sectional NURBS curves by the formula from (nasri 2012)
 
 		  }
@@ -1052,7 +1064,7 @@ namespace t_mesh{
             merge_all();
         }
     template<class T>
-        int Mesh<T>::insert_helper(double s,double t){
+        int Mesh<T>::insert_helper(double s,double t,bool changedata){
             if(get_node(s,t)!=0)
                 return 0;
             Node<T>* node=new_node();
@@ -1078,7 +1090,7 @@ namespace t_mesh{
             s_map[s][t]=node;
             t_map[t][s]=node;
 
-            adjust(node);
+			adjust(node, changedata);
             node->s.output(cout);
             node->t.output(cout);
             cout<<endl;
@@ -1194,7 +1206,7 @@ namespace t_mesh{
         }
 
     template<class T>
-        void Mesh<T>::adjust(Node<T>* n){
+        void Mesh<T>::adjust(Node<T>* n,bool changedata){
             if(!n)
                 return;
             double knots[4]={n->t[2],n->s[2],n->t[2],n->s[2]};
@@ -1212,12 +1224,12 @@ namespace t_mesh{
             for(int i=0;i<4;++i){
                 if(n->adj[i]){
                     Node<T> tmp2;
-                    if(n->adj[i]->split(i,knots[i],&tmp2)){
+                    if(n->adj[i]->split(i,knots[i],&tmp2,changedata)){
                         pool.push_back(tmp2); 
                     }
                     if(n->adj[i]->adj[i]){
                         Node<T> tmp2;
-                        if(n->adj[i]->adj[i]->split(i,knots[i],&tmp2)){
+                        if(n->adj[i]->adj[i]->split(i,knots[i],&tmp2,changedata)){
                             pool.push_back(tmp2); 
                         }
                     }
@@ -1268,7 +1280,7 @@ namespace t_mesh{
                         if(!(*iter)->s.have(tmp.s[j])){
                             Node<T> tmp2;
                             int dir=j>2?1:3;
-                            if((*iter)->split(dir,tmp.s[j],&tmp2)){
+                            if((*iter)->split(dir,tmp.s[j],&tmp2,changedata)){
                                 pool.push_back(tmp2);
                             }
                         }
@@ -1282,7 +1294,7 @@ namespace t_mesh{
                         if(!(*iter)->t.have(tmp.t[j])){
                             Node<T> tmp2;
                             int dir=j>2?0:2;
-                            if((*iter)->split(dir,tmp.t[j],&tmp2)){
+                            if((*iter)->split(dir,tmp.t[j],&tmp2,changedata)){
                                 pool.push_back(tmp2);
                             }
                         }
