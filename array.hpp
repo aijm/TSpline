@@ -20,6 +20,13 @@ namespace t_mesh{
 				}
 				return vec_data;
 			}
+			void fromVectorXd(const Eigen::VectorXd &vec_data) {
+				assert(num == vec_data.size());
+				for (int i = 0; i < num; i++) {
+					data[i] = vec_data(i);
+				}
+			}
+
             typedef T ValueType;
             enum{SIZE=num};
             T& operator[](int index){

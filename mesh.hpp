@@ -62,7 +62,7 @@ namespace t_mesh{
             int insert_helper(double s,double t);
             void adjust(Node<T>* n);
             void merge_all();
-            //bool check_valid();
+            bool check_valid();
             /*void update_iter();
             void update_log();
             void pia_thread(int c,int a);
@@ -78,8 +78,8 @@ namespace t_mesh{
             map<double,map<double,Node<T>*> > t_map; // t_map[t][s]
             list<Node<T> >              pool;
 
-			double width = 3.0;
-			double height = 3.0;
+			double width = 1.0;
+			double height = 1.0;
             // int             iter_num;
             string          iter_str;
             // int             width;
@@ -126,10 +126,16 @@ namespace t_mesh{
 			 Eigen::MatrixXd nodes_st(nodes.size(), 2);
 			 typedef typename map<double, map<double, Node<T>*> >::iterator   map_t;
 			 typedef typename map<double, Node<T>*>::iterator             map2_t;
-			
+			 viewer.data().add_label(Vector3d(0, 0, 0), "haha");
 			 //cout << "1" << endl;
 			 for (int i = 0; i < nodes.size(); i++) {
 				 nodes_st.row(i) << nodes[i]->s[2], nodes[i]->t[2];
+				 std::stringstream label;
+				 label << nodes[i]->get_order()<<":"<<nodes_st(i, 0) << ", " << nodes_st(i, 1);
+				
+				 viewer.data().add_label(nodes_st.row(i), label.str());
+				 viewer.data().add_points(nodes_st.row(i), red);
+				 //cout << "position: " << nodes_st.row(i) << ", label: " << label.str() << endl;
 			 }
 			 //cout << "2" << endl;
 			 for (auto iter = s_map.begin(); iter != s_map.end(); ++iter) {
@@ -197,9 +203,9 @@ namespace t_mesh{
 	      void Mesh<T>::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution) {
 			  // cut apart the parameter domain
 			  double u_low = (++s_map.begin())->first;
-			  //u_low = 1.0;
+			  
 			  double u_high = (++s_map.rbegin())->first;
-			  //u_high = 2.0;
+			  cout << "u_low: " << u_low <<", u_high: "<<u_high<< endl;
 			  const int uspan = (u_high - u_low) / resolution;
 			  double u_resolution = (u_high - u_low) / uspan;
 			  
@@ -209,7 +215,7 @@ namespace t_mesh{
 			  //v_high = 2.0;
 			  const int vspan = (v_high - v_low) / resolution;
 			  double v_resolution = (v_high - v_low) / vspan;
-
+			  cout << "v_low: " << v_low << ", v_high: " << v_high << endl;
 			  mesh_V = Eigen::MatrixXd((uspan + 1)*(vspan + 1), 3);
 			  mesh_F = Eigen::MatrixXi(2 * uspan*vspan, 3);
 			  // discretize T-Spline Surface into triangular mesh(V,F) in libigl mesh structure
@@ -250,15 +256,76 @@ namespace t_mesh{
 		  }
 
 		  // nasri 2012 local T-spline skinning
+		  // knot vector of every curve should be [0,0,0,0,...,1,1,1,1]
+		  // but I need to change multiple knots to single knots [0,0,0,0.0001,...,0.9999,1,1,1]
 		  template<class T>
 		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
 		  {
-			  // 1. construct basis T-mesh 
+			  assert(curves.size() > 0);
+			  const int curves_num = curves.size();
+			  const int dimension = curves[0].controlPw.cols();
+			  // 1. compute s-knot for curves
+			  VectorXd s_knots(curves_num);
+			  MatrixXd u_cpts(curves_num, dimension);
+			  for (int i = 0; i < u_cpts.rows(); i++) {
+				  u_cpts.row(i) = curves[i].controlPw.row(0);
+			  }
+			  s_knots = NURBSCurve::parameterize(u_cpts);
+			  s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
+			  /*s_knots(0) = 0.0; s_knots(s_knots.size() - 1) = 1.0;
+			  s_knots(1) = 0.0001; s_knots(s_knots.size() - 2) = 0.9999;*/
+			  /*s_knots(0) = 0.0001;
+			  s_knots(curves_num - 1) = 0.9999;*/
 
+			  cout << "s_knots: " << s_knots.transpose() << endl;
+			  // 2. construct basis T-mesh 
+			  //add 0 and 1
+			  for(int j=0;j<=curves[0].n;j++){
+				  insert_helper(0.0, curves[0].knots(j + 2));
+			  }
 
-			  // 2. insert intermediate vertices by knot insertion
+			  for (int i = 0; i < curves_num; i++) {
+				  for (int j = 0; j <= curves[i].n; j++) {
+					  insert_helper(s_knots(i), curves[i].knots(j + 2));
+					  //merge_all();
+				  }
+			  }
+			  for (int j = 0; j <= curves[curves_num-1].n; j++) {
+				  insert_helper(1.0, curves[curves_num-1].knots(j + 2));
+			  }
+			  
+			  cout <<"pool size:" <<pool.size() << endl;
+			  pool.clear();
 
-			  // 3. update coordinates of cross-sectional NURBS curves by the formula from (nasri 2012)
+			  if (!check_valid()) {
+				  cout << "skinning: invalid T-mesh!" << endl;
+				  return;
+			  }
+			  for (int j = 0; j <= curves[0].n; j++) {
+				  Node<T>* node = get_node(0.0, curves[0].knots(j + 2));
+				  (node->data).fromVectorXd(curves[0].controlPw.row(j));
+				  (node->data).output(cout);
+				  cout << endl;
+			  }
+			  for (int i = 0; i < curves_num; i++) {
+				  for (int j = 0; j <= curves[i].n; j++) {
+					  Node<T>* node = get_node(s_knots(i), curves[i].knots(j + 2));
+					  (node->data).fromVectorXd(curves[i].controlPw.row(j));
+					  (node->data).output(cout);
+					  cout << endl;
+				  }
+			  }	
+
+			  for (int j = 0; j <= curves[curves_num-1].n; j++) {
+				  Node<T>* node = get_node(1.0, curves[curves_num-1].knots(j + 2));
+				  (node->data).fromVectorXd(curves[curves_num-1].controlPw.row(j));
+				  (node->data).output(cout);
+				  cout << endl;
+			  }
+
+			  // 3. insert intermediate vertices by knot insertion
+
+			  // 4. update coordinates of cross-sectional NURBS curves by the formula from (nasri 2012)
 
 		  }
 
@@ -727,7 +794,7 @@ namespace t_mesh{
                     break;
             }
             while(offset<4)
-                node.s[++offset]=width+1;
+                node.s[++offset]=width;
 
             // calculate s1,s0 by judging whether [s2-a,t2] (a>0)intersects with s-edge
             offset=2;
@@ -752,7 +819,7 @@ namespace t_mesh{
                     break;
             }
             while(offset>0)
-                node.s[--offset]=-1.0;
+                node.s[--offset]=0.0;
 
             // calculate t3,t4 by judging whether [s2,t2+a] (a>0)intersects with t-edge
             offset=2;
@@ -777,7 +844,7 @@ namespace t_mesh{
                     break;
             }
             while(offset<4)
-                node.t[++offset]=height+1;
+                node.t[++offset]=height;
 
             // calculate t1,t0 by judging whether [s2,t2-a] (a>0)intersects with t-edge
             offset=2;
@@ -802,7 +869,7 @@ namespace t_mesh{
                     break;
             }
             while(offset>0)
-                node.t[--offset]=-1.0;
+                node.t[--offset]=0.0;
 
             return node;
         }
@@ -1017,43 +1084,51 @@ namespace t_mesh{
             cout<<endl;
             return 1;
         }
-    // template<class T>
-    //     bool Mesh<T>::check_valid(){
-    //         for(size_t i=0;i<nodes.size();++i){
-    //             if(nodes[i]->s[2]==0||nodes[i]->t[2]==0||nodes[i]->s[2]>=width||nodes[i]->t[2]>=height)
-    //                 continue;
-    //             Node<T> tmp=get_knot(nodes[i]->s[2],nodes[i]->t[2]);
-    //             if(tmp.s!=nodes[i]->s){
-    //                 tmp.save(cout);
-    //                 nodes[i]->save(cout);
-    //                 outMesh("error");
-    //                 return false;
-    //             }
-    //             if(tmp.t!=nodes[i]->t){
-    //                 tmp.save(cout);
-    //                 nodes[i]->save(cout);
-    //                 outMesh("error");
-    //                 return false;
-    //             }
-    //             if(nodes[i]->adj[0]!=get_node(nodes[i]->s[2],nodes[i]->t[1])){
-    //                 nodes[i]->save(cout);                   
-    //                 return false;
-    //             }
-    //             if(nodes[i]->adj[1]!=get_node(nodes[i]->s[3],nodes[i]->t[2])){
-    //                 nodes[i]->save(cout);                   
-    //                 return false;
-    //             }
-    //             if(nodes[i]->adj[2]!=get_node(nodes[i]->s[2],nodes[i]->t[3])){
-    //                 nodes[i]->save(cout);                   
-    //                 return false;
-    //             }
-    //             if(nodes[i]->adj[3]!=get_node(nodes[i]->s[1],nodes[i]->t[2])){
-    //                 nodes[i]->save(cout);                   
-    //                 return false;
-    //             }
-    //         }
-    //         return true;
-    //     }
+     template<class T>
+         bool Mesh<T>::check_valid(){
+             for(size_t i=0;i<nodes.size();++i){
+                 if(nodes[i]->s[2]==0||nodes[i]->t[2]==0||nodes[i]->s[2]>=width||nodes[i]->t[2]>=height)
+                     continue;
+                 Node<T> tmp=get_knot(nodes[i]->s[2],nodes[i]->t[2]);
+                 if(tmp.s!=nodes[i]->s){
+                     tmp.save(cout);
+                     nodes[i]->save(cout);
+                     //outMesh("error");
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+                 }
+                 if(tmp.t!=nodes[i]->t){
+                     tmp.save(cout);
+                     nodes[i]->save(cout);
+                     //outMesh("error");
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+                 }
+                 if(nodes[i]->adj[0]!=get_node(nodes[i]->s[2],nodes[i]->t[1])){
+                     nodes[i]->save(cout);
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+					 
+                 }
+                 if(nodes[i]->adj[1]!=get_node(nodes[i]->s[3],nodes[i]->t[2])){
+                     nodes[i]->save(cout); 
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+                 }
+                 if(nodes[i]->adj[2]!=get_node(nodes[i]->s[2],nodes[i]->t[3])){
+                     nodes[i]->save(cout); 
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+                 }
+                 if(nodes[i]->adj[3]!=get_node(nodes[i]->s[1],nodes[i]->t[2])){
+                     nodes[i]->save(cout); 
+					 cout << "error: invalid T-mesh *********************!" << endl;
+                     return false;
+                 }
+             }
+             return true;
+         }
+
     template<class T>
         void Mesh<T>::merge_all(){
             while(!pool.empty()){
