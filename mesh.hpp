@@ -343,9 +343,28 @@ namespace t_mesh{
 			  map<double, T> coeff_X; // X'
 			  map<double, T> coeff_Y; // Y'
 			  
-			  for (int i = 0; i <= curves_num - 2; i++) {
-				  double s_now = s_knots(i);
+			  for (int i = 1; i <= curves_num - 2; i++) {
+				  const double s_now = s_knots(i);
+				  auto node = s_map[s_now].begin()->second;
+				  auto left_node = node->adj[3];
+				  auto right_node = node->adj[1];
+				  const double s_left = left_node->s[2];
+				  const double s_right = right_node->s[2];
 
+				  double a = Basis((left_node->s).toVectorXd(), s_now);
+				  double b = Basis((node->s).toVectorXd(), s_now);
+				  double c = Basis((right_node->s).toVectorXd(), s_now);
+
+				  basis_split(s_map[s_left], s_map[s_now], coeff_X); // X'
+				  basis_split(s_map[s_right], s_map[s_now], coeff_Y); // Y'
+
+				  for (auto it = s_map[s_now].begin(); it != s_map[s_now].end(); ++it) {
+					  auto temp_X = coeff_X[it->first];
+					  auto temp_Y = coeff_Y[it->first];
+					  temp_X.scale(-a); // aX'
+					  temp_Y.scale(-c); // bY'
+					  (it->second->data).add(temp_X).add(temp_Y).scale(1.0 / b); // W=(V-aX'-bY')/b
+				  }
 			  }
 		  }
 
@@ -1104,6 +1123,9 @@ namespace t_mesh{
 							new_map[t] = node;
 						}
 					}
+					//bug: split_pool should be cleared
+					split_pool.clear();
+					cout << "split_pool size: " << split_pool.size() << endl;
 				}
 			}
 
