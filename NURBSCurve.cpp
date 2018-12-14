@@ -258,6 +258,15 @@ void NURBSCurve::interpolate(const MatrixXd &points, const VectorXd &knotvector)
 	controlPw = controlP;
 }
 
+void NURBSCurve::piafit(const MatrixXd &points)
+{
+	
+}
+
+void NURBSCurve::piafit(const MatrixXd &points, const VectorXd &knotvector)
+{
+}
+
 bool NURBSCurve::insert(double t)
 {
 	/*cout << "before inserting:------------------" << endl;

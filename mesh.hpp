@@ -31,6 +31,12 @@ namespace t_mesh{
 			void drawSurface(igl::opengl::glfw::Viewer &view, double resolution = 0.01);
 			void draw(igl::opengl::glfw::Viewer &viewer, bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			int get_num() const { return nodes.size(); }
+			VectorXd skinning_parameterize(const vector<NURBSCurve> &curves);
+			void skinning_init(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
+			void skinning_insert(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
+			void skinning_insert1(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
+			void skinning_update_intermediate(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
+			void skinning_update_cross(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
 			void skinning(const vector<NURBSCurve> &curves);
             /*int savePoints(string);
             int saveLog(string);
@@ -256,16 +262,14 @@ namespace t_mesh{
 			  }
 		  }
 
-		  // nasri 2012 local T-spline skinning
-		  // knot vector of every curve should be [0,0,0,0,...,1,1,1,1]
-		  // but I need to change multiple knots to single knots [0,0,0,0.0001,...,0.9999,1,1,1]
 		  template<class T>
-		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
+		  inline VectorXd Mesh<T>::skinning_parameterize(const vector<NURBSCurve>& curves)
 		  {
+			  // 1. compute s-knot for curves
 			  assert(curves.size() > 0);
 			  const int curves_num = curves.size();
 			  const int dimension = curves[0].controlPw.cols();
-			  // 1. compute s-knot for curves
+			  
 			  VectorXd s_knots(curves_num);
 			  MatrixXd u_cpts(curves_num, dimension);
 			  for (int i = 0; i < u_cpts.rows(); i++) {
@@ -273,16 +277,19 @@ namespace t_mesh{
 			  }
 			  s_knots = NURBSCurve::parameterize(u_cpts);
 			  s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
-			  /*s_knots(0) = 0.0; s_knots(s_knots.size() - 1) = 1.0;
-			  s_knots(1) = 0.0001; s_knots(s_knots.size() - 2) = 0.9999;*/
-			  /*s_knots(0) = 0.0001;
-			  s_knots(curves_num - 1) = 0.9999;*/
 
 			  cout << "s_knots: " << s_knots.transpose() << endl;
+			  return s_knots;
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_init(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  {
 			  // 2. construct basis T-mesh 
 			  //add 0 and 1
-			  for(int j=0;j<=curves[0].n;j++){
-				  insert_helper(0.0, curves[0].knots(j + 2),false);
+			  const int curves_num = curves.size();
+			  for (int j = 0; j <= curves[0].n; j++) {
+				  insert_helper(0.0, curves[0].knots(j + 2), false);
 				  Node<T>* node = get_node(0.0, curves[0].knots(j + 2));
 				  (node->data).fromVectorXd(curves[0].controlPw.row(j));
 				  (node->data).output(cout);
@@ -291,7 +298,7 @@ namespace t_mesh{
 
 			  for (int i = 0; i < curves_num; i++) {
 				  for (int j = 0; j <= curves[i].n; j++) {
-					  insert_helper(s_knots(i), curves[i].knots(j + 2),false);
+					  insert_helper(s_knots(i), curves[i].knots(j + 2), false);
 					  Node<T>* node = get_node(s_knots(i), curves[i].knots(j + 2));
 					  (node->data).fromVectorXd(curves[i].controlPw.row(j));
 					  (node->data).output(cout);
@@ -299,25 +306,31 @@ namespace t_mesh{
 					  //merge_all();
 				  }
 			  }
-			  for (int j = 0; j <= curves[curves_num-1].n; j++) {
-				  insert_helper(1.0, curves[curves_num-1].knots(j + 2),false);
+			  for (int j = 0; j <= curves[curves_num - 1].n; j++) {
+				  insert_helper(1.0, curves[curves_num - 1].knots(j + 2), false);
 				  Node<T>* node = get_node(1.0, curves[curves_num - 1].knots(j + 2));
 				  (node->data).fromVectorXd(curves[curves_num - 1].controlPw.row(j));
 				  (node->data).output(cout);
 				  cout << endl;
 			  }
-			  
-			  cout <<"pool size:" <<pool.size() << endl;
+
+			  cout << "pool size:" << pool.size() << endl;
 			  pool.clear();
 
 			  if (!check_valid()) {
 				  cout << "skinning: invalid T-mesh!" << endl;
 				  return;
 			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_insert(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  {
+			  const int curves_num = curves.size();
 			  // 3. insert intermediate vertices
 			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
 			  assert(curves_num >= 3);
-			  for (int i = 0; i <= curves_num-2; i++) {
+			  for (int i = 0; i <= curves_num - 2; i++) {
 				  double s_now = s_knots(i);
 				  auto s_nodes = s_map[s_now];
 				  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
@@ -334,15 +347,68 @@ namespace t_mesh{
 					  }
 				  }
 			  }
+			  pool.clear();
 			  if (!check_valid()) {
 				  cout << "skinning: invalid T-mesh!" << endl;
 				  return;
 			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_insert1(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  {
+			  const int curves_num = curves.size();
+			  // 3. insert intermediate vertices
+			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
+			  assert(curves_num >= 3);
+			  for (int i = 0; i <= curves_num-1; i++) {
+				  double s_now = s_knots(i);
+				  auto s_nodes = s_map[s_now];
+				  if (i == 0) {
+					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
+						  double s_insert = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i + 1);
+						  insert_helper(s_insert, it->first, false);
+						  //Node<T>* node = get_node(s_insert, it->first);
+
+					  }
+				  }
+				  else if (i == curves_num - 1) {
+					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
+						  double s_insert = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i - 1);
+						  insert_helper(s_insert, it->first, false);
+					  }
+				  }
+				  else {
+					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
+						  double s_left = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i - 1);
+						  double s_right = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i + 1);
+						  insert_helper(s_left, it->first);
+						  insert_helper(s_right, it->first);
+					  }
+				  }
+				  
+			  }
+			  pool.clear();
+			  if (!check_valid()) {
+				  cout << "skinning: invalid T-mesh!" << endl;
+				  return;
+			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_update_intermediate(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  {
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_update_cross(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  {
+			  const int curves_num = curves.size();
 			  // 4. update coordinates of control points by the formula from (nasri 2012)
 			  // aX' + bW + cY' = V
 			  map<double, T> coeff_X; // X'
 			  map<double, T> coeff_Y; // Y'
-			  
+
 			  for (int i = 1; i <= curves_num - 2; i++) {
 				  const double s_now = s_knots(i);
 				  auto node = s_map[s_now].begin()->second;
@@ -366,6 +432,33 @@ namespace t_mesh{
 					  (it->second->data).add(temp_X).add(temp_Y).scale(1.0 / b); // W=(V-aX'-bY')/b
 				  }
 			  }
+		  }
+
+		  // nasri 2012 local T-spline skinning
+		  // knot vector of every curve should be [0,0,0,0,...,1,1,1,1]
+		  // but I need to change multiple knots to single knots [0,0,0,0.0001,...,0.9999,1,1,1]
+		  template<class T>
+		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
+		  {
+			  assert(curves.size() > 0);
+			  const int curves_num = curves.size();
+			  //const int dimension = curves[0].controlPw.cols();
+
+			  // 1. compute s-knot for curves
+			  VectorXd s_knots = skinning_parameterize(curves);
+
+			  // 2. construct basis T-mesh 
+			  skinning_init(s_knots, curves);
+
+			  // 3. insert intermediate vertices
+			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
+			  //skinning_insert(s_knots, curves);
+			  skinning_insert1(s_knots, curves);
+
+			  // 4. update coordinates of control points by the formula from (nasri 2012)
+			  // aX' + bW + cY' = V
+			  skinning_update_cross(s_knots, curves);
+			  
 		  }
 
 		  
