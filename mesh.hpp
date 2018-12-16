@@ -35,9 +35,12 @@ namespace t_mesh{
 			void skinning_init(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
 			void skinning_insert(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
 			void skinning_insert1(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
-			void skinning_update_intermediate(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
+			void skinning_intermediate(const VectorXd &s_knots, const vector<NURBSCurve> &curves,igl::opengl::glfw::Viewer &viewer);
+			void intermediate_init(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double,map<double,T>> &initial_cpts,igl::opengl::glfw::Viewer &viewer, int n_sample = 100);
+			double intermediate_update(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double, map<double, T>> &initial_cpts, igl::opengl::glfw::Viewer &viewer, int n_sample = 100);
 			void skinning_update_cross(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
-			void skinning(const vector<NURBSCurve> &curves);
+			void skinning(const vector<NURBSCurve> &curves,igl::opengl::glfw::Viewer &viewer);
+			
             /*int savePoints(string);
             int saveLog(string);
             int loadPoints(string);
@@ -289,29 +292,39 @@ namespace t_mesh{
 			  //add 0 and 1
 			  const int curves_num = curves.size();
 			  for (int j = 0; j <= curves[0].n; j++) {
-				  insert_helper(0.0, curves[0].knots(j + 2), false);
-				  Node<T>* node = get_node(0.0, curves[0].knots(j + 2));
+				  double vknot = curves[0].knots(j + 2);
+				  if (j == 1) { vknot = 0.0001; }
+				  if (j == curves[0].n-1) { vknot = 0.9999; }
+				  
+				  insert_helper(0.0, vknot, false);
+				  Node<T>* node = get_node(0.0, vknot);
 				  (node->data).fromVectorXd(curves[0].controlPw.row(j));
-				  (node->data).output(cout);
-				  cout << endl;
+				  /*(node->data).output(cout);
+				  cout << endl;*/
 			  }
 
 			  for (int i = 0; i < curves_num; i++) {
 				  for (int j = 0; j <= curves[i].n; j++) {
-					  insert_helper(s_knots(i), curves[i].knots(j + 2), false);
-					  Node<T>* node = get_node(s_knots(i), curves[i].knots(j + 2));
+					  double vknot = curves[i].knots(j + 2);
+					  if (j == 1) { vknot = 0.0001; }
+					  if (j == curves[i].n - 1) { vknot = 0.9999; }
+					  insert_helper(s_knots(i), vknot, false);
+					  Node<T>* node = get_node(s_knots(i), vknot);
 					  (node->data).fromVectorXd(curves[i].controlPw.row(j));
-					  (node->data).output(cout);
-					  cout << endl;
+					  /*(node->data).output(cout);
+					  cout << endl;*/
 					  //merge_all();
 				  }
 			  }
 			  for (int j = 0; j <= curves[curves_num - 1].n; j++) {
-				  insert_helper(1.0, curves[curves_num - 1].knots(j + 2), false);
-				  Node<T>* node = get_node(1.0, curves[curves_num - 1].knots(j + 2));
+				  double vknot = curves[curves_num-1].knots(j + 2);
+				  if (j == 1) { vknot = 0.0001; }
+				  if (j == curves[curves_num-1].n - 1) { vknot = 0.9999; }
+				  insert_helper(1.0, vknot, false);
+				  Node<T>* node = get_node(1.0, vknot);
 				  (node->data).fromVectorXd(curves[curves_num - 1].controlPw.row(j));
-				  (node->data).output(cout);
-				  cout << endl;
+				  /*(node->data).output(cout);
+				  cout << endl;*/
 			  }
 
 			  cout << "pool size:" << pool.size() << endl;
@@ -368,7 +381,10 @@ namespace t_mesh{
 					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
 						  double s_insert = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i + 1);
 						  insert_helper(s_insert, it->first, false);
-						  //Node<T>* node = get_node(s_insert, it->first);
+						  /*Node<T>* node = get_node(s_insert, it->first);
+						  cout << "insert data:";
+						  (node->data).output(cout);
+						  cout << endl;*/
 
 					  }
 				  }
@@ -376,14 +392,26 @@ namespace t_mesh{
 					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
 						  double s_insert = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i - 1);
 						  insert_helper(s_insert, it->first, false);
+						 /* Node<T>* node = get_node(s_insert, it->first);
+						  cout << "insert data:";
+						  (node->data).output(cout);
+						  cout << endl;*/
 					  }
 				  }
 				  else {
 					  for (auto it = s_nodes.begin(); it != s_nodes.end(); ++it) {
 						  double s_left = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i - 1);
 						  double s_right = 2.0 / 3 * s_now + 1.0 / 3 * s_knots(i + 1);
-						  insert_helper(s_left, it->first);
-						  insert_helper(s_right, it->first);
+						  insert_helper(s_left, it->first, false);
+						  /*Node<T>* node = get_node(s_left, it->first);
+						  cout << "insert left data:";
+						  (node->data).output(cout);
+						  cout << endl;*/
+						  insert_helper(s_right, it->first, false);
+						  /*node = get_node(s_right, it->first);
+						  cout << "insert rigth data:";
+						  (node->data).output(cout);
+						  cout << endl;*/
 					  }
 				  }
 				  
@@ -395,9 +423,196 @@ namespace t_mesh{
 			  }
 		  }
 
+		  
+
 		  template<class T>
-		  inline void Mesh<T>::skinning_update_intermediate(const VectorXd & s_knots, const vector<NURBSCurve>& curves)
+		  inline void Mesh<T>::intermediate_init(
+			  const VectorXd &s_knots, 
+			  const vector<NURBSCurve>& curves, 
+			  map<double, map<double,T>>& initial_cpts,
+			  igl::opengl::glfw::Viewer &viewer,
+			  int n_sample)
 		  {
+			  const int curves_num = curves.size();
+			  const int dimension = curves[0].controlPw.cols();
+			  assert(curves_num >= 2);
+			  for (int i = 0; i <= curves_num - 2; i++) {
+				  double s_now = s_knots(i);
+				  double s_next = s_knots(i + 1);
+				  auto node_now = (s_map[s_now].begin())->second;
+				  auto node_next = (s_map[s_next].begin())->second;
+				  double s_inter1 = node_now->adj[1]->s[2];
+				  double s_inter2 = node_next->adj[3]->s[2];
+				  MatrixXd sample_inter1(n_sample + 1, dimension);
+				  MatrixXd sample_inter2(n_sample + 1, dimension);
+				  // sample points and linear interpolate
+				  for (int j = 0; j <= n_sample; j++) {
+					  RowVectorXd now_coor = curves[i].eval(1.0*j / n_sample);
+					  RowVectorXd next_coor = curves[i + 1].eval(1.0*j / n_sample);
+					  sample_inter1.row(j) = 2.0 / 3 * now_coor + 1.0 / 3 * next_coor;
+					  sample_inter2.row(j) = 2.0 / 3 * next_coor + 1.0 / 3 * now_coor;
+				  }
+
+				  /*viewer.data().add_points(sample_inter1, blue);
+				  viewer.data().add_points(sample_inter2, blue);*/
+
+				  // fit the sample points by LSPIA method with appointed knot vector
+				  NURBSCurve inter1, inter2;
+				  inter1.lspiafit(sample_inter1, curves[i].n + 1, curves[i].knots);
+				  
+				  inter2.lspiafit(sample_inter2, curves[i + 1].n + 1, curves[i + 1].knots);
+				  inter1.draw(viewer,true,true);
+				  inter2.draw(viewer,true,true);
+				  cout << "inter1.knots: " << inter1.knots.transpose() << endl;
+				  cout << "inter2.knots: " << inter2.knots.transpose() << endl;
+
+				  inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
+				  inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;
+
+				  // update coordinate of intermediate control points and save as inital_cpts
+				  for (int j = 0; j <= inter1.n; j++) {
+					  T temp;
+					  
+					  
+					  temp.fromVectorXd(inter1.controlPw.row(j));
+					  /*cout << j << ",position: ";
+					  temp.output(cout);
+					  cout << endl;*/
+					  initial_cpts[s_inter1][inter1.knots(j + 2)] = temp;
+					  s_map[s_inter1][inter1.knots(j + 2)]->data = temp;
+					  /*cout << j << ",map: ";
+					  (s_map[s_inter1][inter1.knots(j + 2)]->data).output(cout);
+					  cout << endl;*/
+				  }
+				  for (int j = 0; j <= inter2.n; j++) {
+					  T temp;
+					  temp.fromVectorXd(inter2.controlPw.row(j));
+
+					  initial_cpts[s_inter2][inter2.knots(j + 2)] = temp;
+					  s_map[s_inter2][inter2.knots(j + 2)]->data = temp;
+				  }
+			  }
+			  cout << "finished intermediate_init()!" << endl;
+
+			  
+		  }
+
+		  template<class T>
+		  inline double Mesh<T>::intermediate_update(
+			  const VectorXd & s_knots, 
+			  const vector<NURBSCurve>& curves,
+			  map<double, map<double, T>>& initial_cpts,
+			  igl::opengl::glfw::Viewer & viewer, int n_sample)
+		  {
+			  const int curves_num = curves.size();
+			  const int dimension = curves[0].controlPw.cols();
+			  double error = 0.0;
+			  assert(curves_num >= 2);
+			  map<double, map<double, T>> T_cpts;
+
+			  for (int i = 0; i <= curves_num - 2; i++) {
+				  double s_now = s_knots(i);
+				  double s_next = s_knots(i + 1);
+				  auto node_now = (s_map[s_now].begin())->second;
+				  auto node_next = (s_map[s_next].begin())->second;
+				  double s_inter1 = node_now->adj[1]->s[2];
+				  double s_inter2 = node_next->adj[3]->s[2];
+				  MatrixXd T_inter1(n_sample + 1, dimension);
+				  MatrixXd T_inter2(n_sample + 1, dimension);
+				  // points on T-spline surface
+				  for (int j = 0; j <= n_sample; j++) {
+					  if (j == 0) {
+						  T_inter1.row(j) = (node_now->adj[1]->data).toVectorXd();
+						  T_inter2.row(j) = (node_next->adj[3]->data).toVectorXd();
+						  
+					  }
+					  else if (j == n_sample) {
+						  T_inter1.row(j) = ((s_map[s_now].rbegin())->second->adj[1]->data).toVectorXd();
+						  T_inter2.row(j) = ((s_map[s_next].rbegin())->second->adj[3]->data).toVectorXd();
+					  }
+					  else {
+						  T_inter1.row(j) = eval(s_inter1, 1.0*j / n_sample).toVectorXd();
+						  T_inter2.row(j) = eval(s_inter2, 1.0*j / n_sample).toVectorXd();
+					  }
+					  
+				  }
+
+				  /*viewer.data().add_points(sample_inter1, blue);
+				  viewer.data().add_points(sample_inter2, blue);*/
+
+				  // fit the sample points by LSPIA method with appointed knot vector
+				  NURBSCurve inter1, inter2;
+				  inter1.lspiafit(T_inter1, curves[i].n + 1, curves[i].knots);
+
+				  inter2.lspiafit(T_inter2, curves[i + 1].n + 1, curves[i + 1].knots);
+				  /*inter1.draw(viewer, true, true);
+				  inter2.draw(viewer, true, true);*/
+				  cout << "inter1.knots: " << inter1.knots.transpose() << endl;
+				  cout << "inter2.knots: " << inter2.knots.transpose() << endl;
+
+				  inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
+				  inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;
+
+				  // update coordinate of intermediate control points
+				  for (int j = 0; j <= inter1.n; j++) {
+					  T_cpts[s_inter1][inter1.knots(j + 2)].fromVectorXd(inter1.controlPw.row(j).transpose());
+				  }
+
+				  for (int j = 0; j <= inter2.n; j++) {
+					  T_cpts[s_inter2][inter2.knots(j + 2)].fromVectorXd(inter2.controlPw.row(j).transpose());
+				  }
+			  }
+
+			  // update by T_cpts and initial_cpts
+			  for (auto it = T_cpts.begin(); it != T_cpts.end(); ++it) {
+				  for (auto it1 = (it->second).begin(); it1 != (it->second).end(); ++it1) {
+					  VectorXd delta = (initial_cpts[it->first][it1->first]).toVectorXd() - (it1->second).toVectorXd();
+					  if (delta.norm() > error) {
+						  error = delta.norm();
+					  }
+					  T temp;
+					  temp.fromVectorXd(delta);
+					  (s_map[it->first][it1->first]->data).add(temp);
+				  }
+			  }
+
+			  cout << "finished intermediate_update()!" << endl;
+			  //skinning_update_cross(s_knots, curves);
+			  return error;
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::skinning_intermediate(
+			  const VectorXd & s_knots,
+			  const vector<NURBSCurve>& curves,
+			  igl::opengl::glfw::Viewer &viewer)
+		  {
+			  // 1. calculate sample points by linear interpolate
+
+			  // 2. fit sample points by B-spline using PIA method
+			  //    (the control points of B-Spline is the initial X,Y;
+			  //     and the B-Spline is the shape to be preserved.)
+			  // 3. update V to W by X,Y using formula aX+bW+cY=V
+			  // 4. calculate s-curve on T-spline surface, forcing the s-curve to approximate the shape by iteration
+
+			  const int curves_num = curves.size();
+			  const int dimension = curves[0].controlPw.cols();
+			  map<double, map<double, T>> initial_cpts;
+
+			  intermediate_init(s_knots, curves, initial_cpts, viewer);
+			  //skinning_update_cross(s_knots, curves);
+
+			  const int max_iter_num = 30;
+			  const double eps = 1e-5;
+			  int iter_num = 0;
+			  double error = 1.0;
+			  while (error > eps&&iter_num < max_iter_num) {
+				  error = intermediate_update(s_knots, curves, initial_cpts, viewer);
+				  iter_num++;
+				  cout << "*******************iter " << iter_num << ": ,error " << error << "********************" << endl;
+				  //skinning_update_cross(s_knots, curves);
+
+			  }
 		  }
 
 		  template<class T>
@@ -433,12 +648,11 @@ namespace t_mesh{
 				  }
 			  }
 		  }
-
 		  // nasri 2012 local T-spline skinning
 		  // knot vector of every curve should be [0,0,0,0,...,1,1,1,1]
 		  // but I need to change multiple knots to single knots [0,0,0,0.0001,...,0.9999,1,1,1]
 		  template<class T>
-		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves)
+		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves, igl::opengl::glfw::Viewer & viewer)
 		  {
 			  assert(curves.size() > 0);
 			  const int curves_num = curves.size();
@@ -454,11 +668,11 @@ namespace t_mesh{
 			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
 			  //skinning_insert(s_knots, curves);
 			  skinning_insert1(s_knots, curves);
+			  skinning_intermediate(s_knots, curves,viewer);
 
 			  // 4. update coordinates of control points by the formula from (nasri 2012)
 			  // aX' + bW + cY' = V
 			  skinning_update_cross(s_knots, curves);
-			  
 		  }
 
 		  

@@ -41,10 +41,10 @@ struct NURBSCurve
 	bool saveNURBS(string);
 	
 	// find the knot interval of t by binary searching
-	int find_ind(double t);
+	int find_ind(double t)const;
 
 	// evaluate the coordinate of curvePoint with parameter t  
-	MatrixXd eval(double t);
+	MatrixXd eval(double t)const;
 
 	// chord length parameterization
 	static VectorXd parameterize(const MatrixXd &points);
@@ -58,10 +58,16 @@ struct NURBSCurve
 	void interpolate(const MatrixXd &points, const VectorXd &knotvector);
 
 	// pia fit by B-spline of degree 3
-	void piafit(const MatrixXd &points);
+	void piafit(const MatrixXd &points,int max_iter_num=100, double eps=1e-5);
 
 	// pia fit with appointed knot vector
-	void piafit(const MatrixXd &points, const VectorXd &knotvector);
+	void piafit(const MatrixXd &points, const VectorXd &knotvector, int max_iter_num = 100, double eps = 1e-5);
+
+	// given Q_0,...,Q_m, fit by B-spline with control points P_0,...,P_n
+	void lspiafit(const MatrixXd & points, const int &n_cpts);
+
+	// lspia fit with appointed knot vector
+	void lspiafit(const MatrixXd & points, const int &n_cpts, const VectorXd & knotvector);
 
 	// kont insertion
 	bool insert(double t);

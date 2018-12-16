@@ -95,15 +95,15 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	nurbs[1].loadNURBS("../circle1.cptw");
 	nurbs[2].loadNURBS("../circle2.cptw");
 
-	nurbs[0].draw(viewer);
-	nurbs[1].draw(viewer);
-	nurbs[2].draw(viewer);
+	nurbs[0].draw(viewer,false);
+	nurbs[1].draw(viewer,false);
+	nurbs[2].draw(viewer,false);
 	//viewer.core.align_camera_center(nurbs[1].controlPw);
 
 
 
 	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
-	mesh.skinning(nurbs);
+	mesh.skinning(nurbs, viewer);
 	mesh.draw(viewer, false, true, true);
 	mesh.saveMesh("simpleMesh");
 }
