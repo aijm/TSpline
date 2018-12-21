@@ -90,22 +90,26 @@ void testMesh(igl::opengl::glfw::Viewer &viewer) {
 
 void testSkinning(igl::opengl::glfw::Viewer &viewer)
 {
-	vector<NURBSCurve> nurbs(3);
+	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
 	nurbs[1].loadNURBS("../circle1.cptw");
 	nurbs[2].loadNURBS("../circle2.cptw");
+	nurbs[3].loadNURBS("../circle3.cptw");
+
 
 	nurbs[0].draw(viewer,false);
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
+	nurbs[3].draw(viewer, false);
 	//viewer.core.align_camera_center(nurbs[1].controlPw);
 
 
 
 	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
 	mesh.skinning(nurbs, viewer);
-	mesh.draw(viewer, false, true, true);
-	mesh.saveMesh("simpleMesh");
+
+	mesh.draw(viewer, false,false, false);
+	//mesh.saveMesh("simpleMesh");
 }
 
 int main(int argc,char** argv){
@@ -201,7 +205,7 @@ int main(int argc,char** argv){
 	};
 
 	viewer.callback_key_down = &key_down;
-	mesh.draw(viewer, showmesh, showpolygon, showsurface);
+	//mesh.draw(viewer, showmesh, showpolygon, showsurface);
 	viewer.launch();
 	
     return 0;

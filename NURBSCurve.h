@@ -64,10 +64,10 @@ struct NURBSCurve
 	void piafit(const MatrixXd &points, const VectorXd &knotvector, int max_iter_num = 100, double eps = 1e-5);
 
 	// given Q_0,...,Q_m, fit by B-spline with control points P_0,...,P_n
-	void lspiafit(const MatrixXd & points, const int &n_cpts);
+	void lspiafit(const MatrixXd & points, const int &n_cpts, int max_iter_num = 100, double eps = 1e-3);
 
 	// lspia fit with appointed knot vector
-	void lspiafit(const MatrixXd & points, const int &n_cpts, const VectorXd & knotvector);
+	void lspiafit(const MatrixXd & points, const int &n_cpts, const VectorXd & knotvector, int max_iter_num = 100, double eps = 1e-3);
 
 	// kont insertion
 	bool insert(double t);
