@@ -92,8 +92,8 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1.cptw");
-	nurbs[2].loadNURBS("../circle2.cptw");
+	nurbs[1].loadNURBS("../circle1_1.cptw");
+	nurbs[2].loadNURBS("../circle2_1.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -108,14 +108,40 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
 	mesh.skinning(nurbs, viewer);
 
-	mesh.draw(viewer, false,false, false);
+	mesh.draw(viewer, false,true, true);
+	//mesh.saveMesh("simpleMesh");
+}
+
+
+void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
+{
+	vector<NURBSCurve> nurbs(4);
+	nurbs[0].loadNURBS("../circle.cptw");
+	nurbs[1].loadNURBS("../circle1_1.cptw");
+	nurbs[2].loadNURBS("../circle2_1.cptw");
+	nurbs[3].loadNURBS("../circle3.cptw");
+
+
+	nurbs[0].draw(viewer, false);
+	nurbs[1].draw(viewer, false);
+	nurbs[2].draw(viewer, false);
+	nurbs[3].draw(viewer, false);
+	//viewer.core.align_camera_center(nurbs[1].controlPw);
+
+
+
+	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
+	mesh.pia_skinning(nurbs, viewer, 200);
+
+	mesh.draw(viewer, false, true, true);
 	//mesh.saveMesh("simpleMesh");
 }
 
 int main(int argc,char** argv){
 	igl::opengl::glfw::Viewer viewer;
 	//testArray();
-	testSkinning(viewer);
+	testpia_skinning(viewer);
+	//testSkinning(viewer);
 	/*if (mesh.loadMesh("../surface1.cfg") == 0) {
 		cout << "num of nodes: " << mesh.get_num() << endl;
 	}

@@ -20,27 +20,30 @@
 
 namespace t_mesh{
     using namespace std;
+	using namespace igl::opengl::glfw;
     template<class T>
     class Mesh{
         public:
             int loadMesh(string);
             int saveMesh(string);
 			T eval(double s,double t);
-			void drawTmesh(igl::opengl::glfw::Viewer &viewer);
-			void drawControlpolygon(igl::opengl::glfw::Viewer &viewer);
-			void drawSurface(igl::opengl::glfw::Viewer &view, double resolution = 0.01);
-			void draw(igl::opengl::glfw::Viewer &viewer, bool tmesh, bool polygon, bool surface,double resolution = 0.01);
+			void drawTmesh(Viewer &viewer);
+			void drawControlpolygon(Viewer &viewer);
+			void drawSurface(Viewer &view, double resolution = 0.01);
+			void draw(Viewer &viewer, bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			int get_num() const { return nodes.size(); }
 			VectorXd skinning_parameterize(const vector<NURBSCurve> &curves);
 			void skinning_init(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
 			void skinning_insert(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
 			void skinning_insert1(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
-			void skinning_intermediate(const VectorXd &s_knots, const vector<NURBSCurve> &curves,igl::opengl::glfw::Viewer &viewer);
-			void intermediate_init(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double,map<double,T>> &initial_cpts,igl::opengl::glfw::Viewer &viewer, int n_sample = 100);
-			double intermediate_update(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double, map<double, T>> &initial_cpts, igl::opengl::glfw::Viewer &viewer, int n_sample = 100, bool showiteration = false);
+			void skinning_intermediate(const VectorXd &s_knots, const vector<NURBSCurve> &curves,Viewer &viewer);
+			void intermediate_init(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double,map<double,T>> &initial_cpts,Viewer &viewer, int n_sample = 100);
+			double intermediate_update(const VectorXd &s_knots, const vector<NURBSCurve>& curves, map<double, map<double, T>> &initial_cpts, Viewer &viewer, int n_sample = 100, bool showiteration = false);
 			void skinning_update_cross(const VectorXd &s_knots, const vector<NURBSCurve> &curves);
-			void skinning(const vector<NURBSCurve> &curves,igl::opengl::glfw::Viewer &viewer);
+			void skinning(const vector<NURBSCurve> &curves,Viewer &viewer);
 			
+			void pia_fit(const VectorXd &s_knots, const vector<NURBSCurve> &curves, Viewer &viewer, int max_iterations = 100, double eps = 1e-5);
+			void pia_skinning(const vector<NURBSCurve> &curves, Viewer &viewer, int max_iterations = 100, double eps = 1e-5);
             /*int savePoints(string);
             int saveLog(string);
             int loadPoints(string);
@@ -131,7 +134,7 @@ namespace t_mesh{
 		 }
 
 	 template<class T>
-		 void Mesh<T>::drawTmesh(igl::opengl::glfw::Viewer &viewer){
+		 void Mesh<T>::drawTmesh(Viewer &viewer){
 			 Eigen::MatrixXd P1(1,2), P2(1,2);
 			 Eigen::MatrixXd nodes_st(nodes.size(), 2);
 			 typedef typename map<double, map<double, Node<T>*> >::iterator   map_t;
@@ -175,7 +178,7 @@ namespace t_mesh{
 		 }
 
 	  template<class T>
-	      void Mesh<T>::drawControlpolygon(igl::opengl::glfw::Viewer &viewer) {
+	      void Mesh<T>::drawControlpolygon(Viewer &viewer) {
 			  Eigen::MatrixXd P1, P2;
 			  array2matrixd(nodes[0]->data, P1);
 			  Eigen::MatrixXd nodes_point(nodes.size(), P1.cols());
@@ -210,7 +213,7 @@ namespace t_mesh{
 		  }
 
 	  template<class T>
-	      void Mesh<T>::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution) {
+	      void Mesh<T>::drawSurface(Viewer &viewer, double resolution) {
 			  // cut apart the parameter domain
 			  double u_low = (++s_map.begin())->first;
 			  
@@ -253,7 +256,7 @@ namespace t_mesh{
 		  }
 
 		  template<class T>
-		  void Mesh<T>::draw(igl::opengl::glfw::Viewer & viewer,bool tmesh, bool polygon, bool surface, double resolution){
+		  void Mesh<T>::draw(Viewer & viewer,bool tmesh, bool polygon, bool surface, double resolution){
 			  if (tmesh) {
 				  drawTmesh(viewer);
 				  return;
@@ -424,7 +427,7 @@ namespace t_mesh{
 			  const VectorXd &s_knots, 
 			  const vector<NURBSCurve>& curves, 
 			  map<double, map<double,T>>& initial_cpts,
-			  igl::opengl::glfw::Viewer &viewer,
+			  Viewer &viewer,
 			  int n_sample)
 		  {
 			  const int curves_num = curves.size();
@@ -446,10 +449,10 @@ namespace t_mesh{
 					  sample_inter1.row(j) = 2.0 / 3 * now_coor + 1.0 / 3 * next_coor;
 					  sample_inter2.row(j) = 2.0 / 3 * next_coor + 1.0 / 3 * now_coor;
 				  }
-				  if (true) {
+				  /*if (true) {
 					  viewer.data().add_points(sample_inter1, blue);
 					  viewer.data().add_points(sample_inter2, blue);
-				  }
+				  }*/
 				  
 				  /*if (i == 2) {
 					  savepoints("sample_inter1" + std::to_string(i) + ".p", sample_inter1);
@@ -461,12 +464,12 @@ namespace t_mesh{
 				  inter1.lspiafit(sample_inter1, curves[i].n + 1, curves[i].knots, 1000);
 				  
 				  inter2.lspiafit(sample_inter2, curves[i + 1].n + 1, curves[i + 1].knots, 1000);
-				  if (true) {
+				  /*if (true) {
 					  inter1.draw(viewer, true, true, 0.001);
 					  inter2.draw(viewer, true, true, 0.001);
 					  cout << "inter1.knots: " << inter1.knots.transpose() << endl;
 					  cout << "inter2.knots: " << inter2.knots.transpose() << endl;
-				  }
+				  }*/
 				  
 
 				  inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
@@ -501,7 +504,7 @@ namespace t_mesh{
 			  const VectorXd & s_knots, 
 			  const vector<NURBSCurve>& curves,
 			  map<double, map<double, T>>& initial_cpts,
-			  igl::opengl::glfw::Viewer & viewer, int n_sample,bool showiteration)
+			  Viewer & viewer, int n_sample,bool showiteration)
 		  {
 			  if (showiteration) {
 				  draw(viewer, false, false, true);
@@ -592,7 +595,7 @@ namespace t_mesh{
 		  inline void Mesh<T>::skinning_intermediate(
 			  const VectorXd & s_knots,
 			  const vector<NURBSCurve>& curves,
-			  igl::opengl::glfw::Viewer &viewer)
+			  Viewer &viewer)
 		  {
 			  // 1. calculate sample points by linear interpolate
 
@@ -609,14 +612,14 @@ namespace t_mesh{
 			  intermediate_init(s_knots, curves, initial_cpts, viewer);
 			  skinning_update_cross(s_knots, curves);
 
-			  const int max_iter_num = 100;
+			  const int max_iter_num = 0;
 			  const double eps = 1e-5;
 			  int iter_num = 0;
 			  double error = 1.0;
 			  while (error > eps&&iter_num < max_iter_num) {
 				  
 				  if (iter_num == max_iter_num - 1) {
-					  error = intermediate_update(s_knots, curves, initial_cpts, viewer,100,true);
+					  error = intermediate_update(s_knots, curves, initial_cpts, viewer,100,false);
 					  iter_num++;
 					  cout << "*******************iter " << iter_num << ": ,error " << error << "********************" << endl;
 					  break;
@@ -680,7 +683,7 @@ namespace t_mesh{
 		  // knot vector of every curve should be [0,0,0,0,...,1,1,1,1]
 		  // but I need to change multiple knots to single knots [0,0,0,0.0001,...,0.9999,1,1,1]
 		  template<class T>
-		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves, igl::opengl::glfw::Viewer & viewer)
+		  inline void Mesh<T>::skinning(const vector<NURBSCurve>& curves, Viewer & viewer)
 		  {
 			  assert(curves.size() > 0);
 			  const int curves_num = curves.size();
@@ -701,6 +704,92 @@ namespace t_mesh{
 			  // 4. update coordinates of control points by the formula from (nasri 2012)
 			  // aX' + bW + cY' = V
 			  //skinning_update_cross(s_knots, curves);
+		  }
+
+		  
+
+		  template<class T>
+		  inline void Mesh<T>::pia_fit(const VectorXd & s_knots, const vector<NURBSCurve>& curves, Viewer &viewer, int max_iterations, double eps)
+		  {
+			  
+		  }
+
+		  template<class T>
+		  inline void t_mesh::Mesh<T>::pia_skinning(const vector<NURBSCurve>& curves, Viewer &viewer, int max_iterations, double eps)
+		  {
+			  assert(curves.size() > 0);
+			  const int curves_num = curves.size();
+			  //const int dimension = curves[0].controlPw.cols();
+
+			  // 1. compute s-knot for curves
+			  // 比如 要拟合点的参数: 0, 0.4, 0.6, 0.8, 1.0
+			  // 则对应的样条节点 0, 0,           0, 0, 0.4, 0.6, 0.8, 1.0, 1.0,          1.0, 1.0
+			  VectorXd s_params = skinning_parameterize(curves);
+			  s_params[0] = 0.0001; s_params[s_params.size() - 1] = 0.9999;
+			  // 每个网格点对应: Q --> 要逼近的点， params --> 对应的参数值
+			  map<double, map<double, T>> Q;
+			  map<double, map<double, pair<double, double>>> params;
+			  
+			  // 初始化T样条的T-preimage,并将控制点坐标设置为要拟合的点坐标Q
+			  VectorXd s_nodes(s_params.size());
+			  s_nodes(0) = 0.0; s_nodes(1) = 0.0001;
+			  s_nodes(s_nodes.size() - 2) = 0.9999; s_nodes(s_nodes.size() - 1) = 1.0;
+			  s_nodes.segment(2, s_nodes.size() - 4) = s_params.segment(2, s_nodes.size() - 4);
+			  cout << "s_nodes:" << s_nodes << endl;
+			  for (int i = 0; i < s_nodes.size(); i++) {
+				  double s = s_nodes(i);
+				  double mapped_s = s_params(i);
+				  // 取出曲线节点向量的参数部分
+				  VectorXd t_params = curves[i].knots.segment(3, curves[i].n - 1);
+				  t_params[0] = 0.0001; t_params[t_params.size() - 1] = 0.9999;
+				  // 计算相应的T样条节点
+				  VectorXd t_nodes(t_params);
+				  t_nodes(0) = 0.0; t_nodes(1) = 0.0001;
+				  t_nodes(t_nodes.size() - 2) = 0.9999; t_nodes(t_nodes.size() - 1) = 1.0;
+				  t_nodes.segment(2, t_nodes.size() - 4) = t_params.segment(2, t_nodes.size() - 4);
+
+				  for(int j = 0;j < t_params.size();j++){
+					  double t = t_nodes(j);
+					  params[s][t] = make_pair(mapped_s, t_params(j));
+					  //cout << "params[" << s << ", " << t << "] = " << mapped_s << ", " << t_params(j) << endl;
+					  T point;
+					  point.fromVectorXd(curves[i].eval(t_params(j)).row(0).transpose());
+					  Q[s][t] = point;
+					  MatrixXd P;
+					  array2matrixd(point, P);
+					  viewer.data().add_points(P, green);
+					  insert_helper(s, t, false);
+					  Node<T>* node = get_node(s, t);
+					  (node->data) = point;
+				  }
+			  }
+
+			  double error = 100.0;
+			  int iter_num = 0;
+			  // 开始迭代
+			  while (error > eps && iter_num < max_iterations) {
+				  error = 0.0;
+				  for (auto s_it = s_map.begin(); s_it != s_map.end(); s_it++) {
+					  for (auto t_it = (s_it->second).begin(); t_it != (s_it->second).end(); t_it++) {
+						  double s = s_it->first;
+						  double t = t_it->first;
+						  T cur = eval(params[s][t].first, params[s][t].second);
+						  T delta = Q[s][t] - cur;
+						  /*MatrixXd P1, P2;
+						  array2matrixd(Q[s][t], P1);
+						  array2matrixd(cur, P2);
+
+						  viewer.data().add_edges(P1, P2, white);*/
+
+						  (s_map[s][t]->data).add(delta);
+						  error += delta.toVectorXd().norm();
+					  }
+				  }
+
+				  error /= get_num();
+				  iter_num++;
+				  cout << "iter: " << iter_num << ", error: " << error << endl;
+			  }
 		  }
 
 		  

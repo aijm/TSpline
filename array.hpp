@@ -60,6 +60,8 @@ namespace t_mesh{
             void input(istream& in);
             Array<T,num>& scale(const T&);
             Array<T,num>& add(const Array<T,num>&);
+			Array<T, num> operator+(const Array<T, num>&);
+			Array<T, num> operator-(const Array<T, num>&);
             void clear();
         private:
             T data[num];
@@ -92,6 +94,25 @@ namespace t_mesh{
         }
         return *this;
     }
+	template<class T, int num>
+	inline Array<T, num> Array<T, num>::operator+(const Array<T, num>& other)
+	{
+		Array<T, num> res;
+		for (int i = 0; i<num; ++i) {
+			res[i] = this->data[i] + other.data[i];
+		}
+		return res;
+	}
+	template<class T, int num>
+	inline Array<T, num> Array<T, num>::operator-(const Array<T, num>& other)
+	{
+		Array<T, num> res;
+		for (int i = 0; i<num; ++i) {
+			res[i] = this->data[i] - other.data[i];
+		}
+		return res;
+
+	}
     template<class T,int num>
     void Array<T,num>::clear(){
         memset(data,0,sizeof(data));
