@@ -50,6 +50,23 @@ namespace t_mesh {
 		//cout << "matrix: \n" << mat << endl;
 		return true;
 	}
+
+	void insert(Eigen::VectorXd &vec, double t) {
+		assert(t > vec(0) && t < vec(vec.size() - 1));
+		Eigen::VectorXd temp = vec;
+		vec.resize(temp.size() + 1);
+		int i = 0;
+		while (i < temp.size() && temp(i)<=t) {
+			vec(i) = temp(i);
+			i++;
+		}
+		vec(i) = t;
+		while (i < temp.size()) {
+			vec(i + 1) = temp(i);
+			i++;
+		}
+
+	}
 	
 
 };

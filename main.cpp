@@ -78,6 +78,17 @@ void testArray() {
 	cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
 
 }
+
+void testInsert() {
+	VectorXd a(6); 
+	a << 0.0, 0.4, 0.5, 0.8, 0.9, 1.0;
+	t_mesh::insert(a, 0.1);
+	cout << "insert 0.1\n" << a << endl;
+	t_mesh::insert(a, 0.85);
+	cout << "insert 0.85\n" << a << endl;
+	t_mesh::insert(a, 0.45);
+	cout << "insert 0.45\n" << a << endl;
+}
 void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	
 	
@@ -92,8 +103,8 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1_1.cptw");
-	nurbs[2].loadNURBS("../circle2_1.cptw");
+	nurbs[1].loadNURBS("../circle1.cptw");
+	nurbs[2].loadNURBS("../circle2.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -117,8 +128,8 @@ void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1_1.cptw");
-	nurbs[2].loadNURBS("../circle2_1.cptw");
+	nurbs[1].loadNURBS("../circle1.cptw");
+	nurbs[2].loadNURBS("../circle2.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -131,7 +142,7 @@ void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
 
 
 	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
-	mesh.pia_skinning(nurbs, viewer, 200);
+	mesh.pia_skinning(nurbs, viewer, 1000);
 
 	mesh.draw(viewer, false, true, true);
 	//mesh.saveMesh("simpleMesh");
@@ -140,6 +151,7 @@ void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
 int main(int argc,char** argv){
 	igl::opengl::glfw::Viewer viewer;
 	//testArray();
+	//testInsert();
 	testpia_skinning(viewer);
 	//testSkinning(viewer);
 	/*if (mesh.loadMesh("../surface1.cfg") == 0) {
