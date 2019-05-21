@@ -45,24 +45,10 @@ namespace t_mesh{
 			void pia_fit(const VectorXd &s_params, const vector<VectorXd>& ttparams, const vector<NURBSCurve> &curves, Viewer &viewer, int max_iterations = 100, double eps = 1e-5);
 			void pia_skinning(const vector<NURBSCurve> &curves, Viewer &viewer, int max_iterations = 100, double eps = 1e-5);
 			double maxoffset(double s, int n, const NURBSCurve& curve, double& max_off);
-            /*int savePoints(string);
-            int saveLog(string);
-            int loadPoints(string);
-            void outMesh(string);*/
 
-            //int init();
-            /*int get_iter_num();
-            void fit_points(int thread_num);*/
+          
             void insert(double s,double t);
-            /*void update_mesh();
-            int piafit(int thread_num);
-            void solve();
-            int solve2(int num,double e);
-            void solve3();
-            void solve4();
-            double get_error();*/
-            // void init_mesh();
-            //void test(int threads);
+            
 
             Node<T>*    new_node();
             Node<T>*    get_node(int num);
@@ -78,16 +64,9 @@ namespace t_mesh{
             void merge_all();
             bool check_valid();
 			void clear();
-            /*void update_iter();
-            void update_log();
-            void pia_thread(int c,int a);
-            void fit_thread(int c,int a);
-            double get_A(const vector<vector<pair<int,double> > >& A,int i,int j);*/
 
             vector<Node<T>*>    nodes;
-            /*cv::Mat             origin;
-            cv::Mat             data;*/
-
+            
             // organizing node in a good data structure 
             map<double,map<double,Node<T>*> > s_map; // s_map[s][t]
             map<double,map<double,Node<T>*> > t_map; // t_map[t][s]
@@ -95,13 +74,8 @@ namespace t_mesh{
 
 			double width = 1.0;
 			double height = 1.0;
-            // int             iter_num;
+           
             string          iter_str;
-            // int             width;
-            // int             height;
-            // Array<int,2>    offset;
-            /*double          error;
-            ostringstream   logger;*/
 			
     };
 
@@ -708,13 +682,13 @@ namespace t_mesh{
 
 			  // 3. insert intermediate vertices
 			  // the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
-			  skinning_insert(s_knots, curves);
-			  //skinning_insert1(s_knots, curves);
-			  //skinning_intermediate(s_knots, curves,viewer);
+			  //skinning_insert(s_knots, curves);
+			  skinning_insert1(s_knots, curves);
+			  skinning_intermediate(s_knots, curves,viewer);
 
 			  // 4. update coordinates of control points by the formula from (nasri 2012)
 			  // aX' + bW + cY' = V
-			  skinning_update_cross(s_knots, curves);
+			  //skinning_update_cross(s_knots, curves);
 		  }
 
 		  
@@ -731,7 +705,7 @@ namespace t_mesh{
 			  s_nodes(0) = 0.0; s_nodes(1) = 0.0001;
 			  s_nodes(s_nodes.size() - 2) = 0.9999; s_nodes(s_nodes.size() - 1) = 1.0;
 			  s_nodes.segment(2, s_nodes.size() - 4) = s_params.segment(2, s_nodes.size() - 4);
-			  cout << "s_nodes:" << s_nodes << endl;
+			  //cout << "s_nodes:" << s_nodes << endl;
 			  for (int i = 0; i < s_nodes.size(); i++) {
 				  double s = s_nodes(i);
 				  double mapped_s = s_params(i);
@@ -785,7 +759,7 @@ namespace t_mesh{
 
 				  error /= get_num();
 				  iter_num++;
-				  cout << "iter: " << iter_num << ", error: " << error << endl;
+				  //cout << "iter: " << iter_num << ", error: " << error << endl;
 			  }
 		  
 		  }
@@ -843,15 +817,18 @@ namespace t_mesh{
 			  for (int i = 0; i < 10; i++) {
 				  this->clear();
 				  cout << i << ": *****************************" << endl;
-				  for (int j = 0; j < ttparams.size(); j++) {
+				  /*for (int j = 0; j < ttparams.size(); j++) {
 					  cout << "curve " << j << ":    " << ttparams[j].transpose() << endl;
-				  }
+				  }*/
 				  pia_fit(s_params, ttparams, curves, viewer, max_iterations, eps);
+				  cout << "num of nodes: " << get_num() << endl;
 				  const int n = 50; // [0,1]区间分为n份
 				  for (int i = 0; i < curves_num; i++) {
 					  double s = s_params(i);
 					  double max_off = 0.0;
 					  double t = maxoffset(s, n, curves[i], max_off);
+					  //t_mesh::insert(ttparams[i], t);
+
 					  if (max_off > eps) {
 						  t_mesh::insert(ttparams[i], t);
 					  }  
@@ -861,354 +838,6 @@ namespace t_mesh{
 
 		  
 	  
-//    template<class T>
-//        void Mesh<T>::test(int threads){
-//            vector<T>   backup;
-//            for(int i=0;i<(int)nodes.size();++i){
-//                backup.push_back(nodes[i]->data);
-//            }
-//            piafit(threads);
-//            double e=get_error();
-//            for(int i=0;i<(int)nodes.size();++i){
-//                nodes[i]->data=backup[i];
-//            }
-//            fit_points(threads);
-//            int num=solve2(0,e);
-//            for(int i=0;i<(int)nodes.size();++i){
-//                nodes[i]->data=backup[i];
-//            }
-//            fit_points(threads);
-//            solve2(num,0);
-//        }
-//
-//    template<class T>
-//        void Mesh<T>::update_iter(){
-//            stringstream ss;
-//            ss<<iter_num;
-//            ss>>iter_str;
-//        }
-//
-//    template<class T>
-//        void Mesh<T>::update_log(){
-//            logger.str("");
-//            logger<<"Iter:"<<iter_num<<endl;
-//            logger<<"width:"<<width<<endl;
-//            logger<<"height:"<<height<<endl;
-//        }
-//
-//    template<class T>
-//        int Mesh<T>::get_iter_num(){
-//            return iter_num;
-//        }
-//    
-//    template<class T>
-//        void Mesh<T>::solve(){
-//            boost::timer t;
-//            int count=0;
-//            cv::Mat A=cv::Mat::zeros(nodes.size(),nodes.size(),CV_64FC1);
-//            cv::Mat B0=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            cv::Mat B1=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            cv::Mat B2=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            cv::Mat X0=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            cv::Mat X1=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            cv::Mat X2=cv::Mat::zeros(nodes.size(),1,CV_64FC1);
-//            for(int i=0;i<(int)nodes.size();++i){
-//                for(int j=i;j<(int)nodes.size();++j){
-//                    for(int y=max(nodes[i]->t[0],nodes[j]->t[0]);y<min(nodes[i]->t[4],nodes[j]->t[4]);++y){
-//                        for(int x=max(nodes[i]->s[0],nodes[j]->s[0]);x<min(nodes[i]->s[4],nodes[j]->s[4]);++x){
-//                            A.at<double>(i,j)+=nodes[i]->base(x+1,y+1)*nodes[j]->base(x+1,y+1);
-//                        }
-//                    }
-//                    A.at<double>(j,i)=A.at<double>(i,j);
-//                    if(A.at<double>(i,j)<1e-5){
-//                        ++count;
-//                        if(i!=j)
-//                            ++count;
-//                    }
-//                    //cout<<A.at<double>(i,j)<<',';
-//                }
-////                cout<<endl;
-//            }
-//            cout<<"Total: "<<nodes.size()*nodes.size()<<" Zero:"<<count<<endl;
-//            for(int i=0;i<(int)nodes.size();++i){
-//                for(int y=nodes[i]->t[0];y<nodes[i]->t[4];++y){
-//                    for(int x=nodes[i]->s[0];x<nodes[i]->s[4];++x){
-//                        B0.at<double>(i,0)+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+0];
-//                        B1.at<double>(i,0)+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+1];
-//                        B2.at<double>(i,0)+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+2];
-//                    }
-//                }
-//            }
-//            cout<<cv::solve(A,B0,X0,cv::DECOMP_CHOLESKY)<<endl;
-//            cout<<cv::solve(A,B1,X1,cv::DECOMP_CHOLESKY)<<endl;
-//            cout<<cv::solve(A,B2,X2,cv::DECOMP_CHOLESKY)<<endl;
-//            for(int i=0;i<(int)nodes.size();++i){
-//                nodes[i]->data[0]=X0.at<double>(i,0);
-//                nodes[i]->data[1]=X1.at<double>(i,0);
-//                nodes[i]->data[2]=X2.at<double>(i,0);
-//                //    cout<<X0.at<double>(i,0)<<','<<X1.at<double>(i,0)<<','<<X2.at<double>(i,0)<<endl;
-//            }
-//            cout<<t.elapsed()<<endl;
-//        }
-//    
-//    template<class T>
-//        int Mesh<T>::solve2(int num,double e){
-//            time_t start,end1,end2;
-//            time(&start);
-//            vector<boost::unordered_map<int,double> > A;
-//
-//            cout<<"initial matrix...."<<endl;
-//                
-//            vector<T> B;
-//            B.reserve(nodes.size());
-//            for(int i=0;i<(int)nodes.size();++i){
-//                boost::unordered_map<int,double> mymap;
-//                for(int j=i;j<(int)nodes.size();++j){
-//                    for(int y=max(nodes[i]->t[0],nodes[j]->t[0]);y<min(nodes[i]->t[4],nodes[j]->t[4]);++y){
-//                        for(int x=max(nodes[i]->s[0],nodes[j]->s[0]);x<min(nodes[i]->s[4],nodes[j]->s[4]);++x){
-//                            mymap[j]+=nodes[i]->base(x+1,y+1)*nodes[j]->base(x+1,y+1);
-//                       }
-//                    }
-//               }
-//                A.push_back(mymap);
-//            }
-//
-//            cout<<"initial A ok..."<<endl;
-//            for(int i=0;i<(int)nodes.size();++i){
-//                T tmp;
-//                for(int y=nodes[i]->t[0];y<nodes[i]->t[4];++y){
-//                    for(int x=nodes[i]->s[0];x<nodes[i]->s[4];++x){
-//                        for(int k=0;k<T::SIZE;++k){
-//                            tmp[k]+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+k];
-//                        }
-//                    }
-//                }
-//                B.push_back(tmp);
-//            }
-//
-//            cout<<"initial B ok..."<<endl;
-//            
-//            if(num==0){
-//                int x=0;
-//                do{
-//                    for(int i=0;i<(int)nodes.size();++i){
-//                        T last=nodes[i]->data;
-//                        nodes[i]->data=B[i];
-//                        for(int j=0;j<(int)nodes.size();++j){
-//                            if(i==j)
-//                                continue;
-//                            double Aij=0;
-//                            boost::unordered_map<int,double>::iterator iter;
-//                            if(i>j){
-//                                if((iter=A[j].find(i))!=A[j].end())
-//                                    Aij=iter->second;
-//                            }else{
-//                                if((iter=A[i].find(j))!=A[i].end())
-//                                    Aij=iter->second;
-//                            }
-//                            if(Aij>1e-3){
-//                                T tmp=nodes[j]->data;
-//                                nodes[i]->data.add(tmp.scale(-Aij));
-//                            }
-//                        }
-//                        nodes[i]->data.scale(1/A[i][i]);
-//                    }
-//                    fit_points(8);
-//                    cout<<"iter:"<<++x<<":"<<get_error()<<endl;
-//                    if(get_error()<e)
-//                        return x;
-//                }while(1);
-//            }else{
-//                time(&end1);
-//                logger<<"Gauss-seidel init time:"<<difftime(end1,start)<<endl;
-//                int x=0;
-//                do{
-//                    double diff=0;
-//                    for(int i=0;i<(int)nodes.size();++i){
-//                        T last=nodes[i]->data;
-//                        nodes[i]->data=B[i];
-//                        for(int j=0;j<(int)nodes.size();++j){
-//                            if(i==j)
-//                                continue;
-//                            double Aij=0;
-//                            boost::unordered_map<int,double>::iterator iter;
-//                            if(i>j){
-//                                if((iter=A[j].find(i))!=A[j].end())
-//                                    Aij=iter->second;
-//                            }else{
-//                                if((iter=A[i].find(j))!=A[i].end())
-//                                    Aij=iter->second;
-//                            }
-//                            if(Aij>1e-3){
-//                                T tmp=nodes[j]->data;
-//                                nodes[i]->data.add(tmp.scale(-Aij));
-//                            }
-//                        }
-//                        nodes[i]->data.scale(1/A[i][i]);
-//                        for(int k=0;k<T::SIZE;++k){
-//                            diff+=(last[k]-nodes[i]->data[k])*(last[k]-nodes[i]->data[k]);
-//                        }
-//                    }
-//                    cout<<"iter "<<++x<<":"<<diff<<endl;
-//                    if(x>=num)
-//                        break;
-//                }while(1);
-//                time(&end2);
-//                logger<<"Gauss-seidel iter time:"<<difftime(end2,end1)<<endl;
-//                logger<<"Gauss-seidel steps:"<<x<<endl;
-//                logger<<"Gauss-seidel mean iter:"<<difftime(end2,end1)/x<<endl;
-//                logger<<"Gauss-seidel total time:"<<difftime(end2,start)<<endl;
-//                fit_points(8);
-//                logger<<"Gauss-seidel after error:"<<get_error()<<endl;
-//            }
-//            return 0;
-//        }
-//
-//    template<class T>
-//        double Mesh<T>::get_A(const vector<vector<pair<int,double> > >& A,int i,int j){
-//            if(i>j){
-//                int tmp=i;
-//                i=j;
-//                j=tmp;
-//            }
-//            int lp=0,rp=A[i].size()-1;
-//            if(A[i][lp].first>j||A[i][rp].first<j)
-//                return 0;
-//            while(lp<=rp){
-//                if(A[i][(lp+rp)/2].first==j)
-//                    return A[i][(lp+rp)/2].second;
-//                if(A[i][(lp+rp)/2].first<j){
-//                    if(lp==(lp+rp)/2)
-//                        return 0;
-//                    lp=(lp+rp)/2;
-//                }else{
-//                    if(rp==(lp+rp)/2)
-//                        return 0;
-//                    rp=(lp+rp)/2;
-//                }
-//            }
-//            return 0;
-//        }
-//
-//    template<class T>
-//        void Mesh<T>::solve3(){
-//            boost::timer t;
-//            vector<T> B;
-//            B.reserve(nodes.size());
-//
-//            vector<vector<pair<int,double> > > A;
-//            A.reserve(nodes.size());
-//
-//            for(int i=0;i<(int)nodes.size();++i){
-//                vector<pair<int,double> > vec;
-//                vec.reserve(nodes.size());
-//                for(int j=i;j<(int)nodes.size();++j){
-//                    double tmp=0;
-//                    for(int y=max(nodes[i]->t[0],nodes[j]->t[0]);y<min(nodes[i]->t[4],nodes[j]->t[4]);++y){
-//                        for(int x=max(nodes[i]->s[0],nodes[j]->s[0]);x<min(nodes[i]->s[4],nodes[j]->s[4]);++x){
-//                            tmp+=nodes[i]->base(x+1,y+1)*nodes[j]->base(x+1,y+1);
-//                        }
-//                    }
-//                    if(tmp>0){
-//                        vec.push_back(pair<int,double>(j,tmp));
-//                    }
-//                }
-//                A.push_back(vec);
-//            }
-//            for(int i=0;i<(int)nodes.size();++i){
-//                T tmp;
-//                for(int y=nodes[i]->t[0];y<nodes[i]->t[4];++y){
-//                    for(int x=nodes[i]->s[0];x<nodes[i]->s[4];++x){
-//                        for(int k=0;k<T::SIZE;++k){
-//                            tmp[k]+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+k];
-//                        }
-//                    }
-//                }
-//                B.push_back(tmp);
-//            }
-//
-//            int x=0;
-//            do{
-//                double diff=0;
-//                for(int i=0;i<(int)nodes.size();++i){
-//                    T last=nodes[i]->data;
-//                    nodes[i]->data=B[i];
-//                    for(int j=0;j<(int)nodes.size();++j){
-//                        if(i==j)
-//                            continue;
-//                        double b=get_A(A,i,j);
-//                        if(b>0){
-//                            T tmp=nodes[j]->data;
-//                            nodes[i]->data.add(tmp.scale(-b));
-//                        }
-//                    }
-//                    nodes[i]->data.scale(1/get_A(A,i,i));
-//                    for(int k=0;k<T::SIZE;++k){
-//                        diff+=(last[k]-nodes[i]->data[k])*(last[k]-nodes[i]->data[k]);
-//                    }
-//                }
-//                cout<<"iter "<<++x<<":"<<diff<<endl;
-//                if(diff<1)
-//                    break;
-//            }while(1||x<100);
-//            cout<<t.elapsed()<<endl;
-//        }
-//    template<class T>
-//        void Mesh<T>::solve4(){
-//            boost::timer t;
-//            int count=0;
-//            cv::Mat A=cv::Mat::zeros(nodes.size(),nodes.size(),CV_64FC1);
-//
-//            vector<T> B;
-//            B.reserve(nodes.size());
-//            for(int i=0;i<(int)nodes.size();++i){
-//                boost::unordered_map<int,double> mymap;
-//                for(int j=i;j<(int)nodes.size();++j){
-//                    for(int y=max(nodes[i]->t[0],nodes[j]->t[0]);y<min(nodes[i]->t[4],nodes[j]->t[4]);++y){
-//                        for(int x=max(nodes[i]->s[0],nodes[j]->s[0]);x<min(nodes[i]->s[4],nodes[j]->s[4]);++x){
-//                            A.at<double>(i,j)+=nodes[i]->base(x+1,y+1)*nodes[j]->base(x+1,y+1);
-//                        }
-//                    }
-//
-//                    A.at<double>(j,i)=A.at<double>(i,j);
-//                }
-//            }
-//            cout<<"Total: "<<nodes.size()*nodes.size()<<" Zero:"<<count<<endl;
-//            for(int i=0;i<(int)nodes.size();++i){
-//                T tmp;
-//                for(int y=nodes[i]->t[0];y<nodes[i]->t[4];++y){
-//                    for(int x=nodes[i]->s[0];x<nodes[i]->s[4];++x){
-//                        for(int k=0;k<T::SIZE;++k){
-//                            tmp[k]+=nodes[i]->base(x+1,y+1)*origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+k];
-//                        }
-//                    }
-//                }
-//                B.push_back(tmp);
-//            }
-//
-//            int x=0;
-//            do{
-//                double diff=0;
-//                for(int i=0;i<(int)nodes.size();++i){
-//                    T last=nodes[i]->data;
-//                    nodes[i]->data=B[i];
-//                    for(int j=0;j<(int)nodes.size();++j){
-//                        if(i==j)
-//                            continue;
-//                        T tmp=nodes[j]->data;
-//                        nodes[i]->data.add(tmp.scale(-A.at<double>(i,j)));
-//                    }
-//                    nodes[i]->data.scale(1/A.at<double>(i,i));
-//                    for(int k=0;k<T::SIZE;++k){
-//                        diff+=(last[k]-nodes[i]->data[k])*(last[k]-nodes[i]->data[k]);
-//                    }
-//                }
-//                cout<<"iter "<<++x<<":"<<diff<<endl;
-//                if(diff<1)
-//                    break;
-//            }while(1);
-//            cout<<t.elapsed()<<endl;
-//        }
 
     template<class T>
         int Mesh<T>::loadMesh(string name){
@@ -1229,30 +858,7 @@ namespace t_mesh{
             return 0;
         }
 
-    /*template<class T>
-        int Mesh<T>::loadPoints(string img){
-            origin=cv::imread(img,CV_64FC3);
-            width=origin.size().width;
-            height=origin.size().height;
-
-            return 0;
-        }*/
-
-    /*template<class T>
-        int Mesh<T>::savePoints(string name){
-            cv::imwrite(name+iter_str+".jpg",data);
-
-            return 0;
-        }*/
-
-    /*template<class T>
-        int Mesh<T>::saveLog(string name){
-            ofstream out((name+iter_str+".log").c_str());
-            if(!out)
-                return -1;
-            out<<logger.str();
-            return 0;
-        }*/
+   
 
     template<class T>
         int Mesh<T>::saveMesh(string name){
@@ -1404,150 +1010,9 @@ namespace t_mesh{
             return node;
         }
 
-    /*template<class T>
-        int Mesh<T>::init(){
-            for(size_t i=0;i<nodes.size();++i){
-                nodes[i]->valid=false;
-                nodes[i]->update();
-            }
-            return 0;
-        }*/
+   
 
-    // template<class T>
-    //     void Mesh<T>::init_mesh(){
-    //         for(int y=0;y<height;y+=100){
-    //             for(int x=0;x<width;x+=100){
-    //                 Node<T> tmp=get_knot(x+1,y+1);
-    //                 insert_helper(tmp.s[1],tmp.t[2]);
-    //                 merge_all();
-    //                 insert_helper(tmp.s[2],tmp.t[1]);
-    //                 merge_all();
-    //                 insert_helper(tmp.s[3],tmp.t[2]);
-    //                 merge_all();
-    //                 insert_helper(tmp.s[2],tmp.t[3]);
-    //                 merge_all();
-    //                 insert_helper(tmp.s[2],tmp.t[2]);
-    //                 merge_all();
-    //             }
-    //         }
-    //         init();
-    //     }
-
-    //template<class T>
-    //    void Mesh<T>::fit_thread(int current,int thread_num){
-    //        for(size_t i=0;i<nodes.size();++i){
-    //            for(int y=(nodes[i]->t[0]+1);y<=nodes[i]->t[4]-1;++y){
-    //                if(y<height*current/thread_num){
-    //                    y=height*current/thread_num;
-    //                    continue;
-    //                }
-    //                if(y>height*(current+1)/thread_num)
-    //                    break;
-    //                for(int x=nodes[i]->s[0]+1;x<=nodes[i]->s[4]-1;++x){
-    //                    T tmp=nodes[i]->get();
-    //                    double b=nodes[i]->base(x,y);
-    //                    for(int n=0;n<T::SIZE;++n){
-    //                        data.ptr<double>(y-1)[(x-1)*(T::SIZE)+n]+=tmp[n]*b;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-
-    //template<class T>
-    //    void Mesh<T>::fit_points(int thread_num){
-    //        using namespace boost;
-    //        {
-    //            data=cv::Mat::zeros(origin.size(),CV_64FC3);
-    //            if(thread_num>1){
-    //                thread_group threads;
-    //                for(int i=0;i<thread_num;++i){
-    //                    threads.create_thread(bind(&Mesh<T>::fit_thread,this,i,thread_num));
-    //                }
-    //                threads.join_all();
-    //            }
-    //            else{
-    //                fit_thread(0,1);
-    //            }
-    //        }
-
-    //        error=0;
-    //        for(int y=0;y<height;++y){
-    //            for(int x=0;x<width;++x){
-    //                double e=0;
-    //                for(int n=0;n<T::SIZE;++n){
-    //                    e+=(origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+n]-data.ptr<double>(y)[(x)*(T::SIZE)+n])*
-    //                        (origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+n]-data.ptr<double>(y)[(x)*(T::SIZE)+n]);
-    //                }
-    //                error+=e/width/height;
-    //            }
-    //        }
-    //    }
-
-    //template<class T>
-    //    void Mesh<T>::update_mesh(){
-    //        ++iter_num;
-    //        update_iter();
-    //        update_log();
-
-    //        multimap<double,Array<int,2> > offsets;
-
-    //        
-    //        double rate=sqrt(iter_num);
-    //        int a=rate*height/100;
-    //        int b=rate*width/100;
-
-    //        int last_node_num=nodes.size();
-    //        logger<<"Before insert:"<<last_node_num<<endl;
-
-    //        time_t start,end;
-    //        time(&start);
-    //        
-    //        for(int i=0;i<a;++i){
-    //            for(int j=0;j<b;++j){
-    //                double max_error=0;
-    //                double total_error=0;
-    //                int count=0;
-    //                for(int y=height*i/a;y<height*(i+1)/a;++y){
-    //                    for(int x=width*j/b;x<width*(j+1)/b;++x){
-    //                        double e=0;
-    //                        for(int n=0;n<T::SIZE;++n){
-    //                            e+=(origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+n]-data.ptr<double>(y)[(x)*(T::SIZE)+n])*
-    //                                (origin.ptr<unsigned char>(y)[(x)*(T::SIZE)+n]-data.ptr<double>(y)[(x)*(T::SIZE)+n]);
-    //                        }
-    //                        if(get_node(x+1,y+1)!=0)
-    //                            continue;
-    //                        if(e>max_error){
-    //                            max_error=e;
-    //                            offset[0]=x+1;
-    //                            offset[1]=y+1;
-    //                        }
-    //                        total_error+=e;
-    //                        ++count;
-    //                    }
-    //                }
-    //                total_error/=count;
-    //                offsets.insert(pair<double,Array<int,2> >(total_error,offset));
-    //            }
-    //        }
-
-    //        multimap<double,Array<int,2> >::reverse_iterator iter;
-
-    //        int x=0;
-    //        for(iter=offsets.rbegin();iter!=offsets.rend();++iter){
-    //            Node<T> tmp=get_knot((iter->second)[0],(iter->second)[1]);
-    //            insert((tmp.s[1]+tmp.s[3])/2,(tmp.t[1]+tmp.t[3])/2);
-    //            //insert(tmp.s[2],tmp.t[2]);
-    //            if(++x>a*b*0.1)
-    //                break;
-    //        }
-
-    //        time(&end);
-    //        logger<<"Insert nodes:"<<nodes.size()-last_node_num<<endl;
-    //        logger<<"After insert:"<<nodes.size()<<endl;
-    //        logger<<"Insertion time:"<<difftime(end,start)<<endl;
-    //        init();
-    //    }
+   
 
     template<class T>
         void Mesh<T>::insert(double s,double t){
@@ -1654,9 +1119,9 @@ namespace t_mesh{
             t_map[t][s]=node;
 
 			adjust(node, changedata);
-            node->s.output(cout);
+            /*node->s.output(cout);
             node->t.output(cout);
-            cout<<endl;
+            cout<<endl;*/
             return 1;
         }
      template<class T>
@@ -1769,208 +1234,101 @@ namespace t_mesh{
         }
 
     template<class T>
-        void Mesh<T>::adjust(Node<T>* n,bool changedata){
-            if(!n)
-                return;
-            double knots[4]={n->t[2],n->s[2],n->t[2],n->s[2]};
-			// ��4�������8�����ϣ����� blending function refinement
-		    // for example: N[s0,s1,s2,s3,s4](s) = c1*N[k,s1,s2,s3,s4](s)+c2*N[s0,k,s1,s2,s3](s)
-			// B(s2,t2) = N[s0,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
-			//          =    c1*N[k,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
-			//    		   + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
-			//			= c1*B(s2,t2) + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
-			// ����[s2,t2]����blending function ��ϸ�������� [s2,t2] �� [s1,t2]
-			// ��[s1,t2] ����kont vector ��[t0,t1,t2,t3,t4] ��ͬ��
-			// ��Ҫ���� violation test
-			// violation1: ��[t0,t1,t2,t3,t4] ������ [s1,t2] ����kont vector,�������ϸ
-			// violation2: ��[t0,t1,t2,t3,t4] �д��� [s1,t2] �� knot vectorû�еĽڵ㣬������µĵ�
-            for(int i=0;i<4;++i){
-                if(n->adj[i]){
-                    Node<T> tmp2;
-                    if(n->adj[i]->split(i,knots[i],&tmp2,changedata)){
-                        pool.push_back(tmp2); 
-                    }
-                    if(n->adj[i]->adj[i]){
-                        Node<T> tmp2;
-                        if(n->adj[i]->adj[i]->split(i,knots[i],&tmp2,changedata)){
-                            pool.push_back(tmp2); 
-                        }
-                    }
-                }
-            }
+	void Mesh<T>::adjust(Node<T>* n, bool changedata) {
+		if (!n)
+			return;
+		double knots[4] = { n->t[2],n->s[2],n->t[2],n->s[2] };
+		// ��4�������8�����ϣ����� blending function refinement
+		// for example: N[s0,s1,s2,s3,s4](s) = c1*N[k,s1,s2,s3,s4](s)+c2*N[s0,k,s1,s2,s3](s)
+		// B(s2,t2) = N[s0,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
+		//          =    c1*N[k,s1,s2,s3,s4](s)*N[t0,t1,t2,t3,t4](t)
+		//    		   + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
+		//			= c1*B(s2,t2) + c2*N[s0,k,s1,s2,s3](s)*N[t0,t1,t2,t3,t4](t)
+		// ����[s2,t2]����blending function ��ϸ�������� [s2,t2] �� [s1,t2]
+		// ��[s1,t2] ����kont vector ��[t0,t1,t2,t3,t4] ��ͬ��
+		// ��Ҫ���� violation test
+		// violation1: ��[t0,t1,t2,t3,t4] ������ [s1,t2] ����kont vector,�������ϸ
+		// violation2: ��[t0,t1,t2,t3,t4] �д��� [s1,t2] �� knot vectorû�еĽڵ㣬������µĵ�
+		for (int i = 0; i < 4; ++i) {
+			if (n->adj[i]) {
+				Node<T> tmp2;
+				if (n->adj[i]->split(i, knots[i], &tmp2, changedata)) {
+					pool.push_back(tmp2);
+				}
+				if (n->adj[i]->adj[i]) {
+					Node<T> tmp2;
+					if (n->adj[i]->adj[i]->split(i, knots[i], &tmp2, changedata)) {
+						pool.push_back(tmp2);
+					}
+				}
+			}
+		}
 
-            set<Node<T>*>   node_set;
-            typedef typename map<double,map<double,Node<T>*> >::iterator   map_t;
-            typedef typename map<double,Node<T>*>::iterator             map2_t;
-            typedef typename set<Node<T>*>::iterator                 set_t;
-			// �ҳ�s����������knot vector���ܲ���ȷ��node,����node_set
-            for(map_t iter=s_map.begin();iter!=s_map.end();++iter){
-                if(iter->first<n->s[1])
-                    continue;
-                if(iter->first>n->s[3])
-                    break;
-                for(map2_t iter1=(iter->second).begin();iter1!=(iter->second).end();++iter1){
-                    if(n->t[2]>iter1->second->t[4])
-                        continue;
-                    if(n->t[2]<iter1->second->t[0])
-                        break;
-                    node_set.insert(iter1->second);
-                }
-            }
-			// �ҳ�s����������knot vector���ܲ���ȷ��node, ����node_set
-            for(map_t iter=t_map.begin();iter!=t_map.end();++iter){
-                if(iter->first<n->t[1])
-                    continue;
-                if(iter->first>n->t[3])
-                    break;
-                for(map2_t iter1=(iter->second).begin();iter1!=(iter->second).end();++iter1){
-                    if(n->s[2]>iter1->second->s[4])
-                        continue;
-                    if(n->s[2]<iter1->second->s[0])
-                        break;
-                    node_set.insert(iter1->second);
-                }
-            }
-			//��ÿ��blending function��Ҫ��ϸ��node,  ���м�ϸ 
-            for(set_t iter=node_set.begin();iter!=node_set.end();++iter){
-                Node<T> tmp=get_knot((*iter)->s[2],(*iter)->t[2]);
-                if(tmp.s!=(*iter)->s){
-                    (*iter)->valid=false;
-                    for(int j=0;j<5;++j){
-                        if(j==2)
-                            continue;
-						// ����ȷ��get_knot�Ľڵ��ϣ�����ϸ 
-                        if(!(*iter)->s.have(tmp.s[j])){
-                            Node<T> tmp2;
-                            int dir=j>2?1:3;
-                            if((*iter)->split(dir,tmp.s[j],&tmp2,changedata)){
-                                pool.push_back(tmp2);
-                            }
-                        }
-                    }
-                }
-                if(tmp.t!=(*iter)->t){
-                    (*iter)->valid=false;
-                    for(int j=0;j<5;++j){
-                        if(j==2)
-                            continue;
-                        if(!(*iter)->t.have(tmp.t[j])){
-                            Node<T> tmp2;
-                            int dir=j>2?0:2;
-                            if((*iter)->split(dir,tmp.t[j],&tmp2,changedata)){
-                                pool.push_back(tmp2);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    //template<class T>
-    //    void Mesh<T>::pia_thread(int current,int thread_num){
-    //        for(size_t i=nodes.size()*current/thread_num;i<nodes.size()*(current+1)/thread_num;++i){
-    //            double sum1=0;
-    //            T   sum2;
-    //            for(int y=nodes[i]->t[0]+1;y<=nodes[i]->t[4]-1;++y){
-    //                for(int x=nodes[i]->s[0]+1;x<=nodes[i]->s[4]-1;++x){
-    //                    double b=nodes[i]->base(x,y);
-    //                    T tmp;
-
-    //                    sum1+=b;
-    //                    for(int n=0;n<T::SIZE;++n){
-    //                        tmp[n]=(origin.ptr<unsigned char>(y-1)[(x-1)*(T::SIZE)+n]-
-    //                                data.ptr<double>(y-1)[(x-1)*(T::SIZE)+n])*b;
-    //                    }
-    //                    sum2.add(tmp);
-    //                }
-    //            }
-    //            assert(sum1>0);
-    //            //if(sum1>m)
-    //            //m=sum1;
-    //            //vec_sum2.push_back(sum2);
-    //            sum2.scale(1/sum1);
-    //            nodes[i]->data.add(sum2);
-    //        }
-    //    }
-
-    //template<class T>
-    //    int Mesh<T>::piafit(int thread_num){
-    //        time_t start,end;
-    //        time (&start);
-    //        double init_error=get_error();
-
-    //        double last_error;
-    //        int x=0;
-    //        for(size_t i=0;i<nodes.size();++i){
-    //            nodes[i]->valid=false;
-    //        }
-    //        using namespace boost;
-
-    //        do{
-    //            last_error=get_error();
-    //            if(thread_num>1){
-    //                thread_group threads;
-    //                for(int i=0;i<thread_num;++i){
-    //                    threads.create_thread(bind(&Mesh<T>::pia_thread,this,i,thread_num));
-    //                }
-    //                threads.join_all();
-    //            }
-    //            else{
-    //                pia_thread(0,1);
-    //            }
-    //            fit_points(thread_num);
-    //            std::cout<<"pia:"<<++x<<' '<<get_error()<<endl;
-
-    //            if(fabs(get_error()/last_error-1)<1e-3||x>50){
-    //                time (&end);
-    //                double totaltime=difftime(end,start);
-    //                logger<<"Pia total time:"<<totaltime<<endl;
-    //                logger<<"Pia steps:"<<x<<endl;
-    //                logger<<"Pia mean time:"<<totaltime/x<<endl;
-    //                logger<<"Pia before error:"<<init_error<<endl;
-    //                logger<<"Pia after error:"<<get_error()<<endl;
-    //                return x;
-    //            }
-    //        }while(1);
-    //    }
-
-    //template<class T>
-    //    double Mesh<T>::get_error(){
-    //        return error;
-    //    }
-
-    //template<class T>
-    //    void Mesh<T>::outMesh(string name){
-    //        IplImage *out=cvCreateImage(cvSize(width+2,height+2),8,1);
-    //        cvZero(out);
-    //        double a=1,b=1;
-    //        typedef typename map<int,map<int,Node<T>*> >::iterator mm_t;
-    //        typedef typename map<int,Node<T>*>::iterator m_t;
-    //        for(mm_t iter=s_map.begin();iter!=s_map.end();++iter){
-    //            for(m_t it=(iter->second).begin();it!=(iter->second).end();++it){
-    //                if((it->second)->adj[2]){
-    //                    cvLineAA(out,cvPoint((iter->first)/a+b,(it->second)->t[2]/a+b),cvPoint((iter->first)/a+b,(it->second)->adj[2]->t[2]/a+b),255);
-    //                }
-    //            }
-    //        }
-    //        for(mm_t iter=t_map.begin();iter!=t_map.end();++iter){
-    //            for(m_t it=(iter->second).begin();it!=(iter->second).end();++it){
-    //                if((it->second)->adj[1]){
-    //                    cvLineAA(out,cvPoint((it->second)->s[2]/a+b,(iter->first)/a+b),cvPoint((it->second)->adj[1]->s[2]/a+b,(iter->first)/a+b),255);
-    //                }
-    //            }
-    //        }
-    //        /*
-    //           for(size_t i=0;i<nodes.size();++i){
-    //           CvPoint   centerpoint;
-    //           centerpoint.x=nodes[i]->s[2]/a+b;
-    //           centerpoint.y=nodes[i]->t[2]/a+b;
-    //           cvCircle( out, centerpoint ,3 , CV_RGB(255,255,255),1, 8, 3);
-    //           }
-    //           */
-
-    //        cvSaveImage((name+iter_str+".jpg").c_str(),out);
-    //        cvReleaseImage(&out);
-    //    }
+		set<Node<T>*>   node_set;
+		typedef typename map<double, map<double, Node<T>*> >::iterator   map_t;
+		typedef typename map<double, Node<T>*>::iterator             map2_t;
+		typedef typename set<Node<T>*>::iterator                 set_t;
+		// �ҳ�s����������knot vector���ܲ���ȷ��node,����node_set
+		for (map_t iter = s_map.begin(); iter != s_map.end(); ++iter) {
+			if (iter->first < n->s[1])
+				continue;
+			if (iter->first > n->s[3])
+				break;
+			for (map2_t iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
+				if (n->t[2] > iter1->second->t[4])
+					continue;
+				if (n->t[2] < iter1->second->t[0])
+					break;
+				node_set.insert(iter1->second);
+			}
+		}
+		// �ҳ�s����������knot vector���ܲ���ȷ��node, ����node_set
+		for (map_t iter = t_map.begin(); iter != t_map.end(); ++iter) {
+			if (iter->first < n->t[1])
+				continue;
+			if (iter->first > n->t[3])
+				break;
+			for (map2_t iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
+				if (n->s[2] > iter1->second->s[4])
+					continue;
+				if (n->s[2] < iter1->second->s[0])
+					break;
+				node_set.insert(iter1->second);
+			}
+		}
+		//��ÿ��blending function��Ҫ��ϸ��node,  ���м�ϸ 
+		for (set_t iter = node_set.begin(); iter != node_set.end(); ++iter) {
+			Node<T> tmp = get_knot((*iter)->s[2], (*iter)->t[2]);
+			if (tmp.s != (*iter)->s) {
+				(*iter)->valid = false;
+				for (int j = 0; j < 5; ++j) {
+					if (j == 2)
+						continue;
+					// ����ȷ��get_knot�Ľڵ��ϣ�����ϸ 
+					if (!(*iter)->s.have(tmp.s[j])) {
+						Node<T> tmp2;
+						int dir = j > 2 ? 1 : 3;
+						if ((*iter)->split(dir, tmp.s[j], &tmp2, changedata)) {
+							pool.push_back(tmp2);
+						}
+					}
+				}
+			}
+			if (tmp.t != (*iter)->t) {
+				(*iter)->valid = false;
+				for (int j = 0; j < 5; ++j) {
+					if (j == 2)
+						continue;
+					if (!(*iter)->t.have(tmp.t[j])) {
+						Node<T> tmp2;
+						int dir = j > 2 ? 0 : 2;
+						if ((*iter)->split(dir, tmp.t[j], &tmp2, changedata)) {
+							pool.push_back(tmp2);
+						}
+					}
+				}
+			}
+		}
+	}
 
 };

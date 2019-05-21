@@ -12,7 +12,6 @@ namespace t_mesh{
             ~Node();
             const T& get() const{ return data; }
             void set(const T& v){ data=v; }
-            //typename T::ValueType base(int ,int); // ???
             Node<T>& operator=(const Node<T>& n);
             std::istream& load(istream& in,Mesh<T>& m);
             std::ostream& save(ostream& out) const;
@@ -22,7 +21,6 @@ namespace t_mesh{
 			bool is_ok(double x, double y) {
 				return (x >= s[0] && x <= s[4] && y >= t[0] && y <= t[4]);
 			}
-            //void update();
 
         private:
             int                 order;   // the order of node: 1,2,3,...
@@ -31,8 +29,6 @@ namespace t_mesh{
             Array<double,5>        t;       // knot vector of s-direction
             Array<Node<T>*,4>   adj;     // pointer of lower, right,upper,left node
 
-           /* vector<double>      s_cache;
-            vector<double>      t_cache;*/
             bool                valid;
     };
 
@@ -40,31 +36,6 @@ namespace t_mesh{
     Node<T>::~Node(){
 
     }
-    
-    /*template<class T>
-    typename T::ValueType Node<T>::base(int p0,int p1){
-        update();
-        if(p0<=s[0]||p0>=s[4]||p1<=t[0]||p1>=t[4])
-            return 0;
-        return s_cache[p0-s[0]-1]*t_cache[p1-t[0]-1];
-    }*/
-
-   /* template<class T>
-    void Node<T>::update(){
-        if(valid)
-            return ;
-
-        s_cache.clear();
-        t_cache.clear();
-        
-        for(int i=s[0]+1;i<=s[4]-1;++i){
-            s_cache.push_back(B(s,i));
-        }
-        for(int i=t[0]+1;i<=t[4]-1;++i){
-            t_cache.push_back(B(t,i));
-        }
-        valid=true;
-    }*/
 
     template<class T>
     Node<T>& Node<T>::operator=(const Node<T>& n)

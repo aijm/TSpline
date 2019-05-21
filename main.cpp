@@ -120,6 +120,7 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	mesh.skinning(nurbs, viewer);
 
 	mesh.draw(viewer, false,true, true);
+	cout << "num of nodes: " << mesh.get_num() << endl;
 	//mesh.saveMesh("simpleMesh");
 }
 
