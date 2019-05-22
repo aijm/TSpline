@@ -18,6 +18,8 @@ void Skinning::parameterize()
 
 void Skinning::update()
 {
+	// update coordinates of control points by the formula from (nasri 2012)
+	// aX' + bW + cY' = V
 	map<double, Point3d> coeff_X; // X'
 	map<double, Point3d> coeff_Y; // Y'
 
@@ -54,6 +56,21 @@ void Skinning::update()
 		}
 
 	}
+}
+
+void Skinning::calculate()
+{
+	// 1. compute s-knot for curves
+	parameterize();
+	// 2. construct basis T-mesh 
+	init();
+	// 3. insert intermediate vertices
+	// the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
+	insert();
+
+	// 4. update coordinates of control points by the formula from (nasri 2012)
+	// aX' + bW + cY' = V
+	update();
 }
 
 void Skinning::basis_split(const map<double, Node<Point3d>*>& fewer_map, const map<double, Node<Point3d>*>& more_map, map<double, Point3d>& coeff)

@@ -6,6 +6,7 @@
 #include <igl/opengl/glfw/imgui/ImGuiHelpers.h>
 #include <imgui/imgui.h>
 #include "NasriMethod.h"
+#include "MinJaeMethod.h"
 
 using namespace std;
 using namespace Eigen;
@@ -30,17 +31,6 @@ void testArray() {
 	cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
 
 }
-
-void testInsert() {
-	/*VectorXd a(6); 
-	a << 0.0, 0.4, 0.5, 0.8, 0.9, 1.0;
-	t_mesh::insert(a, 0.1);
-	cout << "insert 0.1\n" << a << endl;
-	t_mesh::insert(a, 0.85);
-	cout << "insert 0.85\n" << a << endl;
-	t_mesh::insert(a, 0.45);
-	cout << "insert 0.45\n" << a << endl;*/
-}
 void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	mesh.loadMesh("../simpleMesh.cfg");
 	mesh.setViewer(&viewer);
@@ -60,7 +50,8 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
-	NasriMethod method(nurbs);
+
+	MinJaeMethod method(nurbs, 100, 100);
 	method.calculate();
 	mesh = method.tspline;
 	mesh.setViewer(&viewer);

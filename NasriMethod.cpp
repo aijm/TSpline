@@ -79,18 +79,3 @@ void NasriMethod::insert()
 	}
 }
 
-void NasriMethod::calculate()
-{
-	// 1. compute s-knot for curves
-	parameterize();
-	// 2. construct basis T-mesh 
-	init();
-	// 3. insert intermediate vertices
-	// the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
-	insert();
-
-	// 4. update coordinates of control points by the formula from (nasri 2012)
-	// aX' + bW + cY' = V
-	update();
-
-}

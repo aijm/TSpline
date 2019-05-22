@@ -12,7 +12,6 @@ public:
 
 	void init() override;
 	void insert() override;
-	void calculate() override;
 };
 
 
