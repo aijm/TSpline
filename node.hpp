@@ -22,7 +22,7 @@ namespace t_mesh{
 				return (x >= s[0] && x <= s[4] && y >= t[0] && y <= t[4]);
 			}
 
-        private:
+        public:
             int                 order;   // the order of node: 1,2,3,...
             T                   data;	 // point coordinate, 节点插入通过split能够正确更新点的坐标
             Array<double,5>        s;       // knot vector of s-direction

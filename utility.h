@@ -4,8 +4,6 @@
 #include<iostream>
 #include<list>
 #include<vector>
-//#include<cv.h>
-//#include<highgui.h>
 #include <igl/opengl/glfw/Viewer.h>
 
 namespace t_mesh{
@@ -25,36 +23,26 @@ namespace t_mesh{
 	typedef Mesh<Point3d> Mesh3d;
 	typedef Mesh<Point3d> Mesh3f;
 
+	const Eigen::RowVector3d   red(1, 0, 0);
+	const Eigen::RowVector3d green(0, 1, 0);
+	const Eigen::RowVector3d  blue(0, 0, 1);
+	const Eigen::RowVector3d white(1, 1, 1);
+	const Eigen::RowVector3d black(0, 0, 0);
+	const Eigen::RowVector3d deeppink(255, 20, 147);
+
     // Blending function N[s0,s1,s2,s3,s4](p)
     template<class T>
     double B(const T& s,double p); 
+
+	template<class T, int num>
+	void array2matrixd(const Array<T, num> &a, Eigen::MatrixXd &m);
+
+	// Blending function N[s0,s1,s2,s3,s4](p)
+	double Basis(const Eigen::MatrixXd &knotvector, double t, int i = 0, int p = 4);
+
 };
 
 namespace t_mesh{
-    // Blending function N[s0,s1,s2,s3,s4](p)
-	double Basis(const Eigen::MatrixXd &knotvector, double t,int i=0, int p=4)
-	{
-		//cout << "knotvector:\n" << knotvector.transpose() << endl;
-		//int p = knotvector.size() - 1;
-		assert(p >= 1);
-		if (p == 1) {
-			if (t >= knotvector(i) && t < knotvector(i + 1)) {
-				return 1.0;
-			}
-			else {
-				return 0.0;
-			}
-		}
-
-		double a = knotvector(i + p - 1) - knotvector(i);
-		double b = knotvector(i + p) - knotvector(i + 1);
-		a = (a == 0.0) ? 0.0 : (t - knotvector(i)) / a;
-		b = (b == 0.0) ? 0.0 : (knotvector(i + p) - t) / b;
-		return a*Basis(knotvector, t,i, p - 1) + b*Basis(knotvector, t, i + 1, p - 1);
-	}
-
-
-
 
     template<class T>
     double B(const T& s,double p){
@@ -77,7 +65,17 @@ namespace t_mesh{
         return 0.0;
     }
 
+	template<class T, int num>
+	void array2matrixd(const Array<T, num> &a, Eigen::MatrixXd &m) {
+		m.resize(1, num);
+		for (int i = 0; i < num; i++) {
+			m(0, i) = 1.0*a[i];
+		}
+	}
+
 };
+
+
 
 #include"array.hpp"
 #include"node.hpp"
