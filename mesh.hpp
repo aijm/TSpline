@@ -108,7 +108,7 @@ namespace t_mesh{
 			 Eigen::MatrixXd P1(1,2), P2(1,2);
 			 Eigen::MatrixXd nodes_st(nodes.size(), 2);
 			 
-			 (*viewer).data().add_label(Vector3d(0, 0, 0), "haha");
+			 (*viewer).data().add_label(Eigen::Vector3d(0, 0, 0), "haha");
 			 //cout << "1" << endl;
 			 for (int i = 0; i < nodes.size(); i++) {
 				 nodes_st.row(i) << nodes[i]->s[2], nodes[i]->t[2];
