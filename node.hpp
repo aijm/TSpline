@@ -21,6 +21,12 @@ namespace t_mesh{
 			bool is_ok(double x, double y) {
 				return (x >= s[0] && x <= s[4] && y >= t[0] && y <= t[4]);
 			}
+			double basis(double x, double y) {
+				if (is_ok(x, y)) {
+					return Basis(s.toVectorXd(), x) * Basis(t.toVectorXd(), y);
+				}
+				return 0.0;
+			}
 
         public:
             int                 order;   // the order of node: 1,2,3,...

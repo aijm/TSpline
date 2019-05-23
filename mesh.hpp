@@ -22,6 +22,7 @@ namespace t_mesh{
 			
 			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			void setViewer(Viewer* viewer) { this->viewer = viewer; }
+			void piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum=10, double eps=1e-5);
 			int get_num() const { return nodes.size(); }
 		
           
@@ -71,17 +72,15 @@ namespace t_mesh{
 		this->t_map.clear();
 	}
 	
-	 template<class T>
+	template<class T>
 		 T Mesh<T>::eval(double s, double t) {
 			 T result;
 			 for (int i = 0; i < nodes.size(); i++) {
-				 if (nodes[i]->is_ok(s, t)) {
-					 double blend = Basis((nodes[i]->s).toVectorXd(), s)*Basis((nodes[i]->t).toVectorXd(), t);
-					 T temp(nodes[i]->data);
-					 //temp.output(cout);
-					 temp.scale(blend);
-					 result.add(temp);
-				 }
+				 double blend = nodes[i]->basis(s, t);
+				 T temp(nodes[i]->data);
+				 //temp.output(cout);
+				 temp.scale(blend);
+				 result.add(temp);
 			 }
 
 			 /*for (auto it = s_map.begin(); it != s_map.end(); ++it) {
@@ -98,22 +97,22 @@ namespace t_mesh{
 					 }
 				 }
 			 }*/
-			 return result;
+			 return result; 
 		 }
 
-	 template<class T>
+	template<class T>
 		 void Mesh<T>::drawTmesh(){
 			 assert(viewer != NULL); // use setViewer(Viewer* viewer)
 
 			 Eigen::MatrixXd P1(1,2), P2(1,2);
 			 Eigen::MatrixXd nodes_st(nodes.size(), 2);
 			 
-			 (*viewer).data().add_label(Eigen::Vector3d(0, 0, 0), "haha");
+			 //(*viewer).data().add_label(Eigen::Vector3d(0, 0, 0), "haha");
 			 //cout << "1" << endl;
 			 for (int i = 0; i < nodes.size(); i++) {
 				 nodes_st.row(i) << nodes[i]->s[2], nodes[i]->t[2];
 				 std::stringstream label;
-				 label << nodes[i]->get_order()<<":"<<nodes_st(i, 0) << ", " << nodes_st(i, 1);
+				 label <<nodes_st(i, 0) << ", " << nodes_st(i, 1);
 				
 				 (*viewer).data().add_label(nodes_st.row(i), label.str());
 				 (*viewer).data().add_points(nodes_st.row(i), red);
@@ -146,7 +145,7 @@ namespace t_mesh{
 			 (*viewer).core.align_camera_center(nodes_st); // center
 		 }
 
-	  template<class T>
+	template<class T>
 	      void Mesh<T>::drawControlpolygon() {
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
 
@@ -183,7 +182,7 @@ namespace t_mesh{
 			  
 		  }
 
-	  template<class T>
+	template<class T>
 	      void Mesh<T>::drawSurface(double resolution) {
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
 
@@ -228,7 +227,7 @@ namespace t_mesh{
 			  (*viewer).data().set_mesh(mesh_V, mesh_F);
 		  }
 
-		  template<class T>
+	template<class T>
 		  void Mesh<T>::draw(bool tmesh, bool polygon, bool surface, double resolution){
 
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
@@ -246,6 +245,38 @@ namespace t_mesh{
 		  }
 
 		  template<class T>
+		  inline void Mesh<T>::piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum, double eps)
+		  {
+			  // 初始控制点坐标设为要逼近的目标点坐标
+			  for (auto it = targetPoints.begin(); it != targetPoints.end(); it++) {
+				  for (auto it1 = (it->second).begin(); it1 != (it->second).end(); it1++) {
+					  double s = it->first;
+					  double t = it1->first;
+					  s_map[s][t]->data = targetPoints[s][t];
+				  }
+			  }
+
+			  
+			  // 迭代更新控制顶点
+			  for (int i = 0; i < maxIterNum; i++) {
+				  double error = 0.0;
+				  for (auto it = targetPoints.begin(); it != targetPoints.end(); it++) {
+					  for (auto it1 = (it->second).begin(); it1 != (it->second).end(); it1++) {
+						  double s = it->first;
+						  double t = it1->first;
+						  T delta = targetPoints[s][t] - eval(s, t);
+						  (s_map[s][t]->data).add(delta);
+						  error = max(error, delta.toVectorXd().norm());
+					  }
+				  }
+				  cout << "iter: " << i+1 << ", error: " << error << endl;
+				  if (error < eps) {
+					  break;
+				  }
+			  }
+		  }
+
+	template<class T>
 		  int Mesh<T>::loadMesh(string name) {
 			  ifstream in(name.c_str());
 			  if (!in)
@@ -292,6 +323,7 @@ namespace t_mesh{
                 return 0;
             return nodes[num-1];
         }
+
     template<class T>
         Node<T>* Mesh<T>::get_node(double s,double t){
             if(s_map.find(s)!=s_map.end()){

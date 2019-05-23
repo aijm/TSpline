@@ -4,6 +4,7 @@
 #include<cstdlib>
 #include "NasriMethod.h"
 #include "MinJaeMethod.h"
+#include "PiaMethod.h"
 #include "window.h"
 
 using namespace std;
@@ -30,8 +31,8 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1.cptw");
-	nurbs[2].loadNURBS("../circle2.cptw");
+	nurbs[1].loadNURBS("../circle1_1.cptw");
+	nurbs[2].loadNURBS("../circle2_1.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -40,14 +41,15 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
 
-	MinJaeMethod method(nurbs, 100, 100);
+	PiaMethod method(nurbs,1000);
+	method.setViewer(&viewer);
 	method.calculate();
 	mesh = method.tspline;
 	mesh.setViewer(&viewer);
 	mesh.draw(false, true, true);
 
 	cout << "num of nodes: " << mesh.get_num() << endl;
-	//mesh.saveMesh("simpleMesh");
+	//mesh.saveMesh("../simpleMesh1");
 }
 
 
@@ -76,6 +78,7 @@ void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
 }
 
 int main(int argc,char** argv){
+	//testArray();
 	window::init();
 	testSkinning(viewer);
 	window::launch();
