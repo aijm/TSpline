@@ -358,6 +358,9 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, int max_it
 	// initialize knot vector
 	knots(0) = 0.0; knots(1) = 0.0; knots(2) = 0.0; knots(3) = 0.0;
 	knots(n + 4) = 1.0; knots(n + 3) = 1.0; knots(n + 2) = 1.0; knots(n + 1) = 1.0;
+
+
+
 	double d = 1.0 * (m + 1) / (n - 2);
 	for (int j = 1; j <= n - 3; j++) {
 		int i = j*d;
@@ -368,56 +371,41 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, int max_it
 	// initial control points P_0,...,P_n
 	controlPw.row(0) = points.row(0);
 	controlPw.row(n) = points.row(m);
-	MatrixXd controlPw_temp(n_cpts - 2, dimension);
-	for (int i = 1; i <= n - 1; i++) {
-		int index = 1.0*(m + 1)*i / n;
-		controlPw_temp.row(i-1) = points.row(index);
+
+	MatrixXd points_eval(points.rows(), points.cols());
+	for (int j = 0; j < points.rows(); j++) {
+		points_eval.row(j) = eval(params(j));
 	}
-	controlPw_temp.setZero();
-	// calculate basis function matrix A
-	MatrixXd A(m - 1, n - 1);
-	for (int i = 0; i < m - 1; i++) {
-		for (int j = 0; j < n - 1; j++) {
-			A(i, j) = basis(j + 1, 4, params(i + 1), knots);
+	for (int iter = 0; iter < max_iter_num; iter++) {
+		double sum1 = 0;
+		VectorXd sum2(dimension);
+		for (int i = 1; i < n; i++) {
+			for (int j = 0; j < params.size(); j++) {
+				double blend = basis(i, 4, params(j), knots);
+				sum1 += blend;
+				VectorXd delta = points.row(j) - points_eval.row(j);
+				sum2 += blend * delta;
+			}
+			sum2 /= sum1;
+			controlPw.row(i) += sum2;
+
+			double error = 0.0;
+			for (int j = 0; j < points.rows(); j++) {
+				points_eval.row(j) = eval(params(j));
+				error += (points.row(j) - points_eval.row(j)).norm();
+			}
+			error /= points.rows();
+			//cout << "iter: " << iter + 1 << ", error: " << error << endl;
+			if (error < eps) {
+				break;
+			}
 		}
+
 	}
-	// calculate mu paramerter of LSPIA
-	//double mu = 2.0 / (A.transpose()*A).rowwise().sum().maxCoeff();
-	VectorXd mu_vec = A.colwise().sum();
-	for (int i = 0; i < mu_vec.size(); i++) {
-		if (mu_vec(i) != 0.0) {
-			mu_vec(i) = 1.0 / mu_vec(i);
-		}
-	}
-	MatrixXd mu = mu_vec.asDiagonal();
 	
-	
-	//mu = mu.cwiseInverse();
-	// iteration: P_(k+1) = P_k + mu*A.transpose()(Q-AP_k)
-	MatrixXd Q(m - 1, dimension);
-	for (int i = 0; i < m - 1; i++) {
-		Q.row(i) = points.row(i + 1)
-			- basis(0, 4, params(i + 1), knots)*points.row(0)
-			- basis(n, 4, params(i + 1), knots)*points.row(m);
-	}
-	double error = 1.0;
-	int iter_num = 0;
-
-	MatrixXd delta(m - 1, dimension);
-	while (error>eps && iter_num<max_iter_num) {
-		delta = Q - A*controlPw_temp;
-		//cout << "delta: \n" << delta << endl;
-
-		controlPw_temp += mu*A.transpose()*delta;
-
-		error = delta.rowwise().norm().maxCoeff();
-		iter_num++;
-		//cout << "iter: " << iter_num << ", error: " << error << endl;
-	}
-	controlPw.block(1, 0, n - 1, dimension) = controlPw_temp;
 }
 
-void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, const VectorXd & knotvector, int max_iter_num, double eps)
+void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const int &n_cpts, const VectorXd & knotvector, int max_iter_num, double eps)
 {
 	assert(points.rows() > 1 && points.cols() > 0);
 	this->k = 4;
@@ -426,58 +414,45 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, const Vect
 	const int dimension = points.cols();
 	controlPw = MatrixXd(n_cpts, dimension);
 	
-	VectorXd params = parameterize(points);
+	//VectorXd params = parameterize(points);
 
-	
 	knots = knotvector;
 
-	// initial control points P_0,...,P_n
 	controlPw.row(0) = points.row(0);
 	controlPw.row(n) = points.row(m);
-	MatrixXd controlPw_temp(n_cpts - 2, dimension);
-	for (int i = 1; i <= n - 1; i++) {
-		int index = 1.0*(m + 1)*i / n;
-		controlPw_temp.row(i - 1) = points.row(index);
+	MatrixXd points_eval(points.rows(), points.cols());
+	for (int j = 0; j < points.rows(); j++) {
+		points_eval.row(j) = eval(params(j));
 	}
-	controlPw_temp.setZero();
-	// calculate basis function matrix A
-	MatrixXd A(m - 1, n - 1);
-	for (int i = 0; i < m - 1; i++) {
-		for (int j = 0; j < n - 1; j++) {
-			A(i, j) = basis(j + 1, 4, params(i + 1), knots);
+	for (int iter = 0; iter < max_iter_num; iter++) {
+		
+		for (int i = 1; i < n; i++) {
+			double sum1 = 0;
+			VectorXd sum2(dimension);
+
+			for (int j = 0; j < params.size(); j++) {
+				double blend = basis(i, 4, params(j), knots);
+				sum1 += blend;
+				VectorXd delta = points.row(j) - points_eval.row(j);
+				sum2 += blend * delta;
+			}
+			sum2 /= sum1;
+			controlPw.row(i) += sum2;
+
+			double error = 0.0;
+			for (int j = 0; j < points.rows(); j++) {
+				points_eval.row(j) = eval(params(j));
+				error += (points.row(j) - points_eval.row(j)).norm();
+			}
+			error /= points.rows();
+			//cout << "iter: " << iter + 1 << ", error: " << error << endl;
+			if (error < eps) {
+				break;
+			}
 		}
-	}
-	// calculate mu paramerter of LSPIA
-	//double mu = 2.0 / (A.transpose()*A).rowwise().sum().maxCoeff();
-	VectorXd mu_vec = A.colwise().sum();
-	for (int i = 0; i < mu_vec.size(); i++) {
-		if (mu_vec(i) != 0.0) {
-			mu_vec(i) = 1.0 / mu_vec(i);
-		}
-	}
-	MatrixXd mu = mu_vec.asDiagonal();
-	// iteration: P_(k+1) = P_k + mu*A.transpose()(Q-AP_k)
-	MatrixXd Q(m - 1, dimension);
-	for (int i = 0; i < m - 1; i++) {
-		Q.row(i) = points.row(i + 1)
-			- basis(0, 4, params(i + 1), knots)*points.row(0)
-			- basis(n, 4, params(i + 1), knots)*points.row(m);
-	}
-	double error = 1.0;
-	int iter_num = 0;
 
-	MatrixXd delta(m - 1, dimension);
-	while (error>eps && iter_num<max_iter_num) {
-		delta = Q - A*controlPw_temp;
-		//cout << "delta: \n" << delta << endl;
-
-		controlPw_temp += mu*A.transpose()*delta;
-
-		error = delta.rowwise().norm().maxCoeff();
-		iter_num++;
-		//cout << "iter: " << iter_num << ", error: " << error << endl;
 	}
-	controlPw.block(1, 0, n - 1, dimension) = controlPw_temp;
+	
 }
 
 bool NURBSCurve::insert(double t)

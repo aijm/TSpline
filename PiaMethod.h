@@ -8,7 +8,7 @@ struct FitPoint {
 	double u;       // 对应参数
 	double v;
 	Point3d eval;   // 曲面上对应参数的值 T(u,v) 
-	double error;
+	double error; 
 	double geterror() {
 		return (origin - eval).toVectorXd().norm();
 	}

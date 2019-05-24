@@ -1,4 +1,3 @@
-//#include"utility.h"
 #include<fstream>
 #include<sstream>
 #include<cstdlib>
@@ -27,7 +26,7 @@ void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	mesh.draw(showmesh, showpolygon, showsurface);
 }
 
-void testSkinning(igl::opengl::glfw::Viewer &viewer)
+void testSkinning()
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
@@ -40,11 +39,11 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
+	Skinning* method = new MinJaeMethod(nurbs, 100, 10);
 
-	PiaMethod method(nurbs,1000);
-	method.setViewer(&viewer);
-	method.calculate();
-	mesh = method.tspline;
+	method->setViewer(&viewer);
+	method->calculate();
+	mesh = method->tspline;
 	mesh.setViewer(&viewer);
 	mesh.draw(false, true, true);
 
@@ -52,35 +51,28 @@ void testSkinning(igl::opengl::glfw::Viewer &viewer)
 	//mesh.saveMesh("../simpleMesh1");
 }
 
+void test_lspia() {
+	NURBSCurve nurbs;
+	nurbs.loadNURBS("../circle.cptw");
+	const int sampleNum = 100;
+	MatrixXd points(sampleNum + 1, nurbs.controlPw.cols());
+	VectorXd params(points.rows());
+	for (int i = 0; i <= sampleNum; i++) {
+		params(i) = 1.0*i / sampleNum;
+		points.row(i) = nurbs.eval(params(i));
+	}
+	NURBSCurve fit;
+	fit.lspiafit(points, params,nurbs.controlPw.rows(), nurbs.knots, 1000);
 
-void testpia_skinning(igl::opengl::glfw::Viewer &viewer)
-{
-	vector<NURBSCurve> nurbs(4);
-	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1.cptw");
-	nurbs[2].loadNURBS("../circle2.cptw");
-	nurbs[3].loadNURBS("../circle3.cptw");
-
-
-	nurbs[0].draw(viewer, false);
-	nurbs[1].draw(viewer, false);
-	nurbs[2].draw(viewer, false);
-	nurbs[3].draw(viewer, false);
-	//viewer.core.align_camera_center(nurbs[1].controlPw);
-
-
-
-	//cout << "knots: " << nurbs[0].knots.transpose() << endl;
-	//mesh.pia_skinning(nurbs, viewer, 1000);
-
-	mesh.draw(false, true, true);
-	//mesh.saveMesh("simpleMesh");
+	nurbs.draw(viewer);
+	fit.draw(viewer);
 }
 
 int main(int argc,char** argv){
 	//testArray();
 	window::init();
-	testSkinning(viewer);
+	//test_lspia();
+	testSkinning();
 	window::launch();
     return 0;
 }

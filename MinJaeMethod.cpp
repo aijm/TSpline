@@ -141,22 +141,32 @@ void MinJaeMethod::inter_init()
 
 		MatrixXd sample_inter1(sampleNum + 1, dimension);
 		MatrixXd sample_inter2(sampleNum + 1, dimension);
+
+		VectorXd params(sampleNum + 1);
+
 		// calculate sample points by linear interpolate
 		for (int j = 0; j <= sampleNum; j++) {
-			RowVectorXd now_coor = curves[i].eval(1.0*j / sampleNum);
-			RowVectorXd next_coor = curves[i + 1].eval(1.0*j / sampleNum);
+			params(j) = 1.0*j / sampleNum;
+			RowVectorXd now_coor = curves[i].eval(params(j));
+			RowVectorXd next_coor = curves[i + 1].eval(params(j));
 			sample_inter1.row(j) = 2.0 / 3 * now_coor + 1.0 / 3 * next_coor;
 			sample_inter2.row(j) = 2.0 / 3 * next_coor + 1.0 / 3 * now_coor;
+			
 		}
+
+		/*(*viewer).data().add_points(sample_inter1, green);
+		(*viewer).data().add_points(sample_inter2, green);*/
 	
 		// fit sample points by B-spline using LSPIA with appointed knot vector
 		// the control points of B-Spline is the initial X,Y
 		NURBSCurve inter1, inter2;
-		inter1.lspiafit(sample_inter1, curves[i].n + 1, curves[i].knots, 1000);
+		inter1.lspiafit(sample_inter1, params, curves[i].n + 1, curves[i].knots, 500);
 	
-		inter2.lspiafit(sample_inter2, curves[i + 1].n + 1, curves[i + 1].knots, 1000);
-	
-	
+		inter2.lspiafit(sample_inter2, params, curves[i + 1].n + 1, curves[i + 1].knots, 500);
+
+		inter1.draw(*viewer, false);
+		inter2.draw(*viewer, false);
+
 		inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
 		inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;
 	
@@ -193,7 +203,6 @@ double MinJaeMethod::inter_update()
 {
 
 	const int dimension = curves[0].controlPw.cols();
-	double error = 0.0;
 	assert(curves_num >= 2);
 	map<double, map<double, Point3d>> T_cpts;
 	
@@ -206,20 +215,23 @@ double MinJaeMethod::inter_update()
 		double s_inter2 = node_next->adj[3]->s[2];
 		MatrixXd T_inter1(sampleNum + 1, dimension);
 		MatrixXd T_inter2(sampleNum + 1, dimension);
+
+		VectorXd params(sampleNum + 1);
+
 		// 1. calculate sample points on T - spline surface
 		for (int j = 0; j <= sampleNum; j++) {
+			params(j) = 1.0*j / sampleNum;
 			if (j == 0) {
-				T_inter1.row(j) = (node_now->adj[1]->data).toVectorXd();
-				T_inter2.row(j) = (node_next->adj[3]->data).toVectorXd();
-
+				T_inter1.row(j) = tspline.eval(s_inter1, 0.0001).toVectorXd();
+				T_inter2.row(j) = tspline.eval(s_inter2, 0.0001).toVectorXd();
 			}
 			else if (j == sampleNum) {
-				T_inter1.row(j) = ((tspline.s_map[s_now].rbegin())->second->adj[1]->data).toVectorXd();
-				T_inter2.row(j) = ((tspline.s_map[s_next].rbegin())->second->adj[3]->data).toVectorXd();
+				T_inter1.row(j) = tspline.eval(s_inter1, 0.9999).toVectorXd();
+				T_inter2.row(j) = tspline.eval(s_inter2, 0.9999).toVectorXd();
 			}
 			else {
-				T_inter1.row(j) = tspline.eval(s_inter1, 1.0*j / sampleNum).toVectorXd();
-				T_inter2.row(j) = tspline.eval(s_inter2, 1.0*j / sampleNum).toVectorXd();
+				T_inter1.row(j) = tspline.eval(s_inter1, params(j)).toVectorXd();
+				T_inter2.row(j) = tspline.eval(s_inter2, params(j)).toVectorXd();
 			}
 
 		}
@@ -227,9 +239,9 @@ double MinJaeMethod::inter_update()
 	
 		// fit sample points by B-spline using LSPIA with appointed knot vector
 		NURBSCurve inter1, inter2;
-		inter1.lspiafit(T_inter1, curves[i].n + 1, curves[i].knots, 1000);
+		inter1.lspiafit(T_inter1, params, curves[i].n + 1, curves[i].knots, 500);
 	
-		inter2.lspiafit(T_inter2, curves[i + 1].n + 1, curves[i + 1].knots, 1000);
+		inter2.lspiafit(T_inter2, params, curves[i + 1].n + 1, curves[i + 1].knots, 500);
 	
 		inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
 		inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;
@@ -245,19 +257,19 @@ double MinJaeMethod::inter_update()
 	}
 	
 	// update by T_cpts and initial_cpts
+	double error = 0.0;
+	int count = 0;
 	for (auto it = T_cpts.begin(); it != T_cpts.end(); ++it) {
 		for (auto it1 = (it->second).begin(); it1 != (it->second).end(); ++it1) {
-			VectorXd delta = (initial_cpts[it->first][it1->first]).toVectorXd() - (it1->second).toVectorXd();
-			if (delta.norm() > error) {
-				error = delta.norm();
-			}
-			Point3d temp;
-			temp.fromVectorXd(delta);
-			(tspline.s_map[it->first][it1->first]->data).add(temp);
+			count++;
+			Point3d delta = (initial_cpts[it->first][it1->first] - (it1->second));
+			error += delta.toVectorXd().norm();
+
+			(tspline.s_map[it->first][it1->first]->data).add(delta);
 		}
 	}
 	
 	cout << "finished inter_update()!" << endl;
 	
-	return error;
+	return error / count;
 }

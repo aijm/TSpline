@@ -82,7 +82,7 @@ void PiaMethod::calculate()
 void PiaMethod::sample_fitPoints()
 {
 	const int sampleNum = 100;
-	for (int i = 0; i < curves_num; i++) {
+	for (int i = 1; i < curves_num-1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
 			FitPoint point;
 			point.u = s_knots(i);
@@ -121,9 +121,9 @@ void PiaMethod::pia()
 	for (int i = 0; i < maxIterNum; i++) {
 		// 计算差向量并更新曲面控制点
 		for (auto node : tspline.nodes) {
-			/*if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
+			if (node->s[2] == 0.0 || node->s[2] == 1.0) {
 				continue;
-			}*/
+			}
 			double sum1 = 0;
 			Point3d sum2;
 			for (FitPoint point : fitPoints) {
