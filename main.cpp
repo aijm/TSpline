@@ -39,8 +39,8 @@ void testSkinning()
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
-	Skinning* method = new MinJaeMethod(nurbs, 100, 10);
-
+	Skinning* method = new MinJaeMethod(nurbs, 100, 0);
+	//Skinning* method = new PiaMethod(nurbs, 1000);
 	method->setViewer(&viewer);
 	method->calculate();
 	mesh = method->tspline;
