@@ -6,11 +6,13 @@
 #include "PiaMethod.h"
 #include "window.h"
 
+#include "TestNlopt.h"
+
 using namespace std;
 using namespace Eigen;
 using namespace window;
 
-void testArray() {
+void testBasis() {
 
 	t_mesh::Array<double, 5> A;
 	A.input(cin);
@@ -19,7 +21,15 @@ void testArray() {
 	cin >> t;
 	
 	cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
+	cout << "basis1: " << Basis1(A.toVectorXd(), t) << endl;
 
+
+}
+void testDerivative() {
+	Eigen::VectorXd knots(11);
+	knots << 0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5;
+	double t = 2.5;
+	cout << "derivative: \n" << DersBasis(knots, t, 4, 2) << endl;
 }
 void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	mesh.loadMesh("../simpleMesh.cfg");
@@ -68,8 +78,13 @@ void test_lspia() {
 	fit.draw(viewer);
 }
 
+
+
+
 int main(int argc,char** argv){
-	//testArray();
+	//TestNlopt::test_nlopt();
+	//testBasis();
+	testDerivative();
 	window::init();
 	//test_lspia();
 	testSkinning();

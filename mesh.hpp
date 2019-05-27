@@ -24,7 +24,7 @@ namespace t_mesh{
 			void setViewer(Viewer* viewer) { this->viewer = viewer; }
 			void piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum=10, double eps=1e-5);
 			int get_num() const { return nodes.size(); }
-		
+
           
             void insert(double s,double t);
 			int insert_helper(double s, double t, bool changedata = true);
@@ -187,17 +187,20 @@ namespace t_mesh{
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
 
 			  // cut apart the parameter domain
-			  double u_low = (++s_map.begin())->first;
+			  //double u_low = (++s_map.begin())->first;
+			  //double u_high = (++s_map.rbegin())->first;
 			  
-			  double u_high = (++s_map.rbegin())->first;
+			  double u_low = s_map.begin()->first;
+			  double u_high = s_map.rbegin()->first;
+
 			  cout << "u_low: " << u_low <<", u_high: "<<u_high<< endl;
 			  const int uspan = (u_high - u_low) / resolution;
 			  double u_resolution = (u_high - u_low) / uspan;
 			  
-			  double v_low = (++t_map.begin())->first;
-			  //v_low = 1.0;
-			  double v_high = (++t_map.rbegin())->first;
-			  //v_high = 2.0;
+			  /*double v_low = (++t_map.begin())->first;
+			  double v_high = (++t_map.rbegin())->first;*/
+			  double v_low = t_map.begin()->first;
+			  double v_high = t_map.rbegin()->first;
 			  const int vspan = (v_high - v_low) / resolution;
 			  double v_resolution = (v_high - v_low) / vspan;
 			  cout << "v_low: " << v_low << ", v_high: " << v_high << endl;

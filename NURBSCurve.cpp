@@ -46,6 +46,20 @@ bool NURBSCurve::loadNURBS(string name){
 	return true;
 }
 // save
+// nurbs 格式示例
+/*
+0              isRational
+6 4            n k
+3              点的维数
+2    3  0      控制点坐标
+1.5  1  0
+- 1  1  0
+- 2   0  0
+- 1 - 1  0
+1 - 1  0
+2    0  0
+0    0    0 0 0.25    0.5 0.75    1 1    1    1  节点向量
+*/
 bool NURBSCurve::saveNURBS(string name){
 	if(isRational){
 		name += ".cptw";

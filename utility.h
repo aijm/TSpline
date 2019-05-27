@@ -38,8 +38,12 @@ namespace t_mesh{
 	void array2matrixd(const Array<T, num> &a, Eigen::MatrixXd &m);
 
 	// Blending function N[s0,s1,s2,s3,s4](p)
-	double Basis(const Eigen::MatrixXd &knotvector, double t, int i = 0, int p = 4);
+	double Basis1(const Eigen::MatrixXd &knotvector, double t, int i = 0, int p = 4);
 
+	double Basis(const Eigen::MatrixXd &knots, double t, int i = 0, int p = 3);
+
+	// Berivative of Blending function N[s0,s1,s2,s3,s4](t)
+	Eigen::RowVectorXd DersBasis(const Eigen::MatrixXd &knots, double t, int i = 0, int p = 3);
 };
 
 namespace t_mesh{
