@@ -44,6 +44,8 @@ namespace t_mesh{
 
 	// Berivative of Blending function N[s0,s1,s2,s3,s4](t)
 	Eigen::RowVectorXd DersBasis(const Eigen::MatrixXd &knots, double t, int i = 0, int p = 3);
+
+	bool savepoints(std::string name, const Eigen::MatrixXd &mat);
 };
 
 namespace t_mesh{

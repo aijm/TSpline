@@ -66,13 +66,13 @@ namespace t_mesh {
 		for (int k = 1; k <= p; k++) {
 			//cout << "k=1:" << endl;
 			double saved = 0.0;
-			if (N(0) == 0.0) saved = 0.0;
+			if (N(0) == 0.0) saved = 0.0; 
 			else saved = (t - knots(i)) * N(0) / (knots(i + k) - knots(i));
 
 			for (int j = 0; j < p - k + 1; j++) {
 				double Uleft = knots(i + j + 1);
 				double Uright = knots(i + j + k + 1);
-				if (N(j + 1) == 0.0) {
+				if (N(j + 1) == 0.0) { 
 					N(j) = saved;
 					saved = 0.0;
 				}
@@ -90,8 +90,14 @@ namespace t_mesh {
 	// Berivative of Blending function N[s0,s1,s2,s3,s4](t)
 	Eigen::RowVectorXd DersBasis(const Eigen::MatrixXd &knots, double t, int i, int p)
 	{
+		if (t == 0.0) {
+			t = 0.0001;
+		}
+		if (t == 1.0) {
+			t = 0.9999;
+		}
 		const int m = knots.size() - 1;
-		Eigen::RowVectorXd ders(p + 1); // k阶导数, k= 0,1,2,...,p
+		Eigen::RowVectorXd ders = Eigen::RowVectorXd::Zero(p + 1); // k阶导数, k= 0,1,2,...,p
 	
 		// 根据局部性
 		if (t < knots(i) || t >= knots(i + p + 1)) {
@@ -99,7 +105,7 @@ namespace t_mesh {
 			return ders;
 		}
 		
-		Eigen::MatrixXd N(p + 1, p + 1);
+		Eigen::MatrixXd N = Eigen::MatrixXd::Zero(p + 1, p + 1);
 		// 初始化0次的基函数
 		for (int j = 0; j <= p; j++) {
 			if (t >= knots(i + j) && t < knots(i + j + 1)) N(j, 0) = 1.0;
@@ -126,7 +132,7 @@ namespace t_mesh {
 				}
 			}
 		}
-
+		//cout << "N: \n" << N << endl;
 		ders(0) = N(0, p); // 函数值
 
 		// 计算导数
@@ -140,7 +146,7 @@ namespace t_mesh {
 
 				for (int j = 0; j < k - jj + 1; j++) {
 					double Uleft = knots(i + j + 1);
-					double Uright = knots(i + j + p + jj + 1);
+					double Uright = knots(i + j + p - k + jj + 1);
 					if (ND(j + 1) == 0.0) {
 						ND(j) = (p - k + jj) * saved;
 						saved = 0.0;

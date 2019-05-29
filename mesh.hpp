@@ -20,11 +20,22 @@ namespace t_mesh{
             int saveMesh(string);
 			T eval(double s,double t);
 			
-			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
+			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.1);
 			void setViewer(Viewer* viewer) { this->viewer = viewer; }
 			void piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum=10, double eps=1e-5);
 			int get_num() const { return nodes.size(); }
 
+			T du(double u, double v);
+			T dv(double u, double v);
+			T normal(double u, double v);
+			/*VectorXd du(double u, double v);
+			VectorXd dv(double u, double v);
+			VectorXd normal(double u, double v);*/
+
+
+			double du2(Node<T>* node, double u, double v);
+			double dv2(Node<T>* node, double u, double v);
+			double duv(Node<T>* node, double u, double v);
           
             void insert(double s,double t);
 			int insert_helper(double s, double t, bool changedata = true);
@@ -44,7 +55,7 @@ namespace t_mesh{
             void merge_all();
             
 			void clear();
-
+			
 		public:
 			// organizing node in a good data structure 
 			map<double, map<double, Node<T>*> > s_map; // s_map[s][t]
@@ -71,7 +82,45 @@ namespace t_mesh{
 		this->s_map.clear();
 		this->t_map.clear();
 	}
+
 	
+
+	template<class T>
+	inline double Mesh<T>::du2(Node<T>* node, double u, double v) {
+		if (u == 0.0) {
+			u = 0.0001;
+		}
+		if (u == 1.0) {
+			u = 0.9999;
+		}
+		return DersBasis(node->s.toVectorXd(), u)(2)*Basis(node->t.toVectorXd(), v);
+	}
+	template<class T>
+	inline double Mesh<T>::dv2(Node<T>* node, double u, double v) {
+		if (v == 0.0) {
+			v = 0.0001;
+		}
+		if (v == 1.0) {
+			v = 0.9999;
+		}
+		return DersBasis(node->t.toVectorXd(), v)(2)*Basis(node->s.toVectorXd(), u);
+	}
+	template<class T>
+	inline double Mesh<T>::duv(Node<T>* node, double u, double v) {
+		if (u == 0.0) {
+			u = 0.0001;
+		}
+		if (u == 1.0) {
+			u = 0.9999;
+		}
+		if (v == 0.0) {
+			v = 0.0001;
+		}
+		if (v == 1.0) {
+			v = 0.9999;
+		}
+		return DersBasis(node->s.toVectorXd(), u)(1)*DersBasis(node->t.toVectorXd(), v)(1);
+	}
 	template<class T>
 		 T Mesh<T>::eval(double s, double t) {
 			 T result;
@@ -217,6 +266,21 @@ namespace t_mesh{
 					  array2matrixd(eval(u_low + i*u_resolution, v_low + j*v_resolution), curvePoint);
 					  //cout << "u, v, point: \n" <<u<<" "<<v<<" "<< curvePoint << endl;
 					  mesh_V.row(j*(uspan + 1) + i) = curvePoint;
+					  
+					  /*Eigen::MatrixXd endPoint;
+					  endPoint.setZero();
+
+					  array2matrixd(normal(u, v), endPoint);
+					  endPoint.row(0) = endPoint.row(0).normalized();
+					  cout << "normal: \n" << endPoint << endl;
+					  endPoint += curvePoint;
+					  (*viewer).data().add_edges(curvePoint, endPoint, red);*/
+
+					  /*array2matrixd(dv(u, v), endPoint);
+					  endPoint.row(0) = endPoint.row(0).normalized();
+					  cout << "normal: \n" << endPoint << endl;
+					  endPoint += curvePoint;
+					  (*viewer).data().add_edges(curvePoint, endPoint, blue);*/
 				  }
 
 			  for (int j = 0; j<vspan; j++)
@@ -277,6 +341,54 @@ namespace t_mesh{
 					  break;
 				  }
 			  }
+		  }
+
+		  template<class T>
+		  inline T Mesh<T>::du(double u, double v)
+		  {
+			  if (u == 0.0) {
+				  u = 0.0001;
+			  }
+			  if (u == 1.0) {
+				  u = 0.9999;
+			  }
+			  T res;
+			  for (int i = 0; i < nodes.size(); i++) {
+				  auto node = nodes[i];
+				  double fac = DersBasis(node->s.toVectorXd(), u)(1) * Basis(node->t.toVectorXd(), v);
+				  res.add(fac * node->data);
+			  }
+			  return res;
+		  }
+
+		  template<class T>
+		  inline T Mesh<T>::dv(double u, double v)
+		  {
+			  if (v == 0.0) {
+				  v = 0.0001;
+			  }
+			  if (v == 1.0) {
+				  v = 0.9999;
+			  }
+			  T res;
+			  for (int i = 0; i < nodes.size(); i++) {
+				  auto node = nodes[i];
+				  double fac = DersBasis(node->t.toVectorXd(), v)(1) * Basis(node->s.toVectorXd(), u);
+				  res.add(fac * node->data);
+			  }
+			  return res;
+		  }
+
+		  template<class T>
+		  inline T Mesh<T>::normal(double u, double v)
+		  {
+			  Eigen::Vector3d a = du(u, v).toVectorXd();
+			  Eigen::Vector3d b = dv(u, v).toVectorXd();
+			  Eigen::Vector3d n = a.cross(b);
+			  n.normalize();
+			  T res;
+			  res.fromVectorXd(n);
+			  return res;
 		  }
 
 	template<class T>

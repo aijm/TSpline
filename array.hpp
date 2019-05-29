@@ -62,6 +62,10 @@ namespace t_mesh{
             Array<T,num>& add(const Array<T,num>&);
 			Array<T, num> operator+(const Array<T, num>&);
 			Array<T, num> operator-(const Array<T, num>&);
+			template<class T, int num>
+			friend Array<T, num> operator*(const Array<T, num>& a, const T& k);
+			template<class T, int num>
+			friend Array<T, num> operator*(const T& k, const Array<T, num>& a);
             void clear();
         private:
             T data[num];
@@ -117,4 +121,22 @@ namespace t_mesh{
     void Array<T,num>::clear(){
         memset(data,0,sizeof(data));
     }
+	template<class T, int num>
+	Array<T, num> operator*(const Array<T, num>& a, const T & k)
+	{
+		Array<T, num> res;
+		for (int i = 0; i < num; i++) {
+			res.data[i] = a.data[i] * k;
+		}
+		return res;
+	}
+	template<class T, int num>
+	Array<T, num> operator*(const T & k, const Array<T, num>& a)
+	{
+		Array<T, num> res;
+		for (int i = 0; i < num; i++) {
+			res.data[i] = a.data[i] * k;
+		}
+		return res;
+	}
 };

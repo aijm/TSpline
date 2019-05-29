@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <nlopt.hpp>
+#include "OptMethod.h"
 
 typedef struct {
 	double a, b;
@@ -10,7 +11,52 @@ typedef struct {
 
 class TestNlopt {
 public:
+	static void test_Array() {
+		t_mesh::Array<double, 5> A;
+		A.input(cin);
+		A = 2.0*A;
+		A.output(cout);
+		cout << endl;
+		A = A * 2.0;
+		A.output(cout);
+		cout << endl;
+	}
+	static void test_Integral() {
+		double a = 2.0;
+		auto lambda = [a](double u, double v)-> double {
+			return a*sin(u + v);
+		};
+		double res = OptMethod::integral(lambda);
+		cout << "ingegral: " << res << endl;
+		cout << "real: " << 2* (2 * sin(1) - sin(2)) << endl;
+	}
 
+	static void testBasis() {
+
+		t_mesh::Array<double, 5> A;
+		A.input(cin);
+		A.output(cout);
+		double t = 0.0;
+		cin >> t;
+
+		cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
+		cout << "basis1: " << Basis1(A.toVectorXd(), t) << endl;
+	}
+	static void testDerivative() {
+		Eigen::VectorXd knots(11);
+		knots << 0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5;
+		double t = 2.5;
+		cout << "derivative: \n" << DersBasis(knots, t, 4, 2) << endl;
+
+		t_mesh::Array<double, 5> A;
+		A.input(cin);
+		A.output(cout);
+		t = 0.0;
+		cin >> t;
+
+		cout << "derivative basis: \n" << t_mesh::DersBasis(A.toVectorXd(), t) << endl;
+
+	}
 	static double myfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data)
 	{
 		if (!grad.empty()) {

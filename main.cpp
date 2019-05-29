@@ -4,6 +4,7 @@
 #include "NasriMethod.h"
 #include "MinJaeMethod.h"
 #include "PiaMethod.h"
+#include "OptMethod.h"
 #include "window.h"
 
 #include "TestNlopt.h"
@@ -12,25 +13,8 @@ using namespace std;
 using namespace Eigen;
 using namespace window;
 
-void testBasis() {
-
-	t_mesh::Array<double, 5> A;
-	A.input(cin);
-	A.output(cout);
-	double t = 0.0;
-	cin >> t;
-	
-	cout << "basis: " << t_mesh::Basis(A.toVectorXd(), t) << endl;
-	cout << "basis1: " << Basis1(A.toVectorXd(), t) << endl;
 
 
-}
-void testDerivative() {
-	Eigen::VectorXd knots(11);
-	knots << 0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5;
-	double t = 2.5;
-	cout << "derivative: \n" << DersBasis(knots, t, 4, 2) << endl;
-}
 void testMesh(igl::opengl::glfw::Viewer &viewer) {
 	mesh.loadMesh("../simpleMesh.cfg");
 	mesh.draw(showmesh, showpolygon, showsurface);
@@ -40,8 +24,8 @@ void testSkinning()
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1_1.cptw");
-	nurbs[2].loadNURBS("../circle2_1.cptw");
+	nurbs[1].loadNURBS("../circle1.cptw");
+	nurbs[2].loadNURBS("../circle2.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -49,8 +33,11 @@ void testSkinning()
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
-	Skinning* method = new MinJaeMethod(nurbs, 100, 0);
+	//Skinning* method = new MinJaeMethod(nurbs, 100, 0);
 	//Skinning* method = new PiaMethod(nurbs, 1000);
+	//Skinning* method = new NasriMethod(nurbs);
+	Skinning* method = new OptMethod(nurbs);
+
 	method->setViewer(&viewer);
 	method->calculate();
 	mesh = method->tspline;
@@ -60,7 +47,40 @@ void testSkinning()
 	cout << "num of nodes: " << mesh.get_num() << endl;
 	//mesh.saveMesh("../simpleMesh1");
 }
+void test_derOfNurbs() {
+	NURBSCurve nurbs;
+	nurbs.loadNURBS("../circle.cptw");
+	cout << "controlpw: \n" << nurbs.controlPw << endl;
+	for (int i = 0; i <= 10; i++) {
+		double u = 1.0*i / 10;
+		MatrixXd point = MatrixXd::Zero(1, 3);
+		point.row(0) = nurbs.eval(u);
+		RowVector3d du = RowVector3d::Zero(); // Ä¬ÈÏ²»ÊÇ0
 
+		for (int j = 0; j <= nurbs.n; j++) {
+			double a = t_mesh::DersBasis(nurbs.knots, u, j, 3)(1);
+			if (i == 0) {
+				cout << "a: " << a << endl;
+			}
+			du += nurbs.controlPw.row(j) * a;
+			if (i == 0) {
+				cout << "du: \n" << du << endl;
+			}
+		}
+		if (i == 0) {
+			cout << "du: \n" << du << endl;
+		}
+		du.normalize();
+		if (i == 0) {
+			cout << "du: \n" << du << endl;
+		}
+		MatrixXd endpoint(1, 3);
+		endpoint.row(0) = point.row(0) + du;
+		viewer.data().add_points(point, blue);
+		viewer.data().add_edges(point, endpoint, green);
+	}
+	nurbs.draw(viewer);
+}
 void test_lspia() {
 	NURBSCurve nurbs;
 	nurbs.loadNURBS("../circle.cptw");
@@ -82,10 +102,15 @@ void test_lspia() {
 
 
 int main(int argc,char** argv){
-	//TestNlopt::test_nlopt();
-	//testBasis();
-	testDerivative();
+	/*TestNlopt::test_Array();
+	TestNlopt::test_nlopt();
+	TestNlopt::test_Integral();*/
+
+	//TestNlopt::testBasis();
+	//TestNlopt::testDerivative();
+	
 	window::init();
+	//test_derOfNurbs();
 	//test_lspia();
 	testSkinning();
 	window::launch();
