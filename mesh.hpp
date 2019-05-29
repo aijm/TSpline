@@ -20,7 +20,7 @@ namespace t_mesh{
             int saveMesh(string);
 			T eval(double s,double t);
 			
-			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.1);
+			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			void setViewer(Viewer* viewer) { this->viewer = viewer; }
 			void piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum=10, double eps=1e-5);
 			int get_num() const { return nodes.size(); }

@@ -24,12 +24,12 @@ public:
 	void insert() override;		// 按一定规则在误差大的地方插入节点，局部加细
 	void calculate() override;  // 计算流程
 
-private:
-	void sample_fitPoints();
-	void fit();
-	void pia();
+public:
+	virtual void sample_fitPoints();
+	virtual void fit();
+	virtual void pia();
 
-private:
+protected:
 	const int maxIterNum;
 	const double eps;
 	double error;

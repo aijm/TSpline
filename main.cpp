@@ -5,6 +5,8 @@
 #include "MinJaeMethod.h"
 #include "PiaMethod.h"
 #include "OptMethod.h"
+#include "PiaMinJaeMethod.h"
+#include "PiaNasriMethod.h"
 #include "window.h"
 
 #include "TestNlopt.h"
@@ -24,8 +26,8 @@ void testSkinning()
 {
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../circle.cptw");
-	nurbs[1].loadNURBS("../circle1.cptw");
-	nurbs[2].loadNURBS("../circle2.cptw");
+	nurbs[1].loadNURBS("../circle1_1.cptw");
+	nurbs[2].loadNURBS("../circle2_1.cptw");
 	nurbs[3].loadNURBS("../circle3.cptw");
 
 
@@ -33,10 +35,12 @@ void testSkinning()
 	nurbs[1].draw(viewer,false);
 	nurbs[2].draw(viewer,false);
 	nurbs[3].draw(viewer, false);
-	//Skinning* method = new MinJaeMethod(nurbs, 100, 0);
+	Skinning* method = new MinJaeMethod(nurbs, 100, 10);
 	//Skinning* method = new PiaMethod(nurbs, 1000);
 	//Skinning* method = new NasriMethod(nurbs);
-	Skinning* method = new OptMethod(nurbs);
+	//Skinning* method = new OptMethod(nurbs);
+	//Skinning* method = new PiaMinJaeMethod(nurbs, 1000);
+	//Skinning* method = new PiaNasriMethod(nurbs, 1000);
 
 	method->setViewer(&viewer);
 	method->calculate();

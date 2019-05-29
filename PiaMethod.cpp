@@ -121,7 +121,7 @@ void PiaMethod::pia()
 	for (int i = 0; i < maxIterNum; i++) {
 		// 计算差向量并更新曲面控制点
 		for (auto node : tspline.nodes) {
-			if (node->s[2] == 0.0 || node->s[2] == 1.0) {
+			if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
 				continue;
 			}
 			double sum1 = 0;

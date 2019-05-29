@@ -1,6 +1,6 @@
-#include "OptMethod.h"
+#include "PiaMinJaeMethod.h"
 
-void OptMethod::init()
+void PiaMinJaeMethod::init()
 {
 	// 2. construct basis T-mesh 
 	//add 0 and 1
@@ -50,7 +50,7 @@ void OptMethod::init()
 	}
 }
 
-void OptMethod::insert()
+void PiaMinJaeMethod::insert()
 {
 	// 3. insert intermediate vertices
 	// the coordinate of vertices is the midpoint of the corresponding points in C_r and C_(r+1)
@@ -90,37 +90,24 @@ void OptMethod::insert()
 
 	}
 	tspline.pool.clear();
-	
 	if (!tspline.check_valid()) {
 		cout << "Skinning: invalid T-mesh!" << endl;
 		return;
 	}
 }
 
-void OptMethod::calculate()
+void PiaMinJaeMethod::calculate()
 {
 	parameterize();
 	init();
 	insert();
 	sample_fitPoints();
-	getM();
-	getN();
-	getB();
-	savepoints("../M.mat", M);
-	savepoints("../N.mat", N);
-	savepoints("../B.mat", B);
-
-	Eigen::MatrixXd P = (0.00001*M+N).colPivHouseholderQr().solve(B);
-	savepoints("../P.mat", P);
-	for (int i = 0; i < tspline.get_num(); i++) {
-		auto node = tspline.get_node(i + 1);
-		node->data.fromVectorXd(P.row(i).transpose());
-	}
-	
-
+	fit();
+	pia();
+	update();
 }
 
-void OptMethod::sample_fitPoints()
+void PiaMinJaeMethod::sample_fitPoints()
 {
 	const int sampleNum = 100;
 	for (int i = 0; i < curves_num; i++) {
@@ -177,111 +164,4 @@ void OptMethod::sample_fitPoints()
 		}
 	}
 	cout << "number of points: " << fitPoints.size() << endl;
-}
-
-void OptMethod::getM()
-{
-	const int num = tspline.get_num();
-	M = MatrixXd::Zero(num, num);
-	for (int i = 0; i < num; i++) {
-		for (int j = 0; j < num; j++) {
-			auto node_i = tspline.get_node(i+1);
-			auto node_j = tspline.get_node(j+1);
-
-			auto lambda = [this,node_i,node_j](double u, double v)->double {
-				double res = 0;
-				double t0 =  tspline.du2(node_i, u, v)*tspline.du2(node_j, u, v);
-				double t1 =  2 * tspline.duv(node_i, u, v)*tspline.duv(node_j, u, v);
-				double t2 =  tspline.dv2(node_i, u, v)*tspline.dv2(node_j, u, v);
-				res += t0 + t1 + t2;
-				/*cout << "t0: " << t0 << endl;
-				cout << "t1: " << t1 << endl;
-				cout << "t2: " << t2 << endl;*/
-				return res;
-			};
-			M(i, j) = integral(lambda);
-		}
-	}
-	assert(M.isApprox(M.transpose()), 1e-5);
-}
-
-void OptMethod::getN()
-{
-	const int num = tspline.get_num();
-	N = MatrixXd::Zero(num, num);
-
-	for(int i = 0;i < N.rows();i++)
-		for (int j = 0; j < N.cols(); j++) 
-		{
-			auto node_i = tspline.get_node(i+1);
-			auto node_j = tspline.get_node(j+1);
-			for (const auto& point : fitPoints) {
-				double bi = node_i->basis(point.u, point.v);
-				double bj = node_j->basis(point.u, point.v);
-				if (i == 83 && bi != 0.0 && bj != 0.0) {
-					cout << "s: ";
-					node_i->s.output(cout);
-					cout << endl;
-
-					cout << "t: ";
-					node_i->t.output(cout);
-					cout << endl;
-
-					cout << "s: ";
-					node_j->s.output(cout);
-					cout << endl;
-
-					cout << "t: ";
-					node_j->t.output(cout);
-					cout << endl;
-
-					cout << "u: " << point.u << ", v: " << point.v << endl;
-					cout << "bi: " << bi << ", bj: " << bj << endl;
-					cout << "\n\n\n" << endl;
-
-				}	
-				N(i, j) += bi*bj;
-			}	
-		}
-	assert(N.isApprox(N.transpose()), 1e-5);
-}
-
-void OptMethod::getB()
-{
-	const int num = tspline.get_num();
-	B = MatrixXd::Zero(num, 3);
-	for (int i = 0; i < num; i++) {
-		auto node = tspline.get_node(i+1);
-		for (const auto& point : fitPoints) {
-			Point3d temp = node->basis(point.u, point.v) * point.origin;
-			for (int j = 0; j < 3; j++) {
-				B(i, j) += temp[j];
-			}
-		}
-	}
-}
-
-double OptMethod::integral(std::function<double(double, double)> func, double x0, double x1,double y0,double y1)
-{
-	// Gaussian quadrature 计算 func(u,v)在[a,b][a,b]上的积分
-	const int n = 5;
-	VectorXd w(n);
-	w << 0.2369268851, 0.4786286705, 0.5688888888, 0.4786286705, 0.2369268851;
-	VectorXd x(n);
-	x << -0.9061798459, -0.5384693101, 0.0000000000, 0.5384693101, 0.9061798459;
-
-	double sum = 0;
-	double px0 = (x0 + x1) / 2;
-	double px1 = (x1 - x0) / 2;
-
-	double py0 = (y0 + y1) / 2;
-	double py1 = (y1 - y0) / 2;
-
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			sum += w(i)*w(j)*func(px0 + px1*x(i), py0 + py1*x(j));
-		}
-	}
-	sum *= px1 * py1;
-	return sum;
 }
