@@ -395,9 +395,12 @@ namespace t_mesh{
 
 	template<class T>
 		  int Mesh<T>::loadMesh(string name) {
-			  ifstream in(name.c_str());
-			  if (!in)
+			  ifstream in(name);
+			  if (!in.is_open()) {
+				  cout << "can't open file: " << name << endl;
 				  return -1;
+			  }
+				  
 			  loadMesh(in);
 			  return 0;
 		  }
@@ -423,9 +426,11 @@ namespace t_mesh{
 
     template<class T>
         int Mesh<T>::saveMesh(string name){
-            ofstream out((name+iter_str+".cfg").c_str());
-            if(!out)
-                return -1;
+			ofstream out(name + ".cfg");
+			if (!out.is_open()) {
+				cout << "can't open file: " << name << ".cfg" << endl;
+				return -1;
+			}
 			saveMesh(out);
             return 0;
         }

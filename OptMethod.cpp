@@ -106,12 +106,12 @@ void OptMethod::calculate()
 	getM();
 	getN();
 	getB();
-	savepoints("../M.mat", M);
-	savepoints("../N.mat", N);
-	savepoints("../B.mat", B);
+	savepoints("../out/M.mat", M);
+	savepoints("../out/N.mat", N);
+	savepoints("../out/B.mat", B);
 
 	Eigen::MatrixXd P = (0.00001*M+N).colPivHouseholderQr().solve(B);
-	savepoints("../P.mat", P);
+	savepoints("../out/P.mat", P);
 	for (int i = 0; i < tspline.get_num(); i++) {
 		auto node = tspline.get_node(i + 1);
 		node->data.fromVectorXd(P.row(i).transpose());

@@ -164,8 +164,8 @@ void MinJaeMethod::inter_init()
 	
 		inter2.lspiafit(sample_inter2, params, curves[i + 1].n + 1, curves[i + 1].knots, 500);
 
-		/*inter1.draw(*viewer, false);
-		inter2.draw(*viewer, false);*/
+		inter1.draw(*viewer, false);
+		inter2.draw(*viewer, false);
 
 		inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
 		inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;

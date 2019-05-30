@@ -1,66 +1,14 @@
-#include "window.h"
-namespace window {
-	using namespace std;
+#include "Window.h"
 
-	t_mesh::Mesh3d mesh;
-	double resolution = 0.01;
-	bool showmesh = false;
-	bool showpolygon = true;
-	bool showsurface = true;
-	// Customize the menu
-	double doubleVariable = 0.1f; // Shared between two menus
+double Window::doubleVariable = 0.1f;
+igl::opengl::glfw::Viewer Window::viewer;
+igl::opengl::glfw::imgui::ImGuiMenu Window::menu;
 
-	igl::opengl::glfw::Viewer viewer;
-
-	// Attach a menu plugin
-	igl::opengl::glfw::imgui::ImGuiMenu menu;
-	
-	void insert_loop(igl::opengl::glfw::Viewer &viewer) {
-		double s = 0.0;
-		double t = 0.0;
-		while (true) {
-			cout << "insert kont, format: s t" << endl;
-
-			if (!(cin >> s >> t)) {
-				cin.clear(); //clear the buffer
-				cin.get();
-				cout << "error! please use right format!" << endl;
-				continue;
-			}
-			else {
-				mesh.insert(s, t);
-
-				mesh.draw(showmesh, showpolygon, showsurface);
-				return;
-			}
-		}
-	}
-	// This function is called every time a keyboard button is pressed
-	bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier) {
-		//std::cout << "Key: " << key << " " << (unsigned int)key << std::endl;
-		if (key == 32) {
-			viewer.data().clear();
-			insert_loop(viewer);
-		}
-		else if (key == 'M') {
-			viewer.data().clear();
-			showmesh = !showmesh;
-			mesh.draw(showmesh, showpolygon, showsurface);
-		}
-		else if (key == 'P') {
-			viewer.data().clear();
-			showpolygon = !showpolygon;
-			mesh.draw(showmesh, showpolygon, showsurface);
-		}
-		else if (key == 'S') {
-			viewer.data().clear();
-			showsurface = !showsurface;
-			mesh.draw(showmesh, showpolygon, showsurface);
-		}
-		return false;
-	}
-
-	void draw_viewer_menu()
+void Window::init()
+{
+	viewer.plugins.push_back(&menu);
+	// Add content to the default menu window
+	menu.callback_draw_viewer_menu = [&]()
 	{
 		// Draw parent menu content
 		menu.draw_viewer_menu();
@@ -108,10 +56,10 @@ namespace window {
 				std::cout << "Hello\n";
 			}
 		}
-	}
+	};
 
-	void draw_custom_window()
-	{
+	// Draw additional windows
+	menu.callback_draw_custom_window = [&]() {
 		// Define next window position + size
 		ImGui::SetNextWindowPos(ImVec2(180.f * menu.menu_scaling(), 10), ImGuiSetCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(200, 160), ImGuiSetCond_FirstUseEver);
@@ -130,26 +78,21 @@ namespace window {
 		ImGui::InputText("Name", str);
 
 		ImGui::End();
-	}
+	};
+}
 
-	void init()
-	{
-		viewer.plugins.push_back(&menu);
-		// Add content to the default menu window
-		menu.callback_draw_viewer_menu = &draw_viewer_menu;
+void Window::draw()
+{
+}
 
-		// Draw additional windows
-		menu.callback_draw_custom_window = &draw_custom_window;
+void Window::launch()
+{
+	init();
+	draw();
+	viewer.launch();
+}
 
-		// key binding
-		viewer.callback_key_down = &key_down;
-
-		mesh.setViewer(&viewer);
-	}
-
-	void launch()
-	{
-		viewer.launch();
-	}
-
-};
+Window::~Window()
+{
+	viewer.data().clear();
+}
