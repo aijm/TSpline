@@ -26,6 +26,7 @@ namespace t_mesh{
 	const Eigen::RowVector3d   red(1, 0, 0);
 	const Eigen::RowVector3d green(0, 1, 0);
 	const Eigen::RowVector3d  blue(0, 0, 1);
+	const Eigen::RowVector3d  yellow(1, 1, 0);
 	const Eigen::RowVector3d white(1, 1, 1);
 	const Eigen::RowVector3d black(0, 0, 0);
 	const Eigen::RowVector3d deeppink(255, 20, 147);

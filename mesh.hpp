@@ -17,7 +17,9 @@ namespace t_mesh{
     class Mesh{
         public:
             int loadMesh(string);
+			istream& loadMesh(istream&);
             int saveMesh(string);
+			ostream& saveMesh(ostream&);
 			T eval(double s,double t);
 			
 			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
@@ -396,7 +398,14 @@ namespace t_mesh{
 			  ifstream in(name.c_str());
 			  if (!in)
 				  return -1;
-			  int node_num;
+			  loadMesh(in);
+			  return 0;
+		  }
+
+		  template<class T>
+		  inline istream & Mesh<T>::loadMesh(istream& in)
+		  {
+			  int node_num = 0;
 			  in >> node_num;
 			  cout << "node_num: " << node_num << endl;
 			  for (int i = 0; i<node_num; ++i) {
@@ -407,7 +416,7 @@ namespace t_mesh{
 				  s_map[nodes[i]->s[2]][nodes[i]->t[2]] = nodes[i];
 				  t_map[nodes[i]->t[2]][nodes[i]->s[2]] = nodes[i];
 			  }
-			  return 0;
+			  return in;
 		  }
 
    
@@ -417,13 +426,20 @@ namespace t_mesh{
             ofstream out((name+iter_str+".cfg").c_str());
             if(!out)
                 return -1;
-            int node_num=nodes.size();
-            out<<node_num<<endl;
-            for(int i=0;i<node_num;++i){
-                nodes[i]->save(out);
-            }
+			saveMesh(out);
             return 0;
         }
+
+		template<class T>
+		inline ostream & Mesh<T>::saveMesh(ostream& out)
+		{
+			int node_num = nodes.size();
+			out << node_num << endl;
+			for (int i = 0; i<node_num; ++i) {
+				nodes[i]->save(out);
+			}
+			return out;
+		}
 
     template<class T>
         Node<T>* Mesh<T>::new_node(){

@@ -219,7 +219,7 @@ void OptMethod::getN()
 				double bi = node_i->basis(point.u, point.v);
 				double bj = node_j->basis(point.u, point.v);
 				if (i == 83 && bi != 0.0 && bj != 0.0) {
-					cout << "s: ";
+					/*cout << "s: ";
 					node_i->s.output(cout);
 					cout << endl;
 
@@ -237,7 +237,7 @@ void OptMethod::getN()
 
 					cout << "u: " << point.u << ", v: " << point.v << endl;
 					cout << "bi: " << bi << ", bj: " << bj << endl;
-					cout << "\n\n\n" << endl;
+					cout << "\n\n\n" << endl;*/
 
 				}	
 				N(i, j) += bi*bj;

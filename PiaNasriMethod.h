@@ -1,3 +1,6 @@
+#ifndef PIANASRIMETHOD_H
+#define PIANASRIMETHOD_H
+
 #include "PiaMethod.h"
 class PiaNasriMethod :public PiaMethod {
 public:
@@ -5,7 +8,7 @@ public:
 		:PiaMethod(_curves, _maxIterNum, _eps) {
 
 	}
-	
+
 	void init() override;		// 根据NUUBSCurve初始化T-preimage
 	void insert() override;		// 按一定规则在误差大的地方插入节点，局部加细
 	void calculate() override;  // 计算流程
@@ -15,3 +18,5 @@ public:
 	/*virtual void fit();
 	virtual void pia();*/
 };
+#endif // !PIANASRIMETHOD_H
+

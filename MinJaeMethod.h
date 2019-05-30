@@ -6,7 +6,7 @@ class MinJaeMethod : public Skinning {
 public:
 	MinJaeMethod(
 		const vector<NURBSCurve>& _curves, 
-		int _sampleNum = 100, int _maxIterNum = 20, double _eps = 1e-5)
+		int _sampleNum = 10, int _maxIterNum = 20, double _eps = 1e-5)
 		:Skinning(_curves),sampleNum(_sampleNum),
 		maxIterNum(_maxIterNum),eps(_eps) {
 

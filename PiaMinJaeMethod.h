@@ -1,8 +1,11 @@
+#ifndef PIAMINJAEMETHOD_H
+#define PIAMINJAEMETHOD_H
+
 #include "PiaMethod.h"
 class PiaMinJaeMethod : public PiaMethod {
 public:
 	PiaMinJaeMethod(const vector<NURBSCurve>& _curves, int _maxIterNum = 100, double _eps = 1e-5)
-		:PiaMethod(_curves, _maxIterNum, _eps){
+		:PiaMethod(_curves, _maxIterNum, _eps) {
 
 	}
 	void init() override;		// 根据NUUBSCurve初始化T-preimage
@@ -11,6 +14,7 @@ public:
 
 public:
 	void sample_fitPoints() override;
-	/*virtual void fit();
-	virtual void pia();*/
 };
+
+#endif // !PIAMINJAEMETHOD_H
+

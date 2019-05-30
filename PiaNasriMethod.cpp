@@ -92,8 +92,8 @@ void PiaNasriMethod::calculate()
 
 void PiaNasriMethod::sample_fitPoints()
 {
-	const int sampleNum = 100;
-	for (int i = 0; i < curves_num; i++) {
+	const int sampleNum = 10;
+	for (int i = 1; i < curves_num-1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
 			FitPoint point;
 			point.u = s_knots(i);

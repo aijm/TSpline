@@ -81,7 +81,7 @@ void PiaMethod::calculate()
 
 void PiaMethod::sample_fitPoints()
 {
-	const int sampleNum = 100;
+	const int sampleNum = 10;
 	for (int i = 1; i < curves_num-1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
 			FitPoint point;
