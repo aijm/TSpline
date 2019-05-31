@@ -7,6 +7,15 @@ void Test::test_TsplineVolume() {
 	volume.saveAsHex("../out/test",0.1);
 	render.launch();
 }
+void Test::test_BsplineVolume()
+{
+	BsplineVolume volume;
+	volume.readVolume("../out/venus_bspline.txt");
+	VolumeRender render(&volume, false, true, true, 0.1);
+	/*volume.saveAsHex("../out/tooth_bspline", 0.1);
+	volume.saveVolume("../out/tooth_bspline");*/
+	render.launch();
+}
 void Test::test_Mesh() {
 
 	Mesh3d mesh;

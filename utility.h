@@ -38,6 +38,8 @@ namespace t_mesh{
 	template<class T, int num>
 	void array2matrixd(const Array<T, num> &a, Eigen::MatrixXd &m);
 
+	int FindSpan(const Eigen::MatrixXd &knots, double t, int p = 3);
+
 	// Blending function N[s0,s1,s2,s3,s4](p)
 	double Basis1(const Eigen::MatrixXd &knotvector, double t, int i = 0, int p = 4);
 

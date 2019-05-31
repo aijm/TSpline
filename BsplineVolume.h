@@ -1,7 +1,8 @@
-#ifndef TSPLINEVOLUME_H
-#define TSPLINEVOLUME_H
+#pragma once
+#ifndef BSPLINEVOLUME_H
+#define BSPLINEVOLUME_H
 #include "Volume.h"
-class TsplineVolume : public Volume{
+class BsplineVolume :public Volume{
 public:
 
 	Point3d eval(double u, double v, double w) override;
@@ -14,11 +15,9 @@ private:
 	void drawControlpolygon() override;
 
 private:
-	map<double, Mesh3d*>       w_map;   
-	Eigen::VectorXd            w_knots;     // w向节点向量
-
+	vector<vector<vector<Point3d>>> control_grid;
+	vector<Eigen::VectorXd> knot_vector;
 	
 };
-
-#endif // !TSPLINEVOLUME_H
+#endif // !BSPLINEVOLUME_H
 

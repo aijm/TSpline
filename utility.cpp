@@ -3,7 +3,8 @@ namespace t_mesh {
 	// the index of parameter t in knot vector
 	// example knots=[0, 0, 0, 0, 0.4, 0.6, 1, 1, 1, 1]; t= 0.5, n = 5, p = 3 
 	// return 4
-	int FindSpan(const Eigen::MatrixXd &knots, double t, int n, int p) {
+	int FindSpan(const Eigen::MatrixXd &knots, double t, int p) {
+		const int n = knots.size() - p - 2;
 		if (t == knots(n + 1)) return n;
 		int low = p;
 		int high = n+1;

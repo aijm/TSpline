@@ -2,11 +2,11 @@
 #define VOLUMERENDER_H
 
 #include "Window.h"
-#include "TsplineVolume.h"
+#include "Volume.h"
 class VolumeRender : public Window {
 
 public:
-	VolumeRender(TsplineVolume* _volume,
+	VolumeRender(Volume* _volume,
 		bool _showmesh = false, bool _showpolygon = true,
 		bool _showvolume = true, double _resolution = 0.1)
 		:volume(_volume), showmesh(_showmesh), showpolygon(_showpolygon),
@@ -19,7 +19,7 @@ protected:
 	void draw() override;
 
 private:
-	TsplineVolume* volume;
+	Volume* volume;
 	bool showmesh;
 	bool showpolygon;
 	bool showvolume;
