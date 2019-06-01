@@ -13,7 +13,8 @@ int main(int argc,char** argv){
 	//Test::test_Mesh();
 
 	//Test::test_TsplineVolume();
-	Test::test_BsplineVolume();
+	//Test::test_BsplineVolume();
+	Test::test_nurbs();
     return 0;
 }
 

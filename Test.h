@@ -15,6 +15,7 @@
 #include "PiaNasriMethod.h"
 #include "TsplineVolume.h"
 #include "BsplineVolume.h"
+#include "NURBSSurface.h"
 
 #include <nlopt.hpp>
 
@@ -28,6 +29,7 @@ typedef struct {
 
 class Test {
 public:
+	static void test_nurbs();
 	static void test_TsplineVolume();
 	static void test_BsplineVolume();
 	static void test_Mesh();

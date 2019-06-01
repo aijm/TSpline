@@ -50,7 +50,8 @@ NURBSSurface::NURBSSurface(
 // load
 bool NURBSSurface::loadNURBS(string name){
 	ifstream in(name);
-	if(!in){
+	if(!in.is_open()){
+		cout << "failed to open file: " + name << endl;
 		return false;
 	}
 	char sep;
@@ -97,7 +98,8 @@ bool NURBSSurface::saveNURBS(string name){
 		name+=".cpt";
 	}
 	ofstream out(name);
-	if(!out){
+	if(!out.is_open()){
+		cout << "failed to open or create file: " + name << endl;
 		return false;
 	}
 	IOFormat outputFmt(4, 0, " ", " ", "", ",");	
@@ -280,7 +282,7 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 		for (int i = 0; i <= uspan; i++)
 		{
 			RowVectorXd curvePoint = eval(u_low + i*u_resolution, v_low + j*v_resolution).row(0);
-			cout << "curvepoint: " << curvePoint << endl;
+			//cout << "curvepoint: " << curvePoint << endl;
 			if (isRational) { mesh_V.row(j*(uspan + 1) + i) = curvePoint.hnormalized(); }
 			else { mesh_V.row(j*(uspan + 1) + i) = curvePoint; }
 		}

@@ -1,5 +1,38 @@
 #include "Test.h"
 
+void Test::test_nurbs()
+{
+	// bezier curve
+	/*NURBSCurve nurbs;
+	nurbs.loadNURBS("../out/nurbs/bezier.cpt");
+	nurbs.draw(Window::viewer);*/
+
+	// bezier surface
+	/*NURBSSurface nurbs;
+	nurbs.loadNURBS("../out/nurbs/beziersurface.cpt");
+	nurbs.draw(Window::viewer);*/
+
+	// uniform bspline cruve
+	NURBSCurve nurbs;
+	nurbs.loadNURBS("../out/nurbs/bsplinecurve.cpt");
+	nurbs.draw(Window::viewer);
+
+	// uniform bspline surface 
+	/*NURBSSurface nurbs;
+	nurbs.loadNURBS("../out/nurbs/bsplinesurface.cpt");
+	nurbs.draw(Window::viewer);*/
+
+	// nurbs surface
+	/*NURBSSurface nurbs;
+	nurbs.loadNURBS("../out/nurbs/torus.cptw");
+	nurbs.draw(Window::viewer);*/
+
+	Window w;
+	w.launch();
+
+	
+}
+
 void Test::test_TsplineVolume() {
 	TsplineVolume volume;
 	volume.readVolume("../out/test.vol");
@@ -10,8 +43,12 @@ void Test::test_TsplineVolume() {
 void Test::test_BsplineVolume()
 {
 	BsplineVolume volume;
-	volume.readVolume("../out/venus_bspline.txt");
-	VolumeRender render(&volume, false, true, true, 0.1);
+	//volume.readVolume("../out/venus_bspline.txt");
+	//volume.readVolume("../out/balljoint_bspline.txt");
+	//volume.readVolume("../out/isis_bspline.txt");
+	volume.readVolume("../out/moai_bspline.txt");
+	//volume.readVolume("../out/tooth_bspline.txt");
+	VolumeRender render(&volume, false, false, true, 0.01);
 	/*volume.saveAsHex("../out/tooth_bspline", 0.1);
 	volume.saveVolume("../out/tooth_bspline");*/
 	render.launch();
@@ -31,10 +68,10 @@ void Test::test_Skinning()
 {
 
 	vector<NURBSCurve> nurbs(4);
-	nurbs[0].loadNURBS("../out/circle.cptw");
-	nurbs[1].loadNURBS("../out/circle1.cptw");
-	nurbs[2].loadNURBS("../out/circle2.cptw");
-	nurbs[3].loadNURBS("../out/circle3.cptw");
+	nurbs[0].loadNURBS("../out/nurbs/circle.cptw");
+	nurbs[1].loadNURBS("../out/nurbs/circle1.cptw");
+	nurbs[2].loadNURBS("../out/nurbs/circle2.cptw");
+	nurbs[3].loadNURBS("../out/nurbs/circle3.cptw");
 
 
 	nurbs[0].draw(Window::viewer, false);
@@ -65,7 +102,7 @@ void Test::test_Skinning()
 }
 void Test::test_DerOfNurbs() {
 	NURBSCurve nurbs;
-	nurbs.loadNURBS("../out/circle.cptw");
+	nurbs.loadNURBS("../out/nurbs/circle.cptw");
 	cout << "controlpw: \n" << nurbs.controlPw << endl;
 	for (int i = 0; i <= 10; i++) {
 		double u = 1.0*i / 10;
@@ -101,7 +138,7 @@ void Test::test_DerOfNurbs() {
 }
 void Test::test_Lspia() {
 	NURBSCurve nurbs;
-	nurbs.loadNURBS("../out/circle.cptw");
+	nurbs.loadNURBS("../out/nurbs/circle.cptw");
 	const int sampleNum = 100;
 	MatrixXd points(sampleNum + 1, nurbs.controlPw.cols());
 	VectorXd params(points.rows());
