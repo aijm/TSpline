@@ -13,11 +13,13 @@ public:
 	int readVolume(string) override;
 	int saveVolume(string) override;
 
+	void insert(double w, Mesh3d* mesh);
+
 private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;
 
-private:
+public:
 	map<double, Mesh3d*>       w_map;   
 	Eigen::VectorXd            w_knots;     // w向节点向量
 

@@ -18,7 +18,7 @@ namespace t_mesh{
 		private:
 			Mesh& operator=(const Mesh&){}
         public:
-			Mesh(){}
+			Mesh():width(1.0),height(1.0),id(-1){}
 			Mesh(const Mesh& other);// deep copy
 			~Mesh();
             int loadMesh(string);
@@ -71,14 +71,15 @@ namespace t_mesh{
 			vector<Node<T>*>    nodes;
 
 		private:
-			double width = 1.0;
-			double height = 1.0;
+			double width;
+			double height;
            
             string          iter_str;
 
 			Eigen::MatrixXd mesh_V;
 			Eigen::MatrixXi mesh_F;
 			Viewer* viewer;
+			int id;
     };
 
 	template<class T>
@@ -241,7 +242,7 @@ namespace t_mesh{
 	template<class T>
 	      void Mesh<T>::drawSurface(double resolution) {
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
-
+		
 			  // cut apart the parameter domain
 			  //double u_low = (++s_map.begin())->first;
 			  //double u_high = (++s_map.rbegin())->first;
@@ -305,7 +306,10 @@ namespace t_mesh{
 		  void Mesh<T>::draw(bool tmesh, bool polygon, bool surface, double resolution){
 
 			  assert(viewer != NULL); // use setViewer(Viewer* viewer)
-
+			  if (id == -1) {
+				  id = (*viewer).append_mesh();
+			  }
+			  (*viewer).selected_data_index = id;
 			  if (tmesh) {
 				  drawTmesh();
 				  return;
@@ -425,6 +429,9 @@ namespace t_mesh{
 			  this->mesh_V = other.mesh_V;
 			  this->mesh_F = other.mesh_F;
 			  this->pool = other.pool;
+			  this->id = -1;
+			  this->width = 1.0;
+			  this->height = 1.0;
 		  }
 
 		  template<class T>

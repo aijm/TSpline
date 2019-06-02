@@ -49,6 +49,8 @@ namespace t_mesh{
 	Eigen::RowVectorXd DersBasis(const Eigen::MatrixXd &knots, double t, int i = 0, int p = 3);
 
 	bool savepoints(std::string name, const Eigen::MatrixXd &mat);
+
+	void vec_insert(Eigen::VectorXd &vec, double t);
 };
 
 namespace t_mesh{

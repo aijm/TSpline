@@ -22,6 +22,7 @@ public:
 	// aX' + bW + cY' = V
 	void update();
 
+	// 用于skinning过程中显示中间结果
 	void setViewer(Viewer* _viewer) {
 		viewer = _viewer;
 	}

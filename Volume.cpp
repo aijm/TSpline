@@ -3,7 +3,10 @@
 void Volume::draw(bool tmesh, bool polygon, bool surface, double resolution)
 {
 	assert(viewer != NULL); // use setViewer(Viewer* viewer)
-
+	if (id == -1) {
+		id = (*viewer).append_mesh();
+	}
+	(*viewer).selected_data_index = id;
 	if (tmesh) {
 		drawTmesh();
 		return;

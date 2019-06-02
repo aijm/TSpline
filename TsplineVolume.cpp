@@ -8,6 +8,7 @@ TsplineVolume::TsplineVolume(const TsplineVolume & other)
 		this->w_map[entry.first] = mesh;
 	}
 	this->w_knots = other.w_knots;
+	this->id = -1;
 }
 
 TsplineVolume::~TsplineVolume()
@@ -71,6 +72,17 @@ int TsplineVolume::saveVolume(string filename)
 	}
 	return 0;
 	
+}
+
+void TsplineVolume::insert(double w, Mesh3d * mesh)
+{
+	assert(w > 0.0 && w < 1.0);
+	if (w_map.find(w) != w_map.end()) {
+		cout << "knots " << w << " in w direction has existed!" << endl;
+		exit(1);
+	}
+	vec_insert(w_knots, w);
+	w_map[w] = mesh;
 }
 
 void TsplineVolume::drawTmesh()

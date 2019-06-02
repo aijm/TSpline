@@ -219,7 +219,7 @@ namespace t_mesh {
 			return true;
 		}
 	
-		void insert(Eigen::VectorXd &vec, double t) {
+		void vec_insert(Eigen::VectorXd &vec, double t) {
 			assert(t > vec(0) && t < vec(vec.size() - 1));
 			Eigen::VectorXd temp = vec;
 			vec.resize(temp.size() + 1);

@@ -4,7 +4,6 @@
 #include "Volume.h"
 class BsplineVolume :public Volume{
 public:
-
 	Point3d eval(double u, double v, double w) override;
 
 	int readVolume(string) override;

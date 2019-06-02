@@ -49,10 +49,10 @@ void Skinning::update()
 			auto temp_X = coeff_X[vknot];
 			auto temp_Y = coeff_Y[vknot];
 			temp_X.scale(-a); // -aX'
-			temp_Y.scale(-c); // -bY'
+			temp_Y.scale(-c); // -cY'
 			Point3d V;
 			V.fromVectorXd(curves[i].controlPw.row(j).transpose());
-			tspline.s_map[s_now][vknot]->data = V.add(temp_X).add(temp_Y).scale(1.0 / b); // W=(V-aX'-bY')/b
+			tspline.s_map[s_now][vknot]->data = V.add(temp_X).add(temp_Y).scale(1.0 / b); // W=(V-aX'-cY')/b
 		}
 
 	}

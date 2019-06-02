@@ -70,7 +70,7 @@ void Test::test_Mesh() {
 	Mesh3d* mesh = new Mesh3d();
 	mesh->loadMesh("../out/simpleMesh2.cfg");
 	Mesh3d* meshcopy = new Mesh3d(*mesh); // deep copy
-	meshcopy->saveMesh("../out/simpleMesh2_copy.cfg");
+	meshcopy->saveMesh("../out/simpleMesh2_copy");
 	delete mesh;
 	mesh = NULL;
 	MeshRender render(meshcopy);
@@ -80,10 +80,29 @@ void Test::test_Mesh() {
 
 void Test::test_VolumeSkinning()
 {
-	vector<Mesh3d> surfaces;
-	//vector<Mesh3d> a(surfaces);
-	VolumeSkinning vs(surfaces);
+	vector<Mesh3d> surfaces(2);
+	surfaces[0].loadMesh("../out/simpleMesh1.cfg");
+	surfaces[1].loadMesh("../out/simpleMesh2.cfg");
+	surfaces[0].setViewer(&Window::viewer);
+	surfaces[1].setViewer(&Window::viewer);
 
+	surfaces[0].draw(false, false, true);
+	surfaces[1].draw(false, false, true);
+	Window::viewer.data_list[1].set_colors(blue);
+	Window::viewer.data_list[2].set_colors(blue);
+	/*Window w;
+	w.launch();*/
+
+	/*BsplineVolume volume;
+	volume.readVolume("../out/venus_bspline.txt");
+	volume.setViewer(&Window::viewer);
+	volume.draw(false, false, true, 0.1);
+	Window::viewer.data_list[3].set_colors(green);*/
+
+	VolumeSkinning method(surfaces);
+	method.calculate();
+	VolumeRender w(&method.volume, false, false, true,0.01);
+	w.launch();
 }
 
 void Test::test_Skinning()

@@ -8,6 +8,7 @@ using namespace igl::opengl::glfw;
 using namespace t_mesh;
 class Volume {
 public:
+	Volume():id(-1){}
 	void setViewer(Viewer* viewer) {
 		this->viewer = viewer; // 在头文件中内联，若在cpp中用inline，会导致其他文件找不到定义
 	}
@@ -24,6 +25,7 @@ protected:
 
 protected:
 	Viewer* viewer;
+	int id;
 
 };
 

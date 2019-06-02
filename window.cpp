@@ -83,6 +83,7 @@ void Window::init()
 
 void Window::draw()
 {
+
 }
 
 void Window::launch()
