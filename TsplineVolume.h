@@ -2,8 +2,12 @@
 #define TSPLINEVOLUME_H
 #include "Volume.h"
 class TsplineVolume : public Volume{
+private:
+	TsplineVolume& operator=(const TsplineVolume&){}
 public:
-
+	TsplineVolume(){}
+	TsplineVolume(const TsplineVolume& other);
+	~TsplineVolume();
 	Point3d eval(double u, double v, double w) override;
 
 	int readVolume(string) override;

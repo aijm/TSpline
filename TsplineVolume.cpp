@@ -1,6 +1,23 @@
 #include "TsplineVolume.h"
 
 
+TsplineVolume::TsplineVolume(const TsplineVolume & other)
+{
+	for (auto entry : other.w_map) {
+		Mesh3d* mesh = new Mesh3d(*(entry.second));
+		this->w_map[entry.first] = mesh;
+	}
+	this->w_knots = other.w_knots;
+}
+
+TsplineVolume::~TsplineVolume()
+{
+	for (auto entry : w_map) {
+		delete entry.second;
+		entry.second = NULL;
+	}
+}
+
 Point3d TsplineVolume::eval(double u, double v, double w)
 {
 	Point3d res;
@@ -45,7 +62,10 @@ int TsplineVolume::saveVolume(string filename)
 		return -1;
 	}
 	out << w_knots.size() << endl;
-	out << w_knots.transpose() << endl;
+	for (int i = 0; i < w_knots.size(); i++) {
+		out << w_knots(i) << " ";
+	}
+	out << endl;
 	for (auto entry : w_map) {
 		entry.second->saveMesh(out);
 	}

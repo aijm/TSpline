@@ -15,7 +15,12 @@ namespace t_mesh{
 	using namespace igl::opengl::glfw;
     template<class T>
     class Mesh{
+		private:
+			Mesh& operator=(const Mesh&){}
         public:
+			Mesh(){}
+			Mesh(const Mesh& other);// deep copy
+			~Mesh();
             int loadMesh(string);
 			istream& loadMesh(istream&);
             int saveMesh(string);
@@ -393,7 +398,46 @@ namespace t_mesh{
 			  return res;
 		  }
 
-	template<class T>
+		  template<class T>
+		  inline Mesh<T>::Mesh(const Mesh & other)
+		  {
+			  this->nodes = other.nodes;
+			  for (int i = 0; i < other.nodes.size(); i++) {
+				  Node<T>* node = new Node<T>(*(other.nodes[i]));
+				  this->nodes[i] = node;
+				  this->s_map[node->s[2]][node->t[2]] = node;
+				  this->t_map[node->t[2]][node->s[2]] = node;
+			  }
+			  // 更改邻接关系
+			  for (int i = 0; i < this->nodes.size(); i++) {
+				  Node<T>* node = this->nodes[i];
+				  for (int j = 0; j < 4; j++) {
+					  Node<T>* other_node = other.nodes[i]->adj[j];
+					  if (other_node) {
+						  node->adj[j] = this->get_node(other_node->order);
+					  }
+					  else {
+						  node->adj[j] = NULL;
+					  }
+				  }
+			  }
+			  this->viewer = other.viewer;
+			  this->mesh_V = other.mesh_V;
+			  this->mesh_F = other.mesh_F;
+			  this->pool = other.pool;
+		  }
+
+		  template<class T>
+		  inline Mesh<T>::~Mesh()
+		  {
+			  // 析构所有new出的node
+			  for (int i = 0; i < nodes.size(); i++) {
+				  delete nodes[i];
+				  nodes[i] = NULL;
+			  }
+		  }
+
+		  template<class T>
 		  int Mesh<T>::loadMesh(string name) {
 			  ifstream in(name);
 			  if (!in.is_open()) {

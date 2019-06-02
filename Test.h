@@ -16,6 +16,7 @@
 #include "TsplineVolume.h"
 #include "BsplineVolume.h"
 #include "NURBSSurface.h"
+#include "VolumeSkinning.h"
 
 #include <nlopt.hpp>
 
@@ -33,6 +34,7 @@ public:
 	static void test_TsplineVolume();
 	static void test_BsplineVolume();
 	static void test_Mesh();
+	static void test_VolumeSkinning();
 	static void test_Skinning();
 	static void test_DerOfNurbs();
 	static void test_Lspia();
@@ -43,6 +45,9 @@ public:
 	static double myfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data);
 	static double myconstraint(const std::vector<double> &x, std::vector<double> &grad, void *data);
 	static void test_Nlopt();
+private:
+	static clock_t begin;
+	static clock_t end;
 
 };
 

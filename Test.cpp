@@ -1,5 +1,8 @@
 #include "Test.h"
 
+clock_t Test::begin;
+clock_t Test::end;
+
 void Test::test_nurbs()
 {
 	// bezier curve
@@ -34,33 +37,52 @@ void Test::test_nurbs()
 }
 
 void Test::test_TsplineVolume() {
-	TsplineVolume volume;
-	volume.readVolume("../out/test.vol");
-	VolumeRender render(&volume, false, false, true);
-	volume.saveAsHex("../out/test",0.1);
+	TsplineVolume* volume = new TsplineVolume();
+	volume->readVolume("../out/test.vol");
+
+	TsplineVolume volume_copy(*volume); // deep copy
+	delete volume;
+	volume = NULL;
+	VolumeRender render(&volume_copy, false, false, true);
+	volume_copy.saveVolume("../out/test_copy");
 	render.launch();
 }
 void Test::test_BsplineVolume()
 {
 	BsplineVolume volume;
-	//volume.readVolume("../out/venus_bspline.txt");
+	begin = clock();
+	volume.readVolume("../out/venus_bspline.txt");
 	//volume.readVolume("../out/balljoint_bspline.txt");
 	//volume.readVolume("../out/isis_bspline.txt");
-	volume.readVolume("../out/moai_bspline.txt");
+	//volume.readVolume("../out/moai_bspline.txt");
 	//volume.readVolume("../out/tooth_bspline.txt");
 	VolumeRender render(&volume, false, false, true, 0.01);
 	/*volume.saveAsHex("../out/tooth_bspline", 0.1);
 	volume.saveVolume("../out/tooth_bspline");*/
+	
+	
 	render.launch();
+	end = clock();
+	cout << "time passed: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
 }
 void Test::test_Mesh() {
 
-	Mesh3d mesh;
-	mesh.loadMesh("../out/simpleMesh2.cfg");
-
-
-	MeshRender render(&mesh);
+	Mesh3d* mesh = new Mesh3d();
+	mesh->loadMesh("../out/simpleMesh2.cfg");
+	Mesh3d* meshcopy = new Mesh3d(*mesh); // deep copy
+	meshcopy->saveMesh("../out/simpleMesh2_copy.cfg");
+	delete mesh;
+	mesh = NULL;
+	MeshRender render(meshcopy);
 	render.launch();
+
+}
+
+void Test::test_VolumeSkinning()
+{
+	vector<Mesh3d> surfaces;
+	//vector<Mesh3d> a(surfaces);
+	VolumeSkinning vs(surfaces);
 
 }
 
