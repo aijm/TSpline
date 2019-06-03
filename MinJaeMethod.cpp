@@ -111,7 +111,7 @@ void MinJaeMethod::calculate()
 	update();
 	
 	// 5. 迭代更新中间点坐标
-	double error = 1.0;
+	/*double error = 1.0;
 	for (int i = 0; i < maxIterNum; i++) {
 		error = inter_update();
 		update();
@@ -119,7 +119,7 @@ void MinJaeMethod::calculate()
 		if (error < eps) {
 			break;
 		}
-	}
+	}*/
 }
 
 /**
@@ -154,8 +154,8 @@ void MinJaeMethod::inter_init()
 			
 		}
 
-		/*(*viewer).data().add_points(sample_inter1, green);
-		(*viewer).data().add_points(sample_inter2, green);*/
+		(*viewer).data().add_points(sample_inter1, green);
+		(*viewer).data().add_points(sample_inter2, green);
 	
 		// fit sample points by B-spline using LSPIA with appointed knot vector
 		// the control points of B-Spline is the initial X,Y

@@ -3,6 +3,118 @@
 clock_t Test::begin;
 clock_t Test::end;
 
+void Test::test_generate_curves()
+{
+	BsplineVolume volume;
+	volume.readVolume("../out/venus_bspline.txt");
+	const int curves_num = volume.knot_vector[2].size() - 6;
+	vector<NURBSCurve> curves(curves_num);
+
+	uniform_int_distribution<unsigned> u(15, 30);
+	default_random_engine e;
+	default_random_engine e1;
+	uniform_real_distribution<double> u1(0, 1);
+
+	for (int i = 0; i < curves_num; i++) {
+		int sampleNum = u(e);
+		cout << i << " sample " << sampleNum << " points" << endl;
+		Eigen::MatrixXd points(sampleNum+2, 3);
+		double z = volume.knot_vector[2](i + 3);
+
+		vector<double> x_coors;
+		x_coors.push_back(0);
+		x_coors.push_back(1);
+		
+		for (int j = 0; j < sampleNum; j++) {
+			x_coors.push_back(u1(e1));
+		}
+		sort(x_coors.begin(), x_coors.end());
+		for (int j = 0; j < x_coors.size(); j++) {
+			points.row(j) = volume.eval(x_coors[j], 0, z).toVectorXd();
+		}
+		curves[i].interpolate(points);
+		curves[i].saveNURBS("../out/nurbs/venus_curve_" + to_string(i));
+		curves[i].draw(Window::viewer, false, true);
+		/*if (i == curves_num / 2) {
+			Window::viewer.core.align_camera_center(points);
+		}*/
+	}
+
+
+	//Skinning* method = new PiaMethod(curves, 1000);
+	Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new OptMethod(curves);
+	//Skinning* method = new PiaMinJaeMethod(curves, 1000);
+	//Skinning* method = new PiaNasriMethod(curves, 1000);
+	//Skinning* method = new MinJaeMethod(curves, 20, 0);
+
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	Mesh3d* mesh = &(method->tspline);
+	cout << "num of nodes: " << mesh->get_num() << endl;
+
+	mesh->saveMesh("../out/venus_skinning");
+	MeshRender render(mesh);
+	render.launch();
+
+}
+
+void Test::test_generate_curves1()
+{
+	BsplineVolume volume;
+	volume.readVolume("../out/venus_bspline.txt");
+	const double resolution = 0.05;
+	const int curves_num = 1.0 / resolution + 1;
+	vector<NURBSCurve> curves(curves_num);
+
+	uniform_int_distribution<unsigned> u(15, 30);
+	default_random_engine e;
+	default_random_engine e1;
+	uniform_real_distribution<double> u1(0, 1);
+
+	for (int i = 0; i < curves_num; i++) {
+		int sampleNum = u(e);
+		cout << i << " sample " << sampleNum << " points" << endl;
+		Eigen::MatrixXd points(sampleNum + 2, 3);
+		double z = i*resolution;
+
+		vector<double> x_coors;
+		x_coors.push_back(0);
+		x_coors.push_back(1);
+
+		for (int j = 0; j < sampleNum; j++) {
+			x_coors.push_back(u1(e1));
+		}
+		sort(x_coors.begin(), x_coors.end());
+		for (int j = 0; j < x_coors.size(); j++) {
+			points.row(j) = volume.eval(x_coors[j], 0, z).toVectorXd();
+		}
+		curves[i].interpolate(points);
+		curves[i].saveNURBS("../out/nurbs/venus_curve_1_" + to_string(i));
+		curves[i].draw(Window::viewer, false, true,0.001);
+		/*if (i == curves_num / 2) {
+		Window::viewer.core.align_camera_center(points);
+		}*/
+	}
+
+
+	//Skinning* method = new PiaMethod(curves, 1000);
+	Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new OptMethod(curves);
+	//Skinning* method = new PiaMinJaeMethod(curves, 1000);
+	//Skinning* method = new PiaNasriMethod(curves, 1000);
+	//Skinning* method = new MinJaeMethod(curves, 50, 0);
+
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	Mesh3d* mesh = &(method->tspline);
+	cout << "num of nodes: " << mesh->get_num() << endl;
+
+	mesh->saveMesh("../out/venus_skinning1");
+	MeshRender render(mesh,false,true,true,0.001);
+	render.launch();
+}
+
 void Test::test_nurbs()
 {
 	// bezier curve
@@ -80,25 +192,22 @@ void Test::test_Mesh() {
 
 void Test::test_VolumeSkinning()
 {
-	vector<Mesh3d> surfaces(2);
+	vector<Mesh3d> surfaces(3);
 	surfaces[0].loadMesh("../out/simpleMesh1.cfg");
 	surfaces[1].loadMesh("../out/simpleMesh2.cfg");
+	surfaces[2].loadMesh("../out/simpleMesh3.cfg");
 	surfaces[0].setViewer(&Window::viewer);
 	surfaces[1].setViewer(&Window::viewer);
+	surfaces[2].setViewer(&Window::viewer);
 
 	surfaces[0].draw(false, false, true);
 	surfaces[1].draw(false, false, true);
+	surfaces[2].draw(false, false, true);
 	Window::viewer.data_list[1].set_colors(blue);
 	Window::viewer.data_list[2].set_colors(blue);
+	Window::viewer.data_list[3].set_colors(blue);
 	/*Window w;
 	w.launch();*/
-
-	/*BsplineVolume volume;
-	volume.readVolume("../out/venus_bspline.txt");
-	volume.setViewer(&Window::viewer);
-	volume.draw(false, false, true, 0.1);
-	Window::viewer.data_list[3].set_colors(green);*/
-
 	VolumeSkinning method(surfaces);
 	method.calculate();
 	VolumeRender w(&method.volume, false, false, true,0.01);
@@ -114,11 +223,11 @@ void Test::test_Skinning()
 	nurbs[2].loadNURBS("../out/nurbs/circle2.cptw");
 	nurbs[3].loadNURBS("../out/nurbs/circle3.cptw");
 
-
 	nurbs[0].draw(Window::viewer, false);
 	nurbs[1].draw(Window::viewer, false);
 	nurbs[2].draw(Window::viewer, false);
 	nurbs[3].draw(Window::viewer, false);
+	
 	//Skinning* method = new MinJaeMethod(nurbs, 100, 10);
 	//Skinning* method = new PiaMethod(nurbs, 1000);
 	Skinning* method = new NasriMethod(nurbs);
@@ -130,12 +239,8 @@ void Test::test_Skinning()
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
-	for (auto node : mesh->nodes) {
-		Point3d temp = node->data;
-		temp[0] += 6;
-		node->data = temp;
-	}
-	mesh->saveMesh("../out/simpleMesh2");
+	
+	//mesh->saveMesh("../out/simpleMesh4");
 	MeshRender render(mesh);
 	render.launch();
 

@@ -14,6 +14,7 @@ public:
 
 public:
 	void sample_fitPoints() override;
+	void pia() override;
 };
 
 #endif // !PIAMINJAEMETHOD_H

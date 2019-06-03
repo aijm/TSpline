@@ -13,7 +13,7 @@ private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;
 
-private:
+public:
 	vector<vector<vector<Point3d>>> control_grid;
 	vector<Eigen::VectorXd> knot_vector;
 	

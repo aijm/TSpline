@@ -148,3 +148,33 @@ void PiaNasriMethod::sample_fitPoints()
 	}
 	cout << "number of points: " << fitPoints.size() << endl;
 }
+
+void PiaNasriMethod::pia()
+{
+	for (int i = 0; i < maxIterNum; i++) {
+		// 计算差向量并更新曲面控制点
+		for (auto node : tspline.nodes) {
+			if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
+				continue;
+			}
+			double sum1 = 0;
+			Point3d sum2;
+			for (FitPoint point : fitPoints) {
+				double blend = node->basis(point.u, point.v);
+				sum1 += blend;
+				Point3d delta = point.origin - point.eval;
+				delta.scale(blend);
+				sum2.add(delta);
+			}
+			sum2.scale(1.0 / sum1); // 差向量
+			node->data.add(sum2); // 更新坐标	
+		}
+
+		fit();
+		cout << "iter: " << i + 1 << ", error: " << error << endl;
+		if (error < eps) {
+			break;
+		}
+
+	}
+}

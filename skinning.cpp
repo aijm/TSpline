@@ -3,7 +3,7 @@
 void Skinning::parameterize()
 {
 	// 1. compute s-knot for curves
-	assert(curves.size() > 0);
+	/*assert(curves.size() > 0);
 	const int dimension = curves[0].controlPw.cols();
 
 	MatrixXd u_cpts(curves_num, dimension);
@@ -13,7 +13,14 @@ void Skinning::parameterize()
 	s_knots = NURBSCurve::parameterize(u_cpts);
 	s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
 
-	cout << "s_knots: " << s_knots.transpose() << endl;
+	cout << "s_knots: " << s_knots.transpose() << endl;*/
+
+	// 均匀参数化
+	s_knots = Eigen::VectorXd::Zero(curves_num);
+	for (int i = 0; i < curves.size(); i++) {
+		s_knots(i) = 1.0*i / (curves_num-1);
+	}
+	s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
 }
 
 void Skinning::update()

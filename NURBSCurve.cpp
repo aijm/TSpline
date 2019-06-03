@@ -426,7 +426,7 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const
 	const int m = points.rows() - 1;
 	this->n = n_cpts - 1;
 	const int dimension = points.cols();
-	controlPw = MatrixXd(n_cpts, dimension);
+	controlPw = Eigen::MatrixXd::Zero(n_cpts, dimension);
 	
 	//VectorXd params = parameterize(points);
 
@@ -459,7 +459,7 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const
 				error += (points.row(j) - points_eval.row(j)).norm();
 			}
 			error /= points.rows();
-			//cout << "iter: " << iter + 1 << ", error: " << error << endl;
+			cout << "iter: " << iter + 1 << ", error: " << error << endl;
 			if (error < eps) {
 				break;
 			}

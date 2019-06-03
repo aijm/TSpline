@@ -15,8 +15,8 @@ public:
 
 public:
 	void sample_fitPoints() override;
-	/*virtual void fit();
-	virtual void pia();*/
+	//virtual void fit();
+	void pia() override;
 };
 #endif // !PIANASRIMETHOD_H
 

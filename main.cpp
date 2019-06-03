@@ -15,7 +15,9 @@ int main(int argc,char** argv){
 	//Test::test_TsplineVolume();
 	//Test::test_BsplineVolume();
 	//Test::test_nurbs();
-	Test::test_VolumeSkinning();
+	//Test::test_VolumeSkinning();
+	//Test::test_generate_curves();
+	Test::test_generate_curves1();
     return 0;
 }
 

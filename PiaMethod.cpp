@@ -121,7 +121,7 @@ void PiaMethod::pia()
 	for (int i = 0; i < maxIterNum; i++) {
 		// 计算差向量并更新曲面控制点
 		for (auto node : tspline.nodes) {
-			if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
+			if (node->s[2] <= 0.0000 || node->s[2] >= 1.0000) {
 				continue;
 			}
 			double sum1 = 0;
@@ -133,7 +133,11 @@ void PiaMethod::pia()
 				delta.scale(blend);
 				sum2.add(delta);
 			}
-			sum2.scale(1.0 / sum1); // 差向量
+			double factor = 0.0;
+			if (abs(sum1) > 0.0001) {
+				factor = 1.0 / sum1;
+			}
+			sum2.scale(factor); // 差向量
 			node->data.add(sum2); // 更新坐标	
 		}
 

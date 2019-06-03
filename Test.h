@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include <random>
 #include<fstream>
 #include<sstream>
 #include<cstdlib>
@@ -30,6 +31,8 @@ typedef struct {
 
 class Test {
 public:
+	static void test_generate_curves();
+	static void test_generate_curves1();
 	static void test_nurbs();
 	static void test_TsplineVolume();
 	static void test_BsplineVolume();

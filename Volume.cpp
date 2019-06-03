@@ -90,6 +90,28 @@ void Volume::drawVolume(double resolution)
 			}
 		}
 	}
+	// 画出8个点
+	Eigen::MatrixXd corner(8, 3);
+	corner.row(0) = V.row(0);
+	corner.row(1) = V.row(n);
+	corner.row(2) = V.row(n*n1);
+	corner.row(3) = V.row(n*n1+n);
+	corner.row(4) = V.row(n*n1*n1);
+	corner.row(5) = V.row(n*n1*n1+n);
+	corner.row(6) = V.row(n*n1*n1+n*n1);
+	corner.row(7) = V.row(n1*n1*n1-1);
+
+	(*viewer).data().add_label(corner.row(0), "000");
+	(*viewer).data().add_label(corner.row(1), "100");
+	(*viewer).data().add_label(corner.row(2), "010");
+	(*viewer).data().add_label(corner.row(3), "110");
+	(*viewer).data().add_label(corner.row(4), "001");
+	(*viewer).data().add_label(corner.row(5), "101");
+	(*viewer).data().add_label(corner.row(6), "011");
+	(*viewer).data().add_label(corner.row(7), "111");
+
+	(*viewer).data().add_points(corner, red);
+
 	// 画出六个面
 	int f_id = 0;
 	for (int j = 0; j < n; j++) {
