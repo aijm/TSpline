@@ -188,51 +188,51 @@ namespace t_mesh {
 	}
 
 
-		bool loadpoints(string name, Eigen::MatrixXd &mat) {
-			ifstream in(name);
-			if (!in) {
-				cout << "error: can't open file" + name << endl;
-				return false;
-			}
-			int rows = 0;
-			int cols = 0;
-			in >> rows >> cols;
-			mat = Eigen::MatrixXd(rows, cols);
-			for (int i = 0; i < mat.rows(); i++) {
-				for (int j = 0; j < mat.cols(); j++) {
-					in >> mat(i, j);
-				}
-			}
-			cout << "matrix: \n" << mat << endl;
-			return true;
+	bool loadpoints(std::string name, Eigen::MatrixXd &mat) {
+		ifstream in(name);
+		if (!in.is_open()) {
+			cout << "error: can't open file: " + name << endl;
+			return false;
 		}
-	
-		bool savepoints(string name, const Eigen::MatrixXd &mat) {
-			ofstream out(name);
-			if (!out) {
-				cout << "error: can't open file" + name << endl;
-				return false;
+		int rows = 0;
+		int cols = 0;
+		in >> rows >> cols;
+		mat = Eigen::MatrixXd(rows, cols);
+		for (int i = 0; i < mat.rows(); i++) {
+			for (int j = 0; j < mat.cols(); j++) {
+				in >> mat(i, j);
 			}
-			out << mat.rows() << " " << mat.cols() << endl;
-			out << mat;
-			//cout << "matrix: \n" << mat << endl;
-			return true;
 		}
+		//cout << "matrix: \n" << mat << endl;
+		return true;
+	}
 	
-		void vec_insert(Eigen::VectorXd &vec, double t) {
-			assert(t > vec(0) && t < vec(vec.size() - 1));
-			Eigen::VectorXd temp = vec;
-			vec.resize(temp.size() + 1);
-			int i = 0;
-			while (i < temp.size() && temp(i) <= t) {
-				vec(i) = temp(i);
-				i++;
-			}
-			vec(i) = t;
-			while (i < temp.size()) {
-				vec(i + 1) = temp(i);
-				i++;
-			}
-	
+	bool savepoints(string name, const Eigen::MatrixXd &mat) {
+		name += ".dat";
+		ofstream out(name);
+		if (!out.is_open()) {
+			cout << "error: can't open file: " + name << endl;
+			return false;
 		}
+		out << mat.rows() << " " << mat.cols() << endl;
+		out << mat;
+		//cout << "matrix: \n" << mat << endl;
+		return true;
+	}
+	
+	void vec_insert(Eigen::VectorXd &vec, double t) {
+		assert(t > vec(0) && t < vec(vec.size() - 1));
+		Eigen::VectorXd temp = vec;
+		vec.resize(temp.size() + 1);
+		int i = 0;
+		while (i < temp.size() && temp(i) <= t) {
+			vec(i) = temp(i);
+			i++;
+		}
+		vec(i) = t;
+		while (i < temp.size()) {
+			vec(i + 1) = temp(i);
+			i++;
+		}
+	}
 }

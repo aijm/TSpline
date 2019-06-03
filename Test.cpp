@@ -34,19 +34,16 @@ void Test::test_generate_curves()
 		}
 		curves[i].interpolate(points);
 		curves[i].saveNURBS("../out/nurbs/venus_curve_" + to_string(i));
-		curves[i].draw(Window::viewer, false, true);
-		/*if (i == curves_num / 2) {
-			Window::viewer.core.align_camera_center(points);
-		}*/
+		curves[i].draw(Window::viewer, false, true, 0.001);
 	}
 
 
 	//Skinning* method = new PiaMethod(curves, 1000);
-	Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
 	//Skinning* method = new PiaMinJaeMethod(curves, 1000);
 	//Skinning* method = new PiaNasriMethod(curves, 1000);
-	//Skinning* method = new MinJaeMethod(curves, 20, 0);
+	Skinning* method = new MinJaeMethod(curves, 40, 20);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
@@ -54,7 +51,7 @@ void Test::test_generate_curves()
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/venus_skinning");
-	MeshRender render(mesh);
+	MeshRender render(mesh, false, false, true, 0.01);
 	render.launch();
 
 }
@@ -63,7 +60,7 @@ void Test::test_generate_curves1()
 {
 	BsplineVolume volume;
 	volume.readVolume("../out/venus_bspline.txt");
-	const double resolution = 0.05;
+	const double resolution = 0.1;
 	const int curves_num = 1.0 / resolution + 1;
 	vector<NURBSCurve> curves(curves_num);
 
@@ -92,18 +89,13 @@ void Test::test_generate_curves1()
 		curves[i].interpolate(points);
 		curves[i].saveNURBS("../out/nurbs/venus_curve_1_" + to_string(i));
 		curves[i].draw(Window::viewer, false, true,0.001);
-		/*if (i == curves_num / 2) {
-		Window::viewer.core.align_camera_center(points);
-		}*/
 	}
-
-
 	//Skinning* method = new PiaMethod(curves, 1000);
-	Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	//Skinning* method = new PiaMinJaeMethod(curves, 1000);
+	Skinning* method = new PiaMinJaeMethod(curves, 1000);
 	//Skinning* method = new PiaNasriMethod(curves, 1000);
-	//Skinning* method = new MinJaeMethod(curves, 50, 0);
+	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
@@ -111,7 +103,7 @@ void Test::test_generate_curves1()
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/venus_skinning1");
-	MeshRender render(mesh,false,true,true,0.001);
+	MeshRender render(mesh,false,false,true,0.01);
 	render.launch();
 }
 
@@ -219,8 +211,8 @@ void Test::test_Skinning()
 
 	vector<NURBSCurve> nurbs(4);
 	nurbs[0].loadNURBS("../out/nurbs/circle.cptw");
-	nurbs[1].loadNURBS("../out/nurbs/circle1.cptw");
-	nurbs[2].loadNURBS("../out/nurbs/circle2.cptw");
+	nurbs[1].loadNURBS("../out/nurbs/circle1_1.cptw");
+	nurbs[2].loadNURBS("../out/nurbs/circle2_1.cptw");
 	nurbs[3].loadNURBS("../out/nurbs/circle3.cptw");
 
 	nurbs[0].draw(Window::viewer, false);
@@ -228,9 +220,9 @@ void Test::test_Skinning()
 	nurbs[2].draw(Window::viewer, false);
 	nurbs[3].draw(Window::viewer, false);
 	
-	//Skinning* method = new MinJaeMethod(nurbs, 100, 10);
+	Skinning* method = new MinJaeMethod(nurbs, 20, 50);
 	//Skinning* method = new PiaMethod(nurbs, 1000);
-	Skinning* method = new NasriMethod(nurbs);
+	//Skinning* method = new NasriMethod(nurbs);
 	//Skinning* method = new OptMethod(nurbs);
 	//Skinning* method = new PiaMinJaeMethod(nurbs, 1000);
 	//Skinning* method = new PiaNasriMethod(nurbs, 1000);
@@ -283,20 +275,18 @@ void Test::test_DerOfNurbs() {
 	w.launch();
 }
 void Test::test_Lspia() {
-	NURBSCurve nurbs;
-	nurbs.loadNURBS("../out/nurbs/circle.cptw");
-	const int sampleNum = 100;
-	MatrixXd points(sampleNum + 1, nurbs.controlPw.cols());
-	VectorXd params(points.rows());
-	for (int i = 0; i <= sampleNum; i++) {
-		params(i) = 1.0*i / sampleNum;
-		points.row(i) = nurbs.eval(params(i));
-	}
-	NURBSCurve fit;
-	fit.lspiafit(points, params, nurbs.controlPw.rows(), nurbs.knots, 1000);
+	MatrixXd points;
+	t_mesh::loadpoints("../out/points/helix.dat", points);
+	
+	
 
-	nurbs.draw(Window::viewer);
-	fit.draw(Window::viewer);
+	NURBSCurve fit;
+	fit.lspiafit(points, 10);
+
+	fit.draw(Window::viewer, true,true,0.001);
+
+	Window::viewer.data().add_points(points, red);
+
 	Window w;
 	w.launch();
 }

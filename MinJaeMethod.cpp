@@ -111,7 +111,7 @@ void MinJaeMethod::calculate()
 	update();
 	
 	// 5. 迭代更新中间点坐标
-	/*double error = 1.0;
+	double error = 1.0;
 	for (int i = 0; i < maxIterNum; i++) {
 		error = inter_update();
 		update();
@@ -119,7 +119,7 @@ void MinJaeMethod::calculate()
 		if (error < eps) {
 			break;
 		}
-	}*/
+	}
 }
 
 /**
@@ -153,19 +153,38 @@ void MinJaeMethod::inter_init()
 			sample_inter2.row(j) = 2.0 / 3 * next_coor + 1.0 / 3 * now_coor;
 			
 		}
+		//(*viewer).data().add_points(sample_inter1, green);
+		//(*viewer).data().add_points(sample_inter2, green);
 
-		(*viewer).data().add_points(sample_inter1, green);
-		(*viewer).data().add_points(sample_inter2, green);
 	
 		// fit sample points by B-spline using LSPIA with appointed knot vector
 		// the control points of B-Spline is the initial X,Y
-		NURBSCurve inter1, inter2;
-		inter1.lspiafit(sample_inter1, params, curves[i].n + 1, curves[i].knots, 500);
-	
-		inter2.lspiafit(sample_inter2, params, curves[i + 1].n + 1, curves[i + 1].knots, 500);
+		VectorXd knots1 = curves[i].knots;
+		knots1(3) = 0.0001; knots1(curves[i].n + 1) = 0.9999;
 
-		inter1.draw(*viewer, false);
-		inter2.draw(*viewer, false);
+		VectorXd knots2 = curves[i + 1].knots;
+		knots2(3) = 0.0001; knots2(curves[i+1].n + 1) = 0.9999;
+
+		MatrixXd cpts1(curves[i].n + 1, 3);
+		MatrixXd cpts2(curves[i+1].n + 1, 3);
+		for (int j = 0; j <= curves[i].n; j++) {
+
+			cpts1.row(j) = tspline.s_map[s_inter1][knots1(j+2)]->data.toVectorXd();
+		}
+		for (int j = 0; j <= curves[i+1].n; j++) {
+			cpts2.row(j) = tspline.s_map[s_inter2][knots2(j+2)]->data.toVectorXd();
+		}
+		NURBSCurve inter1, inter2;
+		inter1.lspiafit(sample_inter1, params, cpts1, curves[i].knots, 100);
+	
+		inter2.lspiafit(sample_inter2, params, cpts2, curves[i + 1].knots, 100);
+
+	
+		/*inter1.draw(*viewer, false, true, 0.001);
+		inter2.draw(*viewer, false, true, 0.001);*/
+		
+		
+		
 
 		inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
 		inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;
@@ -238,10 +257,27 @@ double MinJaeMethod::inter_update()
 	
 	
 		// fit sample points by B-spline using LSPIA with appointed knot vector
+
+		VectorXd knots1 = curves[i].knots;
+		knots1(3) = 0.0001; knots1(curves[i].n + 1) = 0.9999;
+
+		VectorXd knots2 = curves[i + 1].knots;
+		knots2(3) = 0.0001; knots2(curves[i + 1].n + 1) = 0.9999;
+
+		MatrixXd cpts1(curves[i].n + 1, 3);
+		MatrixXd cpts2(curves[i + 1].n + 1, 3);
+		for (int j = 0; j <= curves[i].n; j++) {
+
+			cpts1.row(j) = tspline.s_map[s_inter1][knots1(j + 2)]->data.toVectorXd();
+		}
+		for (int j = 0; j <= curves[i + 1].n; j++) {
+			cpts2.row(j) = tspline.s_map[s_inter2][knots2(j + 2)]->data.toVectorXd();
+		}
+
 		NURBSCurve inter1, inter2;
-		inter1.lspiafit(T_inter1, params, curves[i].n + 1, curves[i].knots, 500);
+		inter1.lspiafit(T_inter1, params, cpts1, curves[i].knots, 100);
 	
-		inter2.lspiafit(T_inter2, params, curves[i + 1].n + 1, curves[i + 1].knots, 500);
+		inter2.lspiafit(T_inter2, params, cpts2, curves[i + 1].knots, 100);
 	
 		inter1.knots(3) = 0.0001; inter1.knots(inter1.n + 1) = 0.9999;
 		inter2.knots(3) = 0.0001; inter2.knots(inter2.n + 1) = 0.9999;

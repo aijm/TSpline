@@ -49,8 +49,7 @@ struct NURBSCurve
 	// chord length parameterization
 	static VectorXd parameterize(const MatrixXd &points);
 	// basis function N_(i,p)(t)
-	double basis(int i, int p, double t, const VectorXd &knotvector);
-
+	double Basis(const VectorXd &_knots, double _t, int _i = 0, int _p = 3);
 	// interpolate by bspline of degree 3
 	void interpolate(const MatrixXd &points);
 
@@ -64,10 +63,14 @@ struct NURBSCurve
 	void piafit(const MatrixXd &points, const VectorXd &knotvector, int max_iter_num = 100, double eps = 1e-5);
 
 	// given Q_0,...,Q_m, fit by B-spline with control points P_0,...,P_n
-	void lspiafit(const MatrixXd & points, const int &n_cpts, int max_iter_num = 100, double eps = 1e-5);
+	void lspiafit(const MatrixXd & points, int n_cpts, int max_iter_num = 100, double eps = 1e-5);
 
 	// lspia fit with appointed knot vector
-	void lspiafit(const MatrixXd & points, const VectorXd& params, const int &n_cpts, const VectorXd & knotvector, int max_iter_num = 100, double eps = 1e-5);
+	void lspiafit(const MatrixXd & points, const VectorXd& params, int n_cpts, const VectorXd & knotvector, int max_iter_num = 100, double eps = 1e-5);
+
+	// lspia fit with appointed knot vector
+	void lspiafit(const MatrixXd & points, const VectorXd& params, const MatrixXd& cpts, const VectorXd & knotvector, int max_iter_num = 100, double eps = 1e-5);
+
 
 	// kont insertion
 	bool insert(double t);

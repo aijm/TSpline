@@ -109,7 +109,7 @@ void PiaMinJaeMethod::calculate()
 
 void PiaMinJaeMethod::sample_fitPoints()
 {
-	const int sampleNum = 50;
+	const int sampleNum = 10;
 	for (int i = 1; i < curves_num - 1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
 			FitPoint point;
@@ -183,7 +183,11 @@ void PiaMinJaeMethod::pia()
 				delta.scale(blend);
 				sum2.add(delta);
 			}
-			sum2.scale(1.0 / sum1); // 差向量
+			double factor = 0.0;
+			if (abs(sum1) > 0.0001) {
+				factor = 1.0 / sum1;
+			}
+			sum2.scale(factor); // 差向量
 			node->data.add(sum2); // 更新坐标	
 		}
 

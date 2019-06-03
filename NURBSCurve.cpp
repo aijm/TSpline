@@ -134,32 +134,70 @@ VectorXd NURBSCurve::parameterize(const MatrixXd & points)
 	return params;
 }
 
-double NURBSCurve::basis(int i,int p, double t,const VectorXd &knotvector)
+
+
+double NURBSCurve::Basis(const VectorXd & _knots, double _t, int _i, int _p)
 {
-	//cout << "knotvector:\n" << knotvector.transpose() << endl;
-	//int p = knotvector.size() - 1;
-	assert(p >= 1);
-	if (t<knotvector(i) || t>knotvector(i + p)) {
-		return 0.0;
-	}
-	if (p > 1 && t == knotvector(i + p) && t == knotvector(i + 1)) {
-		return 1.0;
-	}
-	if (p == 1) {
-		if (t >= knotvector(i)&& t < knotvector(i+1)) {
+	const int m = _knots.size() - 1;
+	// 特殊情况
+	if (_i == 0) {
+		int count = 0;
+		for (int j = 0; j <= _p; j++) {
+			if (abs(_knots(j) - _t) <= 0.0001) {
+				count++;
+			}
+		}
+		if (count == _p + 1) {
 			return 1.0;
 		}
-		else {
-			return 0.0;
+	}
+	if (_i == m - _p - 1) {
+		int count = 0;
+		for (int j = 0; j <= _p; j++) {
+			if (abs(_knots(_i + j + 1) - _t) <= 0.0001) {
+				count++;
+			}
+		}
+		if (count == _p + 1) {
+			return 1.0;
 		}
 	}
 	
-	double a = knotvector(i+p-1) - knotvector(i);
-	double b = knotvector(i+p) - knotvector(i+1);
-	a = (a == 0.0) ? 0.0 : (t - knotvector(i)) / a;
-	b = (b == 0.0) ? 0.0 : (knotvector(i+p) - t) / b;
-	return a*basis(i,p-1,t,knotvector) + b*basis(i+1,p-1,t,knotvector);
-	
+	// 根据局部性
+	if (_t < _knots(_i) || _t >= _knots(_i + _p + 1)) {
+		return 0.0;
+	}
+	Eigen::VectorXd N(_p + 1);
+	// 初始化0次的基函数
+	for (int j = 0; j <= _p; j++) {
+		if (_t >= _knots(_i + j) && _t < _knots(_i + j + 1)) N(j) = 1.0;
+		else N(j) = 0.0;
+	}
+	//cout << "N: \n" << N << endl;
+
+	// 计算三角形表
+	for (int k = 1; k <= _p; k++) {
+		//cout << "k=1:" << endl;
+		double saved = 0.0;
+		if (N(0) == 0.0) saved = 0.0;
+		else saved = (_t - _knots(_i)) * N(0) / (_knots(_i + k) - _knots(_i));
+
+		for (int j = 0; j < _p - k + 1; j++) {
+			double Uleft = _knots(_i + j + 1);
+			double Uright = _knots(_i + j + k + 1);
+			if (N(j + 1) == 0.0) {
+				N(j) = saved;
+				saved = 0.0;
+			}
+			else {
+				double temp = N(j + 1) / (Uright - Uleft);
+				N(j) = saved + (Uright - _t) * temp;
+				saved = (_t - Uleft) * temp;
+			}
+			//cout << N(j) << endl;
+		}
+	}
+	return N(0);
 }
 
 void NURBSCurve::interpolate(const MatrixXd &points)
@@ -191,20 +229,12 @@ void NURBSCurve::interpolate(const MatrixXd &points)
 	controlPw.row(0) = points.row(0);
 	controlPw.row(K + 2) = points.row(K);
 
+	
 	//// solve linear equation: AX = b
-	//VectorXd d0 = (1.0 / (params(0) - params(1)) + 1.0 / (params(0) - params(2)))*points.row(0)
-	//			+ (1.0 / (params(1) - params(0)) + 1.0 / (params(2) - params(1)))*points.row(1)
-	//			+ (1.0 / (params(2) - params(0)) + 1.0 / (params(2) - params(1)))*points.row(2);
-
-	//VectorXd dK = (1.0 / (params(K) - params(K-1)) + 1.0 / (params(K) - params(K-2)))*points.row(K)
-	//	+ (1.0 / (params(K-1) - params(K)) + 1.0 / (params(K-2) - params(K-1)))*points.row(K-1)
-	//	+ (1.0 / (params(K-1) - params(K-2)) - 1.0 / (params(K) - params(K-2)))*points.row(K-2);
 	MatrixXd X(K + 1, points.cols()); //X_1,...,X_(K+1)
 	MatrixXd A = MatrixXd::Zero(K + 1, K + 1);
 	
 	MatrixXd b = points;
-	/*b.row(0) += (params(1) - params(0)) / 3 * d0;
-	b.row(K) -= (params(K) - params(K - 1)) / 3 * dK;*/
 
 	//A(0, 0) = A(K, K) = 1.0;
 	double delta0 = params(1) - params(0);
@@ -218,10 +248,9 @@ void NURBSCurve::interpolate(const MatrixXd &points)
 
 
 	for (int i = 1; i <= K - 1; i++) {
-		A(i, i - 1) = basis(i, 4, params(i), knots);
-		A(i, i) = basis(i + 1, 4, params(i), knots);
-		//cout << "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii:" << i << endl;
-		A(i, i + 1) = basis(i + 2, 4, params(i), knots);
+		A(i, i - 1) = Basis(knots, params(i), i);
+		A(i, i) = Basis(knots, params(i), i+1);
+		A(i, i + 1) = Basis(knots, params(i), i + 2);
 
 	}
 	//cout << "A:\n" << A << endl;
@@ -242,8 +271,7 @@ void NURBSCurve::interpolate(const MatrixXd &points, const VectorXd &knotvector)
 	
 	knots = knotvector;
 	VectorXd params = knots.block(3, 0, K + 1, 1);
-	/*knots.block(3, 0, K + 1, 1) = params;
-	knots(K + 6) = 1.0; knots(K + 5) = 1.0; knots(K + 4) = 1.0;*/
+
 	//cout << "knots:\n" << knots << endl;
 	isRational = false;
 	if (points.cols() == 4) {
@@ -256,19 +284,11 @@ void NURBSCurve::interpolate(const MatrixXd &points, const VectorXd &knotvector)
 	controlPw.row(K + 2) = points.row(K);
 
 	// solve linear equation: AX = b
-	/*VectorXd d0 = (1.0 / (params(0) - params(1)) + 1.0 / (params(0) - params(2)))*points.row(0)
-		+ (1.0 / (params(1) - params(0)) + 1.0 / (params(2) - params(1)))*points.row(1)
-		+ (1.0 / (params(2) - params(0)) + 1.0 / (params(2) - params(1)))*points.row(2);
-
-	VectorXd dK = (1.0 / (params(K) - params(K - 1)) + 1.0 / (params(K) - params(K - 2)))*points.row(K)
-		+ (1.0 / (params(K - 1) - params(K)) + 1.0 / (params(K - 2) - params(K - 1)))*points.row(K - 1)
-		+ (1.0 / (params(K - 1) - params(K - 2)) - 1.0 / (params(K) - params(K - 2)))*points.row(K - 2);*/
 	MatrixXd X(K + 1, points.cols()); //X_1,...,X_(K+1)
 	MatrixXd A = MatrixXd::Zero(K + 1, K + 1);
 
 	MatrixXd b = points;
-	/*b.row(0) += (params(1) - params(0)) / 3 * d0;
-	b.row(K) -= (params(K) - params(K - 1)) / 3 * dK;*/
+	
 
 	//A(0, 0) = A(K, K) = 1.0;
 	double delta0 = params(1) - params(0);
@@ -281,10 +301,10 @@ void NURBSCurve::interpolate(const MatrixXd &points, const VectorXd &knotvector)
 	A(K, K) = (2.0*delta2 + delta3) / (delta2 + delta3);
 
 	for (int i = 1; i <= K - 1; i++) {
-		A(i, i - 1) = basis(i, 4, params(i), knots);
-		A(i, i) = basis(i + 1, 4, params(i), knots);
-		//cout << "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii:" << i << endl;
-		A(i, i + 1) = basis(i + 2, 4, params(i), knots);
+		A(i, i - 1) = Basis(knots, params(i), i);
+		A(i, i) = Basis(knots, params(i), i+1);
+		
+		A(i, i + 1) = Basis(knots, params(i), i+2);
 
 	}
 	//cout << "A:\n" << A << endl;
@@ -358,14 +378,14 @@ void NURBSCurve::piafit(const MatrixXd &points, const VectorXd &knotvector,int m
 	}
 }
 // given Q_0,...,Q_m, fit by B-spline with control points P_0,...,P_n
-void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, int max_iter_num, double eps)
+void NURBSCurve::lspiafit(const MatrixXd & points, int n_cpts, int max_iter_num, double eps)
 {
 	assert(points.rows() > 1 && points.cols() > 0);
 	this->k = 4;
 	const int m = points.rows() - 1;
 	this->n = n_cpts - 1;
 	const int dimension = points.cols();
-	controlPw = MatrixXd(n_cpts, dimension);
+	controlPw = MatrixXd::Zero(n_cpts, dimension);
 	knots = VectorXd(n + k + 1);
 
 	VectorXd params = parameterize(points);
@@ -385,25 +405,31 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, int max_it
 	// initial control points P_0,...,P_n
 	controlPw.row(0) = points.row(0);
 	controlPw.row(n) = points.row(m);
-
 	MatrixXd points_eval(points.rows(), points.cols());
 	for (int j = 0; j < points.rows(); j++) {
 		points_eval.row(j) = eval(params(j));
 	}
 	for (int iter = 0; iter < max_iter_num; iter++) {
-		double sum1 = 0;
-		VectorXd sum2(dimension);
+
 		for (int i = 1; i < n; i++) {
+			double sum1 = 0;
+			VectorXd sum2 = VectorXd::Zero(dimension);
+
 			for (int j = 0; j < params.size(); j++) {
-				double blend = basis(i, 4, params(j), knots);
+				double blend = Basis(knots, params(j), i);
 				sum1 += blend;
-				VectorXd delta = points.row(j) - points_eval.row(j);
+				VectorXd delta = points.row(j) - points_eval.row(j); // 拟合点处误差向量
 				sum2 += blend * delta;
 			}
-			sum2 /= sum1;
+			double factor = 0.0;
+			if (abs(sum1) > 0.0001) {
+				factor = 1.0 / sum1; // sum1为0时，对应点不更新
+			}
+			sum2 *= factor; // 控制点更新差向量
 			controlPw.row(i) += sum2;
 
 			double error = 0.0;
+			// 控制点更新后，计算新的拟合位置和误差
 			for (int j = 0; j < points.rows(); j++) {
 				points_eval.row(j) = eval(params(j));
 				error += (points.row(j) - points_eval.row(j)).norm();
@@ -419,7 +445,7 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const int &n_cpts, int max_it
 	
 }
 
-void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const int &n_cpts, const VectorXd & knotvector, int max_iter_num, double eps)
+void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, int n_cpts, const VectorXd & knotvector, int max_iter_num, double eps)
 {
 	assert(points.rows() > 1 && points.cols() > 0);
 	this->k = 4;
@@ -442,24 +468,30 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const
 		
 		for (int i = 1; i < n; i++) {
 			double sum1 = 0;
-			VectorXd sum2(dimension);
+			VectorXd sum2 = VectorXd::Zero(dimension);
 
 			for (int j = 0; j < params.size(); j++) {
-				double blend = basis(i, 4, params(j), knots);
+				double blend = Basis(knots, params(j), i);
 				sum1 += blend;
-				VectorXd delta = points.row(j) - points_eval.row(j);
+				VectorXd delta = points.row(j) - points_eval.row(j); // 拟合点处误差向量
 				sum2 += blend * delta;
 			}
-			sum2 /= sum1;
+			double factor = 0.0;
+			if (abs(sum1) > 0.0001) {
+				factor = 1.0 / sum1; // sum1为0时，对应点不更新
+			}
+			sum2 *= factor; // 控制点更新差向量
 			controlPw.row(i) += sum2;
+			//cout << "controlpw " << i << " : " << controlPw.row(i) << endl;
 
 			double error = 0.0;
+			// 控制点更新后，计算新的拟合位置和误差
 			for (int j = 0; j < points.rows(); j++) {
 				points_eval.row(j) = eval(params(j));
 				error += (points.row(j) - points_eval.row(j)).norm();
 			}
 			error /= points.rows();
-			cout << "iter: " << iter + 1 << ", error: " << error << endl;
+			//cout << "iter: " << iter + 1 << ", error: " << error << endl;
 			if (error < eps) {
 				break;
 			}
@@ -467,6 +499,60 @@ void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd& params, const
 
 	}
 	
+}
+// 给定初始控制点
+void NURBSCurve::lspiafit(const MatrixXd & points, const VectorXd & params, const MatrixXd & cpts, const VectorXd & knotvector, int max_iter_num, double eps)
+{
+	assert(points.rows() > 1 && points.cols() > 0);
+	this->k = 4;
+	const int m = points.rows() - 1;
+	this->n = cpts.rows() - 1;
+	const int dimension = points.cols();
+	controlPw = cpts;
+	
+
+	knots = knotvector;
+
+	controlPw.row(0) = points.row(0);
+	controlPw.row(n) = points.row(m);
+	MatrixXd points_eval(points.rows(), points.cols());
+	for (int j = 0; j < points.rows(); j++) {
+		points_eval.row(j) = eval(params(j));
+	}
+	for (int iter = 0; iter < max_iter_num; iter++) {
+
+		for (int i = 1; i < n; i++) {
+			double sum1 = 0;
+			VectorXd sum2 = VectorXd::Zero(dimension);
+
+			for (int j = 0; j < params.size(); j++) {
+				double blend = Basis(knots, params(j), i);
+				sum1 += blend;
+				VectorXd delta = points.row(j) - points_eval.row(j); // 拟合点处误差向量
+				sum2 += blend * delta;
+			}
+			double factor = 0.0;
+			if (abs(sum1) > 0.0001) {
+				factor = 1.0 / sum1; // sum1为0时，对应点不更新
+			}
+			sum2 *= factor; // 控制点更新差向量
+			controlPw.row(i) += sum2;
+			//cout << "controlpw " << i << " : " << controlPw.row(i) << endl;
+
+			double error = 0.0;
+			// 控制点更新后，计算新的拟合位置和误差
+			for (int j = 0; j < points.rows(); j++) {
+				points_eval.row(j) = eval(params(j));
+				error += (points.row(j) - points_eval.row(j)).norm();
+			}
+			error /= points.rows();
+			//cout << "iter: " << iter + 1 << ", error: " << error << endl;
+			if (error < eps) {
+				break;
+			}
+		}
+
+	}
 }
 
 bool NURBSCurve::insert(double t)
