@@ -12,6 +12,13 @@ struct FitPoint {
 	double geterror() {
 		return (origin - eval).toVectorXd().norm();
 	}
+	bool inRectangle(const std::tuple<double, double, double, double>& rect) {
+		double umin = std::get<0>(rect);
+		double umax = std::get<1>(rect);
+		double vmin = std::get<2>(rect);
+		double vmax = std::get<3>(rect);
+		return u >= umin && u <= umax && v >= vmin && v <= vmax;
+	}
 };
 
 class PiaMethod : public Skinning {

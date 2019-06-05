@@ -80,13 +80,15 @@ void Test::test_generate_curves1()
 	}*/
 	surface.loadNURBS("../out/nurbs/venus_front.cpt");
 	//surface.draw(Window::viewer, false, true, 0.01);
-	//surface.saveNURBS("../out/nurbs/venus_front");
+	////surface.saveNURBS("../out/nurbs/venus_front");
+	//Window w;
+	//w.launch();
 
-	const double resolution = 0.2;
+	const double resolution = 0.1;
 	const int curves_num = 1.0 / resolution + 1;
 	vector<NURBSCurve> curves(curves_num);
 
-	uniform_int_distribution<unsigned> u(5, 10);
+	uniform_int_distribution<unsigned> u(15, 30);
 	default_random_engine e;
 	default_random_engine e1;
 	uniform_real_distribution<double> u1(0, 1);
@@ -119,14 +121,14 @@ void Test::test_generate_curves1()
 	//Skinning* method = new PiaMethod(curves, 1000);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	//PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
 	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
-	//Skinning* method = new MinJaeMethod(curves, 40, 10);
+	Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
 	MatrixXd helper_points;
 	loadpoints("../out/points/helper_points.dat", helper_points);
-	method->set_helper_points(helper_points);
+	//method->set_helper_points(helper_points);
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;

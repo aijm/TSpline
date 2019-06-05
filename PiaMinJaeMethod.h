@@ -19,7 +19,7 @@ public:
 		(*viewer).data().add_points(points, red);
 	}
 	// 将辅助点参数化
-	void param_helper_points();
+	std::tuple<double, double, double, double> param_helper_points();
 
 	void init() override;		// 根据NUUBSCurve初始化T-preimage
 	void insert() override;		// 按一定规则在误差大的地方插入节点，局部加细

@@ -1,6 +1,6 @@
 #include "PiaMinJaeMethod.h"
 
-void PiaMinJaeMethod::param_helper_points()
+std::tuple<double,double,double,double> PiaMinJaeMethod::param_helper_points()
 {
 	const int n = 1.0 / 0.01;
 	const int n1 = n + 1;
@@ -64,12 +64,19 @@ void PiaMinJaeMethod::param_helper_points()
 	}*/
 
 	// 计算对应参数值, 为投影所在三角面片三个顶点的参数值的重心
+	double umin = 1.0, vmin = 1.0, umax = 0.0, vmax = 0.0;
 	for (int i = 0; i < query_points.rows(); i++) {
 		auto param = eval_param_uv(F.row(face(i)));
 		helper_points[i].u = std::get<0>(param);
 		helper_points[i].v = std::get<1>(param);
+		if (helper_points[i].u < umin) umin = helper_points[i].u;
+		if (helper_points[i].u > umax) umax = helper_points[i].u;
+		if (helper_points[i].v < vmin) vmin = helper_points[i].v;
+		if (helper_points[i].v > vmax) vmax = helper_points[i].v;
+
 		cout << "i,u,v: " <<i <<", "<< helper_points[i].u << ", " << helper_points[i].v << endl;
 	}
+	return std::make_tuple(1.2*umin, 1.2*umax, 1.2*vmin, 1.2*vmax);
 }
 
 void PiaMinJaeMethod::init()
@@ -185,10 +192,21 @@ void PiaMinJaeMethod::calculate()
 		update();
 	}
 
-	for (int j = 0; j < 1; j++) {
-		param_helper_points(); // 辅助点参数化
-		fitPoints = curve_points;
+	for (int j = 0; j < 5; j++) {
+		auto grid = param_helper_points(); // 辅助点参数化
+		//fitPoints = curve_points;
+		fitPoints.clear();
 		fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
+		for (auto point : inter_points) {
+			if (!point.inRectangle(grid)) {
+				fitPoints.push_back(point);
+			}
+		}
+		for (auto point : curve_points) {
+			if (!point.inRectangle(grid)) {
+				fitPoints.push_back(point);
+			}
+		}
 		fit();
 		pia();
 	}
