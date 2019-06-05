@@ -6,6 +6,13 @@
 #define NURBSSURFACE_H
 
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/cotmatrix.h>
+#include <igl/massmatrix.h>
+#include <igl/invert_diag.h>
+#include <igl/gaussian_curvature.h>
+#include <igl/jet.h>
+#include <igl/parula.h>
+#include <igl/principal_curvature.h>
 #include "NURBSCurve.h"
 using namespace Eigen;
 using namespace std;

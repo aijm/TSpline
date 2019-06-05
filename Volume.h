@@ -2,7 +2,6 @@
 #define VOLUME_H
 
 #include "utility.h"
-
 using namespace std;
 using namespace igl::opengl::glfw;
 using namespace t_mesh;

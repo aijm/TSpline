@@ -1,5 +1,44 @@
 #include "PiaNasriMethod.h"
 
+void PiaNasriMethod::param_helper_points()
+{
+	const int n = 1.0 / 0.01;
+	const int n1 = n + 1;
+	Eigen::MatrixXd V = Eigen::MatrixXd(n1*n1, 3);
+	Eigen::MatrixXi F = Eigen::MatrixXi(2*n*n, 3);
+	// discretize T-Spline Surface into triangular mesh(V,F) in libigl mesh structure
+	// calculate 
+
+	for (int j = 0; j <= n; j++)
+		for (int i = 0; i <= n; i++) {
+			Eigen::MatrixXd curvePoint;
+			double u = 1.0*i / n;
+			double v = 1.0*j / n;
+			array2matrixd(tspline.eval(u, v), curvePoint);
+			V.row(j*n1 + i) = curvePoint;
+		}
+
+	for (int j = 0; j<n; j++)
+		for (int i = 0; i < n; i++) {
+			int V_index = j*(n + 1) + i;
+			int F_index = 2 * j*n + 2 * i;
+			F.row(F_index) << V_index, V_index + 1, V_index + n + 1;
+			F.row(F_index + 1) << V_index + n + 1, V_index + 1, V_index + n + 2;
+		}
+
+	// 计算点到三角网格的投影，据此计算对于参数值
+	MatrixXd query_points(helper_points.size(), 3);
+	for (int i = 0; i < helper_points.size(); i++) {
+		query_points.row(i) = helper_points[i].origin.toVectorXd();
+	}
+	VectorXd sqrD(query_points.rows()); // 点到三角网格的最短距离平方
+	MatrixXi face(query_points.rows(), 3); // 点到三角网格最短距离点所在面
+	MatrixXd closest_point(query_points.rows(), 3); // 最近的点
+	igl::point_mesh_squared_distance(query_points, V, F, sqrD, face, closest_point);
+	(*viewer).data().add_edges(query_points, closest_point, green);
+
+}
+
 void PiaNasriMethod::init()
 {
 	// 2. construct basis T-mesh 
@@ -88,6 +127,12 @@ void PiaNasriMethod::calculate()
 	fit();
 	pia();
 	update();
+
+	param_helper_points();
+	/*for (int i = 0; i < 10; i++) {
+		pia();
+		update();
+	}*/
 }
 
 void PiaNasriMethod::sample_fitPoints()

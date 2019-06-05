@@ -296,7 +296,28 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 			mesh_F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
 		}
 
+	Eigen::MatrixXd HN;
+	Eigen::VectorXd H;
+	Eigen::SparseMatrix<double> L, M, Minv;
+	igl::cotmatrix(mesh_V, mesh_F, L);
+	igl::massmatrix(mesh_V, mesh_F, igl::MASSMATRIX_TYPE_VORONOI, M);
+	igl::invert_diag(M, Minv);
+	HN = -Minv*(L*mesh_V);
+	H = HN.rowwise().norm(); //up to sign
+
+							 // compute curvatrue directions via quadric fitting
+	Eigen::MatrixXd PD1, PD2;
+	Eigen::VectorXd PV1, PV2;
+	igl::principal_curvature(mesh_V, mesh_F, PD1, PD2, PV1, PV2);
+	// mean curvature
+	H = 0.5*(PV1 + PV2);
+
 	viewer.data().set_mesh(mesh_V, mesh_F);
+
+	// Compute pseudocolor
+	Eigen::MatrixXd C;
+	igl::jet(H, true, C);
+	viewer.data().set_colors(C);
 }
 
 

@@ -154,8 +154,7 @@ void Volume::drawVolume(double resolution)
 			f_id += 2;
 		}
 	}
-
-	(*viewer).data().set_mesh(V, F);
 	
+	(*viewer).data().set_mesh(V, F);
 
 }

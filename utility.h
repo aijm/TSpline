@@ -5,6 +5,13 @@
 #include<list>
 #include<vector>
 #include <igl/opengl/glfw/Viewer.h>
+#include <igl/cotmatrix.h>
+#include <igl/massmatrix.h>
+#include <igl/invert_diag.h>
+#include <igl/gaussian_curvature.h>
+#include <igl/jet.h>
+#include <igl/parula.h>
+#include <igl/principal_curvature.h>
 
 namespace t_mesh{
     template<class T,int num>

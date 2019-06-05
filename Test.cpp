@@ -51,20 +51,42 @@ void Test::test_generate_curves()
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/venus_skinning");
-	MeshRender render(mesh, false, false, true, 0.01);
+	MeshRender render(mesh, false, false, true, 0.001);
 	render.launch();
 
 }
 
 void Test::test_generate_curves1()
 {
-	BsplineVolume volume;
-	volume.readVolume("../out/venus_bspline.txt");
-	const double resolution = 0.1;
+	/*BsplineVolume volume;
+	volume.readVolume("../out/venus_bspline.txt");*/
+
+	NURBSSurface surface;
+
+	/*surface.u_num = volume.control_grid.size() - 1;
+	surface.v_num = volume.control_grid[0][0].size() - 1;
+	surface.u_order = 4;
+	surface.v_order = 4;
+	surface.dimension = 3;
+	surface.isRational = false;
+	surface.uknots = volume.knot_vector[0];
+	surface.vknots = volume.knot_vector[2];
+	surface.controlPw.resize(surface.v_num + 1);
+	for (int i = 0; i <= surface.v_num; i++) {
+		surface.controlPw[i].resize(surface.u_num + 1, 3);
+		for (int j = 0; j <= surface.u_num; j++) {
+			surface.controlPw[i].row(j) = volume.control_grid[j][0][i].toVectorXd();
+		}
+	}*/
+	surface.loadNURBS("../out/nurbs/venus_front.cpt");
+	//surface.draw(Window::viewer, false, true, 0.01);
+	//surface.saveNURBS("../out/nurbs/venus_front");
+
+	const double resolution = 0.2;
 	const int curves_num = 1.0 / resolution + 1;
 	vector<NURBSCurve> curves(curves_num);
 
-	uniform_int_distribution<unsigned> u(15, 30);
+	uniform_int_distribution<unsigned> u(5, 10);
 	default_random_engine e;
 	default_random_engine e1;
 	uniform_real_distribution<double> u1(0, 1);
@@ -80,12 +102,16 @@ void Test::test_generate_curves1()
 		x_coors.push_back(1);
 
 		for (int j = 0; j < sampleNum; j++) {
-			x_coors.push_back(u1(e1));
+			double x = 1.0*(j+1) / (sampleNum+1);
+			//double x = u1(e1);
+			//cout << "x: " << x << endl;
+			x_coors.push_back(x);
 		}
 		sort(x_coors.begin(), x_coors.end());
 		for (int j = 0; j < x_coors.size(); j++) {
-			points.row(j) = volume.eval(x_coors[j], 0, z).toVectorXd();
+			points.row(j) = surface.eval(x_coors[j], z);
 		}
+		//Window::viewer.data().add_points(points, blue);
 		curves[i].interpolate(points);
 		curves[i].saveNURBS("../out/nurbs/venus_curve_1_" + to_string(i));
 		curves[i].draw(Window::viewer, false, true,0.001);
@@ -93,17 +119,20 @@ void Test::test_generate_curves1()
 	//Skinning* method = new PiaMethod(curves, 1000);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	Skinning* method = new PiaMinJaeMethod(curves, 1000);
-	//Skinning* method = new PiaNasriMethod(curves, 1000);
+	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
+	MatrixXd helper_points;
+	loadpoints("../out/points/helper_points.dat", helper_points);
+	method->set_helper_points(helper_points);
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/venus_skinning1");
-	MeshRender render(mesh,false,false,true,0.01);
+	MeshRender render(mesh,false,true,true,0.01);
 	render.launch();
 }
 
@@ -278,8 +307,6 @@ void Test::test_Lspia() {
 	MatrixXd points;
 	t_mesh::loadpoints("../out/points/helix.dat", points);
 	
-	
-
 	NURBSCurve fit;
 	fit.lspiafit(points, 10);
 
