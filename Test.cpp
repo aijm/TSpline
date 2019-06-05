@@ -79,6 +79,7 @@ void Test::test_generate_curves1()
 		}
 	}*/
 	surface.loadNURBS("../out/nurbs/venus_front.cpt");
+	surface.saveAsObj("../out/OBJ/venus_surface", 0.01);
 	//surface.draw(Window::viewer, false, true, 0.01);
 	////surface.saveNURBS("../out/nurbs/venus_front");
 	//Window w;
@@ -118,22 +119,38 @@ void Test::test_generate_curves1()
 		curves[i].saveNURBS("../out/nurbs/venus_curve_1_" + to_string(i));
 		curves[i].draw(Window::viewer, false, true,0.001);
 	}
+
+	/*NURBSSurface skin;
+	skin.skinning(curves, Window::viewer);
+	skin.draw(Window::viewer, false, true);
+	skin.saveAsObj("../out/OBJ/venus_nurbs_skin");
+	Window w;
+	w.launch();*/
 	//Skinning* method = new PiaMethod(curves, 1000);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	//PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
 	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
-	Skinning* method = new MinJaeMethod(curves, 40, 10);
+	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
 	MatrixXd helper_points;
 	loadpoints("../out/points/helper_points.dat", helper_points);
-	//method->set_helper_points(helper_points);
+	method->set_helper_points(helper_points);
+
+
+	/*method->parameterize();
+	method->sample_fitPoints_2();
+	Window w;
+	w.launch();*/
+
+
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/venus_skinning1");
+	mesh->saveAsObj("../out/OBJ/venus_PiaMinJae_helper_sample_1600", 0.01);
 	MeshRender render(mesh,false,true,true,0.01);
 	render.launch();
 }

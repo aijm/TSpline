@@ -118,6 +118,51 @@ bool NURBSSurface::saveNURBS(string name){
 	out<<vknots.transpose();
 	return true;
 }
+
+bool NURBSSurface::saveAsObj(string filename, double resolution)
+{
+	filename += ".obj";
+	ofstream out(filename);
+	if (!out.is_open()) {
+		cout << "can't open file: " << filename << endl;
+		return false;
+	}
+
+	double u_low = uknots(u_order - 1);
+	double u_high = uknots(u_num + 1);
+	const int uspan = (u_high - u_low) / resolution;
+	double u_resolution = (u_high - u_low) / uspan;
+
+	double v_low = vknots(v_order - 1);
+	double v_high = vknots(v_num + 1);
+	const int vspan = (v_high - v_low) / resolution;
+	double v_resolution = (v_high - v_low) / vspan;
+
+	mesh_V = MatrixXd((uspan + 1)*(vspan + 1), 3);
+	mesh_F = MatrixXi(2 * uspan*vspan, 3);
+	// discretize NURBS Surface into triangular mesh(V,F) in libigl mesh structure
+	// calculate mesh_V
+	for (int j = 0; j <= vspan; j++)
+		for (int i = 0; i <= uspan; i++)
+		{
+			RowVectorXd curvePoint = eval(u_low + i*u_resolution, v_low + j*v_resolution).row(0);
+			//cout << "curvepoint: " << curvePoint << endl;
+			if (isRational) { mesh_V.row(j*(uspan + 1) + i) = curvePoint.hnormalized(); }
+			else { mesh_V.row(j*(uspan + 1) + i) = curvePoint; }
+		}
+
+	for (int j = 0; j<vspan; j++)
+		for (int i = 0; i < uspan; i++)
+		{
+			int V_index = j*(uspan + 1) + i;
+			int F_index = 2 * j*uspan + 2 * i;
+			mesh_F.row(F_index) << V_index, V_index + 1, V_index + uspan + 1;
+			mesh_F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
+		}
+
+	igl::writeOBJ(filename, mesh_V, mesh_F);
+	return true;
+}
 	
 
 // find the knot interval of t by binary searching
@@ -375,10 +420,10 @@ void NURBSSurface::skinning(const vector<NURBSCurve> &curves,igl::opengl::glfw::
 			}
 		}
 	}
-	cout << "merge_knots:\n" << endl;
-	for (auto it = merge_knots.begin(); it != merge_knots.end(); it++) {
+	//cout << "merge_knots:\n" << endl;
+	/*for (auto it = merge_knots.begin(); it != merge_knots.end(); it++) {
 		cout << it->first << ", " << it->second << endl;
-	}
+	}*/
 
 	// change every curve to 3D and rational
 	vector<NURBSCurve> new_curves = curves;
@@ -401,7 +446,7 @@ void NURBSSurface::skinning(const vector<NURBSCurve> &curves,igl::opengl::glfw::
 	}
 	
 	for (int i = 0; i < new_curves.size(); i++) {
-		cout << "curve " << i << ": " << new_curves[i].knots.transpose() << endl;
+		//cout << "curve " << i << ": " << new_curves[i].knots.transpose() << endl;
 		/*if (i == 3 || i == 4) {
 			viewer.data().add_points(new_curves[i].controlPw.rowwise().hnormalized(), RowVector3d(0, 1, 0));
 		}*/
@@ -470,5 +515,125 @@ void NURBSSurface::skinning(const vector<NURBSCurve> &curves,igl::opengl::glfw::
 		}*/
 	}
 	//dimension = 3;
+	cout << "number of control points: " << controlPw.size()*controlPw[0].rows() << endl;
+	cout << "skinning finished!" << endl;
+}
+
+void NURBSSurface::skinning(const vector<NURBSCurve>& curves, const VectorXd & curves_param, igl::opengl::glfw::Viewer & viewer)
+{
+	assert(curves.size()>1);
+	isRational = curves[0].isRational;
+	// count knots of every curve
+	vector<map<double, int>> curve_knots(curves.size());
+	for (int i = 0; i<curves.size(); i++) {
+		for (int j = 0; j<curves[i].knots.size(); j++) {
+			if (curve_knots[i].find(curves[i].knots(j)) == curve_knots[i].end()) {
+				curve_knots[i][curves[i].knots(j)] = 1;
+			}
+			else {
+				curve_knots[i][curves[i].knots(j)] += 1;
+			}
+		}
+	}
+	// compute merge knots 
+	map<double, int> merge_knots;
+	for (int i = 0; i < curve_knots.size(); i++) {
+		for (auto it = curve_knots[i].begin(); it != curve_knots[i].end(); it++) {
+			if (merge_knots.find(it->first) == merge_knots.end()) {
+				merge_knots[it->first] = it->second;
+			}
+			else if (merge_knots[it->first] < it->second) {
+				merge_knots[it->first] = it->second;
+			}
+		}
+	}
+	//cout << "merge_knots:\n" << endl;
+	/*for (auto it = merge_knots.begin(); it != merge_knots.end(); it++) {
+	cout << it->first << ", " << it->second << endl;
+	}*/
+
+	// change every curve to 3D and rational
+	vector<NURBSCurve> new_curves = curves;
+
+	// for every curve, insert knots to make curve knots compatible
+	for (int i = 0; i < curve_knots.size(); i++) {
+		for (auto it = merge_knots.begin(); it != merge_knots.end(); it++) {
+			int insert_num = 0;
+			if (curve_knots[i].find(it->first) == curve_knots[i].end()) {
+				insert_num = it->second;
+			}
+			else {
+				insert_num = it->second - curve_knots[i][it->first];
+			}
+			// insert
+			for (int j = 0; j < insert_num; j++) {
+				new_curves[i].insert(it->first);
+			}
+		}
+	}
+
+	for (int i = 0; i < new_curves.size(); i++) {
+		//cout << "curve " << i << ": " << new_curves[i].knots.transpose() << endl;
+		/*if (i == 3 || i == 4) {
+		viewer.data().add_points(new_curves[i].controlPw.rowwise().hnormalized(), RowVector3d(0, 1, 0));
+		}*/
+	}
+
+
+	vknots = new_curves[0].knots;
+	//cout << "after insert knots: " << vknots.transpose() << endl;
+	// compute u-direction knot vector
+	//VectorXd curves_param = VectorXd::Zero(new_curves.size());
+	v_num = new_curves[0].n;
+	v_order = new_curves[0].k;
+	dimension = new_curves[0].controlPw.cols();
+	//u_num = new_curves.size() - 1;
+	u_order = 4;
+	int curve_num = curves.size() - 1;
+	u_num = curve_num + 2;
+
+	uknots = VectorXd::Zero(curve_num + 7); // u_0,u_0,u_0, u_0,...,u_K, u_K,u_K,u_K
+
+	uknots.block(3, 0, curve_num + 1, 1) = curves_param;
+	uknots(curve_num + 6) = 1.0; uknots(curve_num + 5) = 1.0; uknots(curve_num + 4) = 1.0;
+
+	//uknots << 0, 0, 0, 0, 2.0/12, 4.0/12, 5.0/12, 7.0/12, 8.0/12, 11.0/12, 1, 1, 1, 1;
+
+	//cout << "uknots: " << uknots.transpose() << endl;
+	// interpolate points to get the NURBS skinning surface control points
+	controlPw = vector<MatrixXd>(v_num + 1);
+	for (int i = 0; i < controlPw.size(); i++) {
+		controlPw[i] = MatrixXd(u_num + 1, dimension);
+	}
+
+	for (int i = 0; i <= v_num; i++) {
+		MatrixXd u_ctps = MatrixXd::Zero(curve_num + 1, dimension);
+		for (int j = 0; j <= curve_num; j++) {
+			u_ctps.row(j) = new_curves[j].controlPw.row(i);
+		}
+		NURBSCurve nurbs;
+
+		nurbs.interpolate(u_ctps, uknots);
+
+		//nurbs.isRational = false;
+		/*if (i==3) {
+		viewer.data().add_points(u_ctps.rowwise().hnormalized(), RowVector3d(0, 1, 0));
+		cout << "points:\n" << u_ctps << endl;
+		cout << "knots: " << nurbs.knots.transpose() << endl;
+		nurbs.draw(viewer, true, true);
+
+		}*/
+
+		//cout << "dim: " << nurbs.controlPw.cols() << endl;
+		controlPw[i] = nurbs.controlPw;
+		/*if (i == 3) {
+		viewer.data().add_points(controlPw[i].rowwise().hnormalized(), RowVector3d(1, 0, 0));
+		}
+		else if (i == 4) {
+		viewer.data().add_points(controlPw[i].rowwise().hnormalized(), RowVector3d(0, 1, 0));
+		}*/
+	}
+	//dimension = 3;
+	cout << "number of control points: " << controlPw.size()*controlPw[0].rows() << endl;
 	cout << "skinning finished!" << endl;
 }

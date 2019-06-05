@@ -42,6 +42,8 @@ struct NURBSSurface
 	// save 
 	bool saveNURBS(string);
 
+	bool saveAsObj(string, double resolution = 0.01);
+
 	// find the knot interval of t by binary searching
 	int find_ind(double t, int k, int n, const VectorXd& knots);
 
@@ -66,6 +68,9 @@ struct NURBSSurface
 
 	// surface skinning
 	void skinning(const vector<NURBSCurve> &curves, igl::opengl::glfw::Viewer &viewer);
+
+	// surface skinning
+	void skinning(const vector<NURBSCurve> &curves,const VectorXd& curves_param, igl::opengl::glfw::Viewer &viewer);
 
 	bool isRational = false;
 	int u_order; // order of u direction

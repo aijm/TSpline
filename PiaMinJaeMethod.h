@@ -2,6 +2,7 @@
 #define PIAMINJAEMETHOD_H
 
 #include "PiaMethod.h"
+#include "NURBSSurface.h"
 #include <igl/point_mesh_squared_distance.h>
 class PiaMinJaeMethod : public PiaMethod {
 public:
@@ -26,6 +27,8 @@ public:
 	void calculate() override;  // ¼ÆËãÁ÷³Ì
 
 public:
+	void sample_fitPoints_1();
+	void sample_fitPoints_2();
 	void sample_fitPoints() override;
 	void pia() override;
 

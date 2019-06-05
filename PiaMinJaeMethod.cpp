@@ -180,7 +180,7 @@ void PiaMinJaeMethod::calculate()
 	parameterize();
 	init();
 	insert();
-	sample_fitPoints();
+	sample_fitPoints_2();
 	fitPoints = curve_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
 	fit();
@@ -214,9 +214,133 @@ void PiaMinJaeMethod::calculate()
 	
 }
 
-void PiaMinJaeMethod::sample_fitPoints()
+void PiaMinJaeMethod::sample_fitPoints_1()
 {
 	const int sampleNum = 10;
+	for (int i = 1; i < curves_num - 1; i++) {
+		for (int j = 0; j <= sampleNum; j++) {
+			FitPoint point;
+			point.u = s_knots(i);
+			point.v = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
+			if (point.v == 0.0) {
+				point.v = 0.0001;
+			}
+			else if (point.v == 1.0) {
+				point.v = 0.9999;
+			}
+			curve_points.push_back(point);
+
+			/*MatrixXd P;
+			array2matrixd(point.origin, P);
+			(*viewer).data().add_points(P, green);*/
+		}
+	}
+
+	// 直接从nurbs蒙皮结果上采样
+	NURBSSurface skin;
+	VectorXd params = s_knots;
+	params(0) = 0; params(params.size() - 1) = 1;
+	Viewer viewer;
+	skin.skinning(curves, params, viewer);
+	const int num = 10;
+	for (int i = 0; i <= num; i++) {
+		bool valid = true;
+		for (int k = 0; k < s_knots.size(); k++) {
+			if (abs(s_knots(k) - 1.0*i / num) < 0.01) {
+				valid = false;
+				break;
+			}
+		}
+		if (!valid) {
+			continue;
+		}
+		for (int j = 0; j <= num; j++) {
+			FitPoint point;
+			point.u = 1.0*i / num;
+			
+			point.v = 1.0*j / num;
+			point.origin.fromVectorXd(skin.eval(point.u, point.v));
+			inter_points.push_back(point);
+		}
+	}
+
+}
+
+void PiaMinJaeMethod::sample_fitPoints_2()
+{
+	const int sampleNum = 50;
+	for (int i = 1; i < curves_num - 1; i++) {
+		for (int j = 0; j <= sampleNum; j++) {
+			FitPoint point;
+			point.u = s_knots(i);
+			point.v = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
+			if (point.v == 0.0) {
+				point.v = 0.0001;
+			}
+			else if (point.v == 1.0) {
+				point.v = 0.9999;
+			}
+			curve_points.push_back(point);
+
+			/*MatrixXd P;
+			array2matrixd(point.origin, P);
+			(*viewer).data().add_points(P, green);*/
+		}
+	}
+
+	// 纵向采样，拟合出一个B样条曲线
+	const int v_sample_num = 40;
+	const int u_sample_num = 40;
+
+	VectorXd params = s_knots;
+	params(0) = 0; params(params.size() - 1) = 1;
+	cout << "params: \n" << params << endl;
+	VectorXd knots(params.size() + 6);
+	knots(0) = 0; knots(1) = 0, knots(2) = 0;
+	knots(knots.size()-1) = 1; knots(knots.size() - 2) = 1, knots(knots.size() - 3) = 1;
+	knots.block(3, 0, params.size(), 1) = params;
+	cout << "knots for interpolate: \n" << knots << endl;
+
+	vector<NURBSCurve> sample_curves(v_sample_num + 1);
+	for (int i = 0; i <= v_sample_num; i++) {
+		double v = 1.0*i / v_sample_num;
+		MatrixXd points(curves_num, 3);
+		for (int j = 0; j < curves_num; j++) {
+			points.row(j) = curves[j].eval(v);
+		}
+		sample_curves[i].interpolate(points, knots);
+		//sample_curves[i].draw(*viewer, false, true);
+	}
+
+
+	for (int i = 0; i <= u_sample_num; i++) {
+		bool valid = true;
+		for (int k = 0; k < s_knots.size(); k++) {
+			if (abs(s_knots(k) - 1.0*i / u_sample_num) < 0.01) {
+				valid = false;
+				break;
+			}
+		}
+		if (!valid) {
+			continue;
+		}
+		for (int j = 0; j <= v_sample_num; j++) {
+			FitPoint point;
+			point.u = 1.0*i / u_sample_num;
+			point.v = 1.0*j / v_sample_num;
+
+			point.origin.fromVectorXd(sample_curves[j].eval(point.u));
+			inter_points.push_back(point);
+		}
+	}
+	
+}
+
+void PiaMinJaeMethod::sample_fitPoints()
+{
+	const int sampleNum = 50;
 	for (int i = 1; i < curves_num - 1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
 			FitPoint point;
