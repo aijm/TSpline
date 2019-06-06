@@ -148,6 +148,11 @@ void Test::test_generate_curves1()
 	render.launch();
 }
 
+void Test::test_generate_surfaces()
+{
+
+}
+
 void Test::test_nurbs()
 {
 	// bezier curve

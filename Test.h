@@ -33,6 +33,7 @@ class Test {
 public:
 	static void test_generate_curves();
 	static void test_generate_curves1();
+	static void test_generate_surfaces();
 	static void test_nurbs();
 	static void test_TsplineVolume();
 	static void test_BsplineVolume();

@@ -9,7 +9,6 @@ public:
 	TsplineVolume(const TsplineVolume& other);
 	~TsplineVolume();
 	Point3d eval(double u, double v, double w) override;
-
 	int readVolume(string) override;
 	int saveVolume(string) override;
 
