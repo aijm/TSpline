@@ -54,7 +54,7 @@ void PiaMethod::insert()
 			id = i;
 		}
 	}
-	auto node = tspline.get_knot(fitPoints[id].u, fitPoints[id].v);
+	auto node = tspline.get_knot(fitPoints[id].param[0], fitPoints[id].param[1]);
 	cout << "maxnode " << node.s[2] << ", " << node.t[2] << endl;
 	double u = (node.s[1] + node.s[3]) / 2.0;
 	double v = (node.t[1] + node.t[3]) / 2.0;
@@ -84,15 +84,15 @@ void PiaMethod::sample_fitPoints()
 	const int sampleNum = 10;
 	for (int i = 1; i < curves_num-1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point;
-			point.u = s_knots(i);
-			point.v = 1.0*j / sampleNum;
-			point.origin.fromVectorXd(curves[i].eval(point.v).row(0).transpose());
-			if (point.v == 0.0) {
-				point.v = 0.0001;
+			FitPoint2D point;
+			point.param[0] = s_knots(i);
+			point.param[1] = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.param[1]).row(0).transpose());
+			if (point.param[1] == 0.0) {
+				point.param[1] = 0.0001;
 			}
-			else if (point.v == 1.0) {
-				point.v = 0.9999;
+			else if (point.param[1] == 1.0) {
+				point.param[1] = 0.9999;
 			}
 			fitPoints.push_back(point);
 
@@ -108,8 +108,8 @@ void PiaMethod::sample_fitPoints()
 void PiaMethod::fit()
 {
 	error = 0.0;
-	for (FitPoint& point : fitPoints) {
-		point.eval = tspline.eval(point.u, point.v);
+	for (FitPoint2D& point : fitPoints) {
+		point.eval = tspline.eval(point.param[0], point.param[1]);
 		point.error = point.geterror();
 		error += point.error;
 	}
@@ -126,8 +126,8 @@ void PiaMethod::pia()
 			}
 			double sum1 = 0;
 			Point3d sum2;
-			for (FitPoint point : fitPoints) {
-				double blend = node->basis(point.u, point.v);
+			for (FitPoint2D point : fitPoints) {
+				double blend = node->basis(point.param[0], point.param[1]);
 				sum1 += blend;
 				Point3d delta = point.origin - point.eval;
 				delta.scale(blend);

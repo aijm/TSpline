@@ -2,24 +2,24 @@
 #define PIAMETHOD_H
 
 #include "skinning.h"
-
-struct FitPoint {
-	Point3d origin; // 要拟合点的坐标
-	double u;       // 对应参数
-	double v;
-	Point3d eval;   // 曲面上对应参数的值 T(u,v) 
-	double error; 
-	double geterror() {
-		return (origin - eval).toVectorXd().norm();
-	}
-	bool inRectangle(const std::tuple<double, double, double, double>& rect) {
-		double umin = std::get<0>(rect);
-		double umax = std::get<1>(rect);
-		double vmin = std::get<2>(rect);
-		double vmax = std::get<3>(rect);
-		return u >= umin && u <= umax && v >= vmin && v <= vmax;
-	}
-};
+#include "FitPoint.hpp"
+//struct FitPoint {
+//	Point3d origin; // 要拟合点的坐标
+//	double u;       // 对应参数
+//	double v;
+//	Point3d eval;   // 曲面上对应参数的值 T(u,v) 
+//	double error; 
+//	double geterror() {
+//		return (origin - eval).toVectorXd().norm();
+//	}
+//	bool inRectangle(const std::tuple<double, double, double, double>& rect) {
+//		double umin = std::get<0>(rect);
+//		double umax = std::get<1>(rect);
+//		double vmin = std::get<2>(rect);
+//		double vmax = std::get<3>(rect);
+//		return u >= umin && u <= umax && v >= vmin && v <= vmax;
+//	}
+//};
 
 class PiaMethod : public Skinning {
 public:
@@ -40,7 +40,7 @@ protected:
 	const int maxIterNum;
 	const double eps;
 	double error;
-	vector<FitPoint> fitPoints;
+	vector<FitPoint2D> fitPoints;
 };
 #endif // !PIAMETHOD_H
 

@@ -2,6 +2,7 @@
 #define PIANASRIMETHOD_H
 
 #include "PiaMethod.h"
+#include "NURBSSurface.h"
 #include <igl/point_mesh_squared_distance.h>
 class PiaNasriMethod :public PiaMethod {
 public:
@@ -17,19 +18,22 @@ public:
 		}
 	}
 	// 将辅助点参数化
-	void param_helper_points();
+	std::tuple<double, double, double, double> param_helper_points();
 
 	void init() override;		// 根据NUUBSCurve初始化T-preimage
 	void insert() override;		// 按一定规则在误差大的地方插入节点，局部加细
 	void calculate() override;  // 计算流程
 
 public:
+	void sample_fitPoints_1();
+	void sample_fitPoints_2();
 	void sample_fitPoints() override;
-	//virtual void fit();
 	void pia() override;
 
 private:
-	vector<FitPoint> helper_points;
+	vector<FitPoint2D> curve_points;
+	vector<FitPoint2D> inter_points;
+	vector<FitPoint2D> helper_points;
 };
 #endif // !PIANASRIMETHOD_H
 

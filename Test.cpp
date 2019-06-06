@@ -6,7 +6,7 @@ clock_t Test::end;
 void Test::test_generate_curves()
 {
 	BsplineVolume volume;
-	volume.readVolume("../out/venus_bspline.txt");
+	volume.readVolume("../out/volume/venus_bspline.txt");
 	const int curves_num = volume.knot_vector[2].size() - 6;
 	vector<NURBSCurve> curves(curves_num);
 
@@ -50,7 +50,7 @@ void Test::test_generate_curves()
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/venus_skinning");
+	mesh->saveMesh("../out/tspline/venus_skinning");
 	MeshRender render(mesh, false, false, true, 0.001);
 	render.launch();
 
@@ -59,7 +59,7 @@ void Test::test_generate_curves()
 void Test::test_generate_curves1()
 {
 	/*BsplineVolume volume;
-	volume.readVolume("../out/venus_bspline.txt");*/
+	volume.readVolume("../out/volume/venus_bspline.txt");*/
 
 	NURBSSurface surface;
 
@@ -126,31 +126,24 @@ void Test::test_generate_curves1()
 	skin.saveAsObj("../out/OBJ/venus_nurbs_skin");
 	Window w;
 	w.launch();*/
-	//Skinning* method = new PiaMethod(curves, 1000);
+	//Skinning* method = new PiaMethod(curves, 100);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
-	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
+	//PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
 	MatrixXd helper_points;
 	loadpoints("../out/points/helper_points.dat", helper_points);
-	method->set_helper_points(helper_points);
-
-
-	/*method->parameterize();
-	method->sample_fitPoints_2();
-	Window w;
-	w.launch();*/
-
+	//method->set_helper_points(helper_points);
 
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/venus_skinning1");
-	mesh->saveAsObj("../out/OBJ/venus_PiaMinJae_helper_sample_1600", 0.01);
+	mesh->saveMesh("../out/tspline/venus_skinning1");
+	//mesh->saveAsObj("../out/OBJ/venus_PiaMinJae_sample_400", 0.01);
 	MeshRender render(mesh,false,true,true,0.01);
 	render.launch();
 }
@@ -190,27 +183,27 @@ void Test::test_nurbs()
 
 void Test::test_TsplineVolume() {
 	TsplineVolume* volume = new TsplineVolume();
-	volume->readVolume("../out/test.vol");
+	volume->readVolume("../out/volume/test.vol");
 
 	TsplineVolume volume_copy(*volume); // deep copy
 	delete volume;
 	volume = NULL;
 	VolumeRender render(&volume_copy, false, false, true);
-	volume_copy.saveVolume("../out/test_copy");
+	volume_copy.saveVolume("../out/volume/test_copy");
 	render.launch();
 }
 void Test::test_BsplineVolume()
 {
 	BsplineVolume volume;
 	begin = clock();
-	volume.readVolume("../out/venus_bspline.txt");
-	//volume.readVolume("../out/balljoint_bspline.txt");
-	//volume.readVolume("../out/isis_bspline.txt");
-	//volume.readVolume("../out/moai_bspline.txt");
-	//volume.readVolume("../out/tooth_bspline.txt");
+	volume.readVolume("../out/volume/venus_bspline.txt");
+	//volume.readVolume("../out/volume/balljoint_bspline.txt");
+	//volume.readVolume("../out/volume/isis_bspline.txt");
+	//volume.readVolume("../out/volume/moai_bspline.txt");
+	//volume.readVolume("../out/volume/tooth_bspline.txt");
 	VolumeRender render(&volume, false, false, true, 0.01);
-	/*volume.saveAsHex("../out/tooth_bspline", 0.1);
-	volume.saveVolume("../out/tooth_bspline");*/
+	/*volume.saveAsHex("../out/volume/tooth_bspline", 0.1);
+	volume.saveVolume("../out/volume/tooth_bspline");*/
 	
 	
 	render.launch();
@@ -220,9 +213,9 @@ void Test::test_BsplineVolume()
 void Test::test_Mesh() {
 
 	Mesh3d* mesh = new Mesh3d();
-	mesh->loadMesh("../out/simpleMesh2.cfg");
+	mesh->loadMesh("../out/tspline/simpleMesh2.cfg");
 	Mesh3d* meshcopy = new Mesh3d(*mesh); // deep copy
-	meshcopy->saveMesh("../out/simpleMesh2_copy");
+	meshcopy->saveMesh("../out/tspline/simpleMesh2_copy");
 	delete mesh;
 	mesh = NULL;
 	MeshRender render(meshcopy);
@@ -233,9 +226,9 @@ void Test::test_Mesh() {
 void Test::test_VolumeSkinning()
 {
 	vector<Mesh3d> surfaces(3);
-	surfaces[0].loadMesh("../out/simpleMesh1.cfg");
-	surfaces[1].loadMesh("../out/simpleMesh2.cfg");
-	surfaces[2].loadMesh("../out/simpleMesh3.cfg");
+	surfaces[0].loadMesh("../out/tspline/simpleMesh1.cfg");
+	surfaces[1].loadMesh("../out/tspline/simpleMesh2.cfg");
+	surfaces[2].loadMesh("../out/tspline/simpleMesh3.cfg");
 	surfaces[0].setViewer(&Window::viewer);
 	surfaces[1].setViewer(&Window::viewer);
 	surfaces[2].setViewer(&Window::viewer);
@@ -268,19 +261,19 @@ void Test::test_Skinning()
 	nurbs[2].draw(Window::viewer, false);
 	nurbs[3].draw(Window::viewer, false);
 	
-	Skinning* method = new MinJaeMethod(nurbs, 20, 50);
-	//Skinning* method = new PiaMethod(nurbs, 1000);
+	//Skinning* method = new MinJaeMethod(nurbs, 20, 50);
+	Skinning* method = new PiaMethod(nurbs, 100);
 	//Skinning* method = new NasriMethod(nurbs);
 	//Skinning* method = new OptMethod(nurbs);
-	//Skinning* method = new PiaMinJaeMethod(nurbs, 1000);
-	//Skinning* method = new PiaNasriMethod(nurbs, 1000);
+	//Skinning* method = new PiaMinJaeMethod(nurbs, 100);
+	//Skinning* method = new PiaNasriMethod(nurbs, 100);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 	
-	//mesh->saveMesh("../out/simpleMesh4");
+	//mesh->saveMesh("../out/tspline/simpleMesh4");
 	MeshRender render(mesh);
 	render.launch();
 

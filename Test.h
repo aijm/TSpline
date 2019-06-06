@@ -45,9 +45,12 @@ public:
 	static void test_Integral();
 	static void test_Basis();
 	static void test_Derivative();
+	static void test_Nlopt();
+
+private:
 	static double myfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data);
 	static double myconstraint(const std::vector<double> &x, std::vector<double> &grad, void *data);
-	static void test_Nlopt();
+	
 private:
 	static clock_t begin;
 	static clock_t end;

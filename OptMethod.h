@@ -25,7 +25,7 @@ private:
 	
 
 private:
-	vector<FitPoint> fitPoints;
+	vector<FitPoint2D> fitPoints;
 	MatrixXd M; // m_ij
 	MatrixXd N; // n_ij
 	MatrixXd B; // 

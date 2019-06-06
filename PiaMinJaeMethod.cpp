@@ -67,14 +67,16 @@ std::tuple<double,double,double,double> PiaMinJaeMethod::param_helper_points()
 	double umin = 1.0, vmin = 1.0, umax = 0.0, vmax = 0.0;
 	for (int i = 0; i < query_points.rows(); i++) {
 		auto param = eval_param_uv(F.row(face(i)));
-		helper_points[i].u = std::get<0>(param);
-		helper_points[i].v = std::get<1>(param);
-		if (helper_points[i].u < umin) umin = helper_points[i].u;
-		if (helper_points[i].u > umax) umax = helper_points[i].u;
-		if (helper_points[i].v < vmin) vmin = helper_points[i].v;
-		if (helper_points[i].v > vmax) vmax = helper_points[i].v;
+		helper_points[i].param[0] = std::get<0>(param);
+		helper_points[i].param[1] = std::get<1>(param);
+		double u = helper_points[i].param[0];
+		double v = helper_points[i].param[1];
+		if (u < umin) umin = u;
+		if (u > umax) umax = u;
+		if (v < vmin) vmin = v;
+		if (v > vmax) vmax = v;
 
-		cout << "i,u,v: " <<i <<", "<< helper_points[i].u << ", " << helper_points[i].v << endl;
+		cout << "i,u,v: " <<i <<", "<< u << ", " << v << endl;
 	}
 	return std::make_tuple(1.2*umin, 1.2*umax, 1.2*vmin, 1.2*vmax);
 }
@@ -194,16 +196,20 @@ void PiaMinJaeMethod::calculate()
 
 	for (int j = 0; j < 5; j++) {
 		auto grid = param_helper_points(); // 辅助点参数化
+		t_mesh::Array<double, 2> low;
+		t_mesh::Array<double, 2> high;
+		low[0] = std::get<0>(grid); high[0] = std::get<1>(grid);
+		low[1] = std::get<2>(grid); high[1] = std::get<3>(grid);
 		//fitPoints = curve_points;
 		fitPoints.clear();
 		fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
 		for (auto point : inter_points) {
-			if (!point.inRectangle(grid)) {
+			if (!point.inRectangle(low,high)) {
 				fitPoints.push_back(point);
 			}
 		}
 		for (auto point : curve_points) {
-			if (!point.inRectangle(grid)) {
+			if (!point.inRectangle(low,high)) {
 				fitPoints.push_back(point);
 			}
 		}
@@ -219,15 +225,15 @@ void PiaMinJaeMethod::sample_fitPoints_1()
 	const int sampleNum = 10;
 	for (int i = 1; i < curves_num - 1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point;
-			point.u = s_knots(i);
-			point.v = 1.0*j / sampleNum;
-			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
-			if (point.v == 0.0) {
-				point.v = 0.0001;
+			FitPoint2D point;
+			point.param[0] = s_knots(i);
+			point.param[1] = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.param[1]).transpose());
+			if (point.param[1] == 0.0) {
+				point.param[1] = 0.0001;
 			}
-			else if (point.v == 1.0) {
-				point.v = 0.9999;
+			else if (point.param[1] == 1.0) {
+				point.param[1] = 0.9999;
 			}
 			curve_points.push_back(point);
 
@@ -256,11 +262,11 @@ void PiaMinJaeMethod::sample_fitPoints_1()
 			continue;
 		}
 		for (int j = 0; j <= num; j++) {
-			FitPoint point;
-			point.u = 1.0*i / num;
+			FitPoint2D point;
+			point.param[0] = 1.0*i / num;
 			
-			point.v = 1.0*j / num;
-			point.origin.fromVectorXd(skin.eval(point.u, point.v));
+			point.param[1] = 1.0*j / num;
+			point.origin.fromVectorXd(skin.eval(point.param[0], point.param[1]));
 			inter_points.push_back(point);
 		}
 	}
@@ -272,15 +278,15 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 	const int sampleNum = 50;
 	for (int i = 1; i < curves_num - 1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point;
-			point.u = s_knots(i);
-			point.v = 1.0*j / sampleNum;
-			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
-			if (point.v == 0.0) {
-				point.v = 0.0001;
+			FitPoint2D point;
+			point.param[0] = s_knots(i);
+			point.param[1] = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.param[1]).transpose());
+			if (point.param[1] == 0.0) {
+				point.param[1] = 0.0001;
 			}
-			else if (point.v == 1.0) {
-				point.v = 0.9999;
+			else if (point.param[1] == 1.0) {
+				point.param[1] = 0.9999;
 			}
 			curve_points.push_back(point);
 
@@ -291,8 +297,8 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 	}
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 40;
-	const int u_sample_num = 40;
+	const int v_sample_num = 20;
+	const int u_sample_num = 20;
 
 	VectorXd params = s_knots;
 	params(0) = 0; params(params.size() - 1) = 1;
@@ -327,11 +333,11 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 			continue;
 		}
 		for (int j = 0; j <= v_sample_num; j++) {
-			FitPoint point;
-			point.u = 1.0*i / u_sample_num;
-			point.v = 1.0*j / v_sample_num;
+			FitPoint2D point;
+			point.param[0] = 1.0*i / u_sample_num;
+			point.param[1] = 1.0*j / v_sample_num;
 
-			point.origin.fromVectorXd(sample_curves[j].eval(point.u));
+			point.origin.fromVectorXd(sample_curves[j].eval(point.param[0]));
 			inter_points.push_back(point);
 		}
 	}
@@ -343,15 +349,15 @@ void PiaMinJaeMethod::sample_fitPoints()
 	const int sampleNum = 50;
 	for (int i = 1; i < curves_num - 1; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point;
-			point.u = s_knots(i);
-			point.v = 1.0*j / sampleNum;
-			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
-			if (point.v == 0.0) {
-				point.v = 0.0001;
+			FitPoint2D point;
+			point.param[0] = s_knots(i);
+			point.param[1] = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.param[1]).transpose());
+			if (point.param[1] == 0.0) {
+				point.param[1] = 0.0001;
 			}
-			else if (point.v == 1.0) {
-				point.v = 0.9999;
+			else if (point.param[1] == 1.0) {
+				point.param[1] = 0.9999;
 			}
 			curve_points.push_back(point);
 
@@ -372,23 +378,23 @@ void PiaMinJaeMethod::sample_fitPoints()
 
 		// calculate sample points by linear interpolate
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point1, point2;
-			point1.v = 1.0*j / sampleNum;
-			point2.v = point1.v;
-			point1.u = s_inter1;
-			point2.u = s_inter2;
+			FitPoint2D point1, point2;
+			point1.param[1] = 1.0*j / sampleNum;
+			point2.param[1] = point1.param[1];
+			point1.param[0] = s_inter1;
+			point2.param[0] = s_inter2;
 
-			RowVectorXd now_coor = curves[i].eval(point1.v);
-			RowVectorXd next_coor = curves[i + 1].eval(point1.v);
+			RowVectorXd now_coor = curves[i].eval(point1.param[1]);
+			RowVectorXd next_coor = curves[i + 1].eval(point1.param[1]);
 			point1.origin.fromVectorXd(2.0 / 3 * now_coor + 1.0 / 3 * next_coor);
 			point2.origin.fromVectorXd(2.0 / 3 * next_coor + 1.0 / 3 * now_coor);
-			if (point1.v == 0.0) {
-				point1.v = 0.0001;
-				point2.v = 0.0001;
+			if (point1.param[1] == 0.0) {
+				point1.param[1] = 0.0001;
+				point2.param[1] = 0.0001;
 			}
-			else if (point1.v == 1.0) {
-				point1.v = 0.9999;
-				point2.v = 0.9999;
+			else if (point1.param[1] == 1.0) {
+				point1.param[1] = 0.9999;
+				point2.param[1] = 0.9999;
 			}
 			inter_points.push_back(point1);
 			inter_points.push_back(point2);
@@ -413,8 +419,8 @@ void PiaMinJaeMethod::pia()
 			}
 			double sum1 = 0;
 			Point3d sum2;
-			for (FitPoint point : fitPoints) {
-				double blend = node->basis(point.u, point.v);
+			for (FitPoint2D point : fitPoints) {
+				double blend = node->basis(point.param[0], point.param[1]);
 				sum1 += blend;
 				Point3d delta = point.origin - point.eval;
 				delta.scale(blend);

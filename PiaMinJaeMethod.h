@@ -33,9 +33,9 @@ public:
 	void pia() override;
 
 private:
-	vector<FitPoint> curve_points;
-	vector<FitPoint> inter_points;
-	vector<FitPoint> helper_points;
+	vector<FitPoint2D> curve_points;
+	vector<FitPoint2D> inter_points;
+	vector<FitPoint2D> helper_points;
 };
 
 #endif // !PIAMINJAEMETHOD_H

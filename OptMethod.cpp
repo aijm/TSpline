@@ -125,15 +125,15 @@ void OptMethod::sample_fitPoints()
 	const int sampleNum = 100;
 	for (int i = 0; i < curves_num; i++) {
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point;
-			point.u = s_knots(i);
-			point.v = 1.0*j / sampleNum;
-			point.origin.fromVectorXd(curves[i].eval(point.v).transpose());
-			if (point.v == 0.0) {
-				point.v = 0.0001;
+			FitPoint2D point;
+			point.param[0] = s_knots(i);
+			point.param[1] = 1.0*j / sampleNum;
+			point.origin.fromVectorXd(curves[i].eval(point.param[1]).transpose());
+			if (point.param[1] == 0.0) {
+				point.param[1] = 0.0001;
 			}
-			else if (point.v == 1.0) {
-				point.v = 0.9999;
+			else if (point.param[1] == 1.0) {
+				point.param[1] = 0.9999;
 			}
 			fitPoints.push_back(point);
 
@@ -154,23 +154,23 @@ void OptMethod::sample_fitPoints()
 
 		// calculate sample points by linear interpolate
 		for (int j = 0; j <= sampleNum; j++) {
-			FitPoint point1, point2;
-			point1.v = 1.0*j / sampleNum;
-			point2.v = point1.v;
-			point1.u = s_inter1;
-			point2.u = s_inter2;
+			FitPoint2D point1, point2;
+			point1.param[1] = 1.0*j / sampleNum;
+			point2.param[1] = point1.param[1];
+			point1.param[0] = s_inter1;
+			point2.param[0] = s_inter2;
 
-			RowVectorXd now_coor = curves[i].eval(point1.v);
-			RowVectorXd next_coor = curves[i + 1].eval(point1.v);
+			RowVectorXd now_coor = curves[i].eval(point1.param[1]);
+			RowVectorXd next_coor = curves[i + 1].eval(point1.param[1]);
 			point1.origin.fromVectorXd(2.0 / 3 * now_coor + 1.0 / 3 * next_coor);
 			point2.origin.fromVectorXd(2.0 / 3 * next_coor + 1.0 / 3 * now_coor);
-			if (point1.v == 0.0) {
-				point1.v = 0.0001;
-				point2.v = 0.0001;
+			if (point1.param[1] == 0.0) {
+				point1.param[1] = 0.0001;
+				point2.param[1] = 0.0001;
 			}
-			else if (point1.v == 1.0) {
-				point1.v = 0.9999;
-				point2.v = 0.9999;
+			else if (point1.param[1] == 1.0) {
+				point1.param[1] = 0.9999;
+				point2.param[1] = 0.9999;
 			}
 			fitPoints.push_back(point1);
 			fitPoints.push_back(point2);
@@ -216,8 +216,8 @@ void OptMethod::getN()
 			auto node_i = tspline.get_node(i+1);
 			auto node_j = tspline.get_node(j+1);
 			for (const auto& point : fitPoints) {
-				double bi = node_i->basis(point.u, point.v);
-				double bj = node_j->basis(point.u, point.v);
+				double bi = node_i->basis(point.param[0], point.param[1]);
+				double bj = node_j->basis(point.param[0], point.param[1]);
 				if (i == 83 && bi != 0.0 && bj != 0.0) {
 					/*cout << "s: ";
 					node_i->s.output(cout);
@@ -235,7 +235,7 @@ void OptMethod::getN()
 					node_j->t.output(cout);
 					cout << endl;
 
-					cout << "u: " << point.u << ", v: " << point.v << endl;
+					cout << "u: " << point.param[0] << ", v: " << point.param[1] << endl;
 					cout << "bi: " << bi << ", bj: " << bj << endl;
 					cout << "\n\n\n" << endl;*/
 
@@ -253,7 +253,7 @@ void OptMethod::getB()
 	for (int i = 0; i < num; i++) {
 		auto node = tspline.get_node(i+1);
 		for (const auto& point : fitPoints) {
-			Point3d temp = node->basis(point.u, point.v) * point.origin;
+			Point3d temp = node->basis(point.param[0], point.param[1]) * point.origin;
 			for (int j = 0; j < 3; j++) {
 				B(i, j) += temp[j];
 			}
