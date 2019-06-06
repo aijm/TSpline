@@ -292,7 +292,7 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 
 			/*MatrixXd P;
 			array2matrixd(point.origin, P);
-			(*viewer).data().add_points(P, green);*/
+			(*viewer).data().add_points(P, red);*/
 		}
 	}
 
@@ -317,7 +317,6 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 			points.row(j) = curves[j].eval(v);
 		}
 		sample_curves[i].interpolate(points, knots);
-		//sample_curves[i].draw(*viewer, false, true);
 	}
 
 
@@ -339,6 +338,10 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 
 			point.origin.fromVectorXd(sample_curves[j].eval(point.param[0]));
 			inter_points.push_back(point);
+
+			/*MatrixXd P;
+			array2matrixd(point.origin, P);
+			(*viewer).data().add_points(P, green);*/
 		}
 	}
 	
@@ -353,12 +356,12 @@ void PiaMinJaeMethod::sample_fitPoints()
 			point.param[0] = s_knots(i);
 			point.param[1] = 1.0*j / sampleNum;
 			point.origin.fromVectorXd(curves[i].eval(point.param[1]).transpose());
-			if (point.param[1] == 0.0) {
+			/*if (point.param[1] == 0.0) {
 				point.param[1] = 0.0001;
 			}
 			else if (point.param[1] == 1.0) {
 				point.param[1] = 0.9999;
-			}
+			}*/
 			curve_points.push_back(point);
 
 			/*MatrixXd P;
@@ -388,14 +391,14 @@ void PiaMinJaeMethod::sample_fitPoints()
 			RowVectorXd next_coor = curves[i + 1].eval(point1.param[1]);
 			point1.origin.fromVectorXd(2.0 / 3 * now_coor + 1.0 / 3 * next_coor);
 			point2.origin.fromVectorXd(2.0 / 3 * next_coor + 1.0 / 3 * now_coor);
-			if (point1.param[1] == 0.0) {
+			/*if (point1.param[1] == 0.0) {
 				point1.param[1] = 0.0001;
 				point2.param[1] = 0.0001;
 			}
 			else if (point1.param[1] == 1.0) {
 				point1.param[1] = 0.9999;
 				point2.param[1] = 0.9999;
-			}
+			}*/
 			inter_points.push_back(point1);
 			inter_points.push_back(point2);
 

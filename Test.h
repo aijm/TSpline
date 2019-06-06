@@ -18,6 +18,7 @@
 #include "BsplineVolume.h"
 #include "NURBSSurface.h"
 #include "VolumeSkinning.h"
+#include "VolumePiaMethod.h"
 
 #include <nlopt.hpp>
 
@@ -31,6 +32,7 @@ typedef struct {
 
 class Test {
 public:
+	static void test_TsplineSimplify();
 	static void test_generate_curves();
 	static void test_generate_curves1();
 	static void test_generate_surfaces();

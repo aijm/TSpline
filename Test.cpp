@@ -3,6 +3,19 @@
 clock_t Test::begin;
 clock_t Test::end;
 
+void Test::test_TsplineSimplify()
+{
+	NURBSSurface surface;
+	surface.loadNURBS("../out/nurbs/venus_front.cpt");
+	//surface.draw(Window::viewer, false, true);
+	/*Window w;
+	w.launch();*/
+	Mesh3d tspline;   
+	t_mesh::TsplineSimplify(surface, tspline, 4);
+	MeshRender render(&tspline, false, true, true);
+	render.launch();
+}
+
 void Test::test_generate_curves()
 {
 	BsplineVolume volume;
@@ -129,8 +142,8 @@ void Test::test_generate_curves1()
 	//Skinning* method = new PiaMethod(curves, 100);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	//PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
-	PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
+	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
@@ -246,9 +259,12 @@ void Test::test_VolumeSkinning()
 	Window::viewer.data_list[3].set_colors(blue);
 	/*Window w;
 	w.launch();*/
-	VolumeSkinning method(surfaces);
-	method.calculate();
-	VolumeRender w(&method.volume, false, false, true,0.01);
+	VolumeSkinning* method = new VolumePiaMethod(surfaces,15);
+	method->setViewer(&Window::viewer);
+	cout << "1" << endl;
+	method->calculate();
+	cout << "2" << endl;
+	VolumeRender w(&method->volume, false, false, true,0.01);
 	w.launch();
 }
 

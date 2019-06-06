@@ -13,7 +13,7 @@ public:
 	int saveVolume(string) override;
 
 	void insert(double w, Mesh3d* mesh);
-
+	
 private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;

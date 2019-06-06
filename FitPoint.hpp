@@ -19,9 +19,9 @@ public:
 	}
 
 public:
-	Point3d origin; // 要拟合点的坐标
+	t_mesh::Point3d origin; // 要拟合点的坐标
 	t_mesh::Array<double, num> param; // 对应参数
-	Point3d eval;   // 曲面上对应参数的值 T(u,v) 
+	t_mesh::Point3d eval;   // 曲面上对应参数的值 T(u,v) 
 	double error;
 
 };

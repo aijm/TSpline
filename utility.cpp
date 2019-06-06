@@ -235,4 +235,130 @@ namespace t_mesh {
 			i++;
 		}
 	}
-}
+	void TsplineSimplify(const NURBSSurface & surface, Mesh3d & tspline, int maxIterNum, double eps)
+	{
+		assert(surface.dimension == 3 && surface.u_order == 4 && surface.v_order == 4);
+		// create a tspline format of surface
+		Mesh3d origin;
+		Eigen::VectorXd u_knots = surface.uknots;
+		Eigen::VectorXd v_knots = surface.vknots;
+		u_knots(3) = 0.0001; u_knots(u_knots.size() - 4) = 0.9999;
+		v_knots(3) = 0.0001; v_knots(v_knots.size() - 4) = 0.9999;
+		map<double, int> u_map;
+		map<double, int> v_map;
+		for (int i = 2; i <= u_knots.size()-3; i++) {
+			u_map[u_knots(i)] = i;
+		}
+		for (int i = 2; i <= v_knots.size() - 3; i++) {
+			v_map[v_knots(i)] = i;
+		}
+		
+
+		for (int i = 0; i <= surface.v_num; i++) {
+			for (int j = 0; j <= surface.u_num; j++) {
+				double u = u_knots(j + 2);
+				double v = v_knots(i + 2);
+				origin.insert_helper(u, v, false);
+				auto node = origin.get_node(u, v);
+				node->data.fromVectorXd(surface.controlPw[i].row(j));
+			}
+		}
+		origin.pool.clear();
+		if (!origin.check_valid()) {
+			cout << "error: invalid tspline mesh!" << endl;
+			return;
+		}
+
+		// create an initial tspline patch
+		
+		Eigen::VectorXd init_knots(4);
+		init_knots << 0, 0.0001, 0.9999, 1.0;
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				double u = init_knots(i);
+				double v = init_knots(j);
+				tspline.insert_helper(u, v, false);
+				tspline.s_map[u][v]->data = origin.s_map[u][v]->data;
+			}
+		}
+		tspline.pool.clear();
+		if (!tspline.check_valid()) {
+			cout << "error: invalid tspline mesh!" << endl;
+			return;
+		}
+
+		// split the rectangle defined by the parameter
+		auto split = [&](const std::tuple<double,double,double,double>& rect) {
+			// 其实只是分割区域，是拓扑层面的操作，控制点坐标不需要考虑
+			int u0 = u_map[get<0>(rect)]; // ulow
+			int u1 = u_map[get<1>(rect)]; // uhigh
+			int v0 = v_map[get<2>(rect)]; // vlow
+			int v1 = v_map[get<3>(rect)]; // vhigh
+			if (u1 - u0 >= v1 - v0) {
+				int u_insert = (u0 + u1) / 2;
+				tspline.insert_helper(u_knots(u_insert), v_knots(v0));
+				tspline.merge_all();
+				tspline.insert_helper(u_knots(u_insert), v_knots(v1));
+				tspline.merge_all();
+			}
+			else {
+				int v_insert = (v0 + v1) / 2;
+				tspline.insert_helper(u_knots(u0), v_knots(v_insert));
+				tspline.merge_all();
+				tspline.insert_helper(u_knots(u1), v_knots(v_insert));
+				tspline.merge_all();
+			}
+		};
+
+		for (int i = 0; i < maxIterNum; i++) {
+			cout << "size of nodes: " << tspline.get_num() << endl;
+			// 节点插入加细到与B样条曲面一致
+			Mesh3d temp(tspline);
+			for (auto node : origin.nodes) {
+				if (temp.get_node(node->s[2], node->t[2]) == 0) {
+					temp.insert(node->s[2], node->t[2]);
+				}
+			}
+			
+			vector<tuple<double,double,double,double>> regions;
+			// 先整体计算误差，取出需要split的区域
+			for (auto node : temp.nodes) {
+				double u = node->s[2];
+				double v = node->t[2];
+				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
+				//cout << "error : " << error << endl;
+				if (tspline.get_node(u, v) != 0 || error < 5e-4) {
+					continue;
+				}
+				auto temp = tspline.get_knot(u, v);
+				if (tspline.get_node(temp.s[2], temp.t[1]) != 0) {
+					// on the u-edge of tspline
+					regions.push_back(std::make_tuple(temp.s[1], temp.s[2], temp.t[1], temp.t[3]));
+					regions.push_back(std::make_tuple(temp.s[2], temp.s[3], temp.t[1], temp.t[3]));
+				}
+				else if (tspline.get_node(temp.s[1], temp.t[2]) != 0) {
+					// on the v-edge of tspline
+					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[1], temp.t[2]));
+					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[2], temp.t[3]));
+				}
+				else {
+					// inside the rectangle
+					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[1], temp.t[3]));
+				}
+			}
+
+			// 分割区域
+			for (const auto& rect : regions) {
+				split(rect);
+			}
+
+			// 更新 tspline
+			for (auto node : tspline.nodes) {
+				node->data = origin.s_map[node->s[2]][node->t[2]]->data;
+			}
+		}
+
+		cout << "size of nodes: " << tspline.get_num() << endl;
+
+	}
+};

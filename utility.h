@@ -12,6 +12,7 @@
 #include <igl/jet.h>
 #include <igl/parula.h>
 #include <igl/principal_curvature.h>
+#include "NURBSSurface.h"
 
 namespace t_mesh{
     template<class T,int num>
@@ -60,6 +61,9 @@ namespace t_mesh{
 	bool savepoints(std::string name, const Eigen::MatrixXd &mat);
 
 	void vec_insert(Eigen::VectorXd &vec, double t);
+
+	void TsplineSimplify(const NURBSSurface& surface, Mesh3d& tspline, int maxIterNum = 20, double eps = 1e-5);
+	
 };
 
 namespace t_mesh{

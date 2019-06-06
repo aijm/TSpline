@@ -48,7 +48,7 @@ void VolumePiaMethod::param_helper_points(Point3d & low, Point3d & high)
 
 void VolumePiaMethod::sample_fitPoints_2()
 {
-	const int sampleNum = 50;
+	const int sampleNum = 10;
 	for (int i = 1; i < surfaces_num - 1; i++) {
 
 		for (int j = 0; j <= sampleNum; j++) {
@@ -66,9 +66,9 @@ void VolumePiaMethod::sample_fitPoints_2()
 
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 20;
-	const int u_sample_num = 20;
-	const int w_sample_num = 20;
+	const int v_sample_num = 10;
+	const int u_sample_num = 10;
+	const int w_sample_num = 10;
 
 	VectorXd params = w_params;
 	params(0) = 0; params(params.size() - 1) = 1;
@@ -87,9 +87,10 @@ void VolumePiaMethod::sample_fitPoints_2()
 			double v = 1.0*j / v_sample_num;
 			MatrixXd points(surfaces_num, 3);
 			for (int k = 0; k < surfaces_num; k++) {
-				points.row(k) = surfaces[j].eval(u, v).toVectorXd();
+				points.row(k) = surfaces[k].eval(u, v).toVectorXd();
 			}
 			sample_curves[i][j].interpolate(points, knots);
+			sample_curves[i][j].draw(*viewer, false);
 		}
 	}
 
@@ -119,7 +120,7 @@ void VolumePiaMethod::sample_fitPoints_2()
 
 void VolumePiaMethod::sample_fitPoints()
 {
-	const int sampleNum = 50;
+	const int sampleNum = 10;
 	for (int i = 1; i < surfaces_num - 1; i++) {
 
 		for (int j = 0; j <= sampleNum; j++) {
@@ -130,6 +131,9 @@ void VolumePiaMethod::sample_fitPoints()
 				point.param[2] = this->w_params(i);
 				point.origin = surfaces[i].eval(point.param[0], point.param[1]);
 				surface_points.push_back(point);
+				MatrixXd P;
+				array2matrixd(point.origin, P);
+				(*viewer).data().add_points(P, red);
 			}
 		}
 
@@ -159,6 +163,12 @@ void VolumePiaMethod::sample_fitPoints()
 
 				inter_points.push_back(point1);
 				inter_points.push_back(point2);
+
+				MatrixXd P;
+				array2matrixd(point1.origin, P);
+				(*viewer).data().add_points(P, green);
+				array2matrixd(point2.origin, P);
+				(*viewer).data().add_points(P, green);
 			}
 		}
 	}

@@ -50,14 +50,14 @@ namespace t_mesh{
             Node<T>*    get_node(double s,double t);
             Node<T>     get_knot(double x,double y); // get the knot vector of (x,y)
 			bool check_valid();
-
+			void merge_all();
         private:
 			void drawTmesh();
 			void drawControlpolygon();
 			void drawSurface(double resolution = 0.01);
 
 			void adjust(Node<T>* n, bool changedata = true);
-            void merge_all();
+            
             
 			void clear();
 			
