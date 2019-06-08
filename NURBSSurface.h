@@ -72,6 +72,16 @@ struct NURBSSurface
 	// surface skinning
 	void skinning(const vector<NURBSCurve> &curves,const VectorXd& curves_param, igl::opengl::glfw::Viewer &viewer);
 
+public:
+	double mean_curvature(double u, double v);
+	double guassian_curvature(double u, double v);
+
+	void curvature(double u, double v, double& k1, double& k2);
+	void derivative(double u, double v, RowVector3d& du, RowVector3d& dv, RowVector3d& d2u, RowVector3d& d2v, RowVector3d& duv);
+
+	int FindSpan(const Eigen::MatrixXd &knots, double t, int p = 3);
+
+public:
 	bool isRational = false;
 	int u_order; // order of u direction
 	int v_order; // order of v direction

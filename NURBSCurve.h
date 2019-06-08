@@ -49,7 +49,11 @@ struct NURBSCurve
 	// chord length parameterization
 	static VectorXd parameterize(const MatrixXd &points);
 	// basis function N_(i,p)(t)
-	double Basis(const VectorXd &_knots, double _t, int _i = 0, int _p = 3);
+	static double Basis(const VectorXd &_knots, double _t, int _i = 0, int _p = 3);
+
+	// Berivative of Blending function N[s0,s1,s2,s3,s4](t)
+	static Eigen::RowVectorXd DersBasis(const Eigen::MatrixXd &knots, double t, int i = 0, int p = 3);
+
 	// interpolate by bspline of degree 3
 	void interpolate(const MatrixXd &points);
 

@@ -27,7 +27,7 @@ namespace t_mesh{
 			ostream& saveMesh(ostream&);
 			void saveAsObj(string, double resolution=0.01);
 			T eval(double s,double t);
-			
+			vector<std::tuple<double, double, double, double>> region(double u, double v);
 			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
 			void setViewer(Viewer* viewer) { this->viewer = viewer; }
 			void piafit(const map<double, map<double, T>>& targetPoints, int maxIterNum=10, double eps=1e-5);
@@ -153,6 +153,159 @@ namespace t_mesh{
 				 }
 			 }*/
 			 return result; 
+		 }
+
+		 template<class T>
+		 inline vector<std::tuple<double, double, double, double>> Mesh<T>::region(double u, double v)
+		 {
+			 vector<tuple<double, double, double, double>> res;
+			 // find the rectangle region of param u,v
+			 if (get_node(u, v) != 0) {
+				 return res;
+			 }
+			 Node<T> temp = get_knot(u, v);
+			 if (get_node(temp.s[2], temp.t[1]) != 0 && get_node(temp.s[2], temp.t[3]) != 0) {
+				 // on the u-edge of tspline
+
+				 // 左边的矩形
+				 double ulow = temp.s[1];
+				 double u = temp.s[2];
+				 double vlow = 0;
+				 double vhigh = 0;
+				 int count = 0;
+				 for (auto it = s_map[u].begin(); it != s_map[u].end(); it++) {
+					 if (u == ulow) {
+						 break;
+					 }
+					 if (it->first >= temp.t[2]) {
+						 break;
+					 }
+					 if (it->second->adj[3] != NULL && it->second->adj[3]->s[2] == ulow) {
+						 vlow = it->first;
+						 count++;
+					 }
+				 }
+				 if (count != 0) {
+					 count = 0;
+					 for (auto it = s_map[u].rbegin(); it != s_map[u].rend(); it++) {
+						 if (it->first <= temp.t[2]) {
+							 break;
+						 }
+						 if (it->second->adj[3] != NULL && it->second->adj[3]->s[2] == ulow) {
+							 vhigh = it->first;
+							 count++;
+						 }
+					 }
+					 if (count != 0) {
+						 res.push_back(make_tuple(ulow, u, vlow, vhigh));
+					 }
+				 }
+
+
+				 // 右边的矩形
+				 double uhigh = temp.s[3];
+				 count = 0;
+				 for (auto it = s_map[u].begin(); it != s_map[u].end(); it++) {
+					 if (u == uhigh) {
+						 break;
+					 }
+					 if (it->first >= temp.t[2]) {
+						 break;
+					 }
+					 if (it->second->adj[1] != NULL && it->second->adj[1]->s[2] == uhigh) {
+						 vlow = it->first;
+						 count++;
+					 }
+				 }
+				 if (count != 0) {
+					 count = 0;
+					 for (auto it = s_map[u].rbegin(); it != s_map[u].rend(); it++) {
+						 if (it->first <= temp.t[2]) {
+							 break;
+						 }
+						 if (it->second->adj[1] != NULL && it->second->adj[1]->s[2] == uhigh) {
+							 vhigh = it->first;
+							 count++;
+						 }
+					 }
+					 if (count != 0) {
+						 res.push_back(make_tuple(u, uhigh, vlow, vhigh));
+					 }
+				 }
+			 }
+			 else if (get_node(temp.s[1], temp.t[2]) != 0 && get_node(temp.s[3], temp.t[2]) != 0) {
+				 // on the v-edge of tspline
+				 // 下面的矩形
+				 double vlow = temp.t[1];
+				 double v = temp.t[2];
+				 double ulow = 0;
+				 double uhigh = 0;
+				 int count = 0;
+				 for (auto it = t_map[v].begin(); it != t_map[v].end(); it++) {
+					 if (v == vlow) {
+						 break;
+					 }
+					 if (it->first >= temp.s[2]) {
+						 break;
+					 }
+					 if (it->second->adj[0] != NULL && it->second->adj[0]->t[2] == vlow) {
+						 ulow = it->first;
+						 count++;
+					 }
+				 }
+				 if (count != 0) {
+					 count = 0;
+					 for (auto it = t_map[v].rbegin(); it != t_map[v].rend(); it++) {
+						 if (it->first <= temp.s[2]) {
+							 break;
+						 }
+						 if (it->second->adj[0] != NULL && it->second->adj[0]->t[2] == vlow) {
+							 uhigh = it->first;
+							 count++;
+						 }
+					 }
+					 if (count != 0) {
+						 res.push_back(make_tuple(ulow, uhigh, vlow, v));
+					 }
+				 }
+
+
+				 // 上面的矩形
+				 double vhigh = temp.t[3];
+				 count = 0;
+				 for (auto it = t_map[v].begin(); it != t_map[v].end(); it++) {
+					 if (v == vhigh) {
+						 break;
+					 }
+					 if (it->first >= temp.s[2]) {
+						 break;
+					 }
+					 if (it->second->adj[2] != NULL && it->second->adj[2]->t[2] == vhigh) {
+						 ulow = it->first;
+						 count++;
+					 }
+				 }
+				 if (count != 0) {
+					 count = 0;
+					 for (auto it = t_map[v].rbegin(); it != t_map[v].rend(); it++) {
+						 if (it->first <= temp.s[2]) {
+							 break;
+						 }
+						 if (it->second->adj[2] != NULL && it->second->adj[2]->t[2] == vhigh) {
+							 uhigh = it->first;
+							 count++;
+						 }
+					 }
+					 if (count != 0) {
+						 res.push_back(make_tuple(ulow, uhigh, v, vhigh));
+					 }
+				 }
+			 }
+			 else {
+				 // inside the rectangle
+				 res.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[1], temp.t[3]));
+			 }
+			 return res;
 		 }
 
 	template<class T>

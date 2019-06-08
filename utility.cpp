@@ -296,16 +296,16 @@ namespace t_mesh {
 			int v1 = v_map[get<3>(rect)]; // vhigh
 			if (u1 - u0 >= v1 - v0) {
 				int u_insert = (u0 + u1) / 2;
-				tspline.insert_helper(u_knots(u_insert), v_knots(v0));
+				tspline.insert_helper(u_knots(u_insert), v_knots(v0),false);
 				tspline.merge_all();
-				tspline.insert_helper(u_knots(u_insert), v_knots(v1));
+				tspline.insert_helper(u_knots(u_insert), v_knots(v1),false);
 				tspline.merge_all();
 			}
 			else {
 				int v_insert = (v0 + v1) / 2;
-				tspline.insert_helper(u_knots(u0), v_knots(v_insert));
+				tspline.insert_helper(u_knots(u0), v_knots(v_insert),false);
 				tspline.merge_all();
-				tspline.insert_helper(u_knots(u1), v_knots(v_insert));
+				tspline.insert_helper(u_knots(u1), v_knots(v_insert),false);
 				tspline.merge_all();
 			}
 		};
@@ -313,38 +313,26 @@ namespace t_mesh {
 		for (int i = 0; i < maxIterNum; i++) {
 			cout << "size of nodes: " << tspline.get_num() << endl;
 			// 节点插入加细到与B样条曲面一致
-			Mesh3d temp(tspline);
+			Mesh3d mesh(tspline);
+			cout << "size of mesh: " << mesh.get_num() << endl;
 			for (auto node : origin.nodes) {
-				if (temp.get_node(node->s[2], node->t[2]) == 0) {
-					temp.insert(node->s[2], node->t[2]);
+				if (mesh.get_node(node->s[2], node->t[2]) == 0) {
+					mesh.insert(node->s[2], node->t[2]);
 				}
 			}
 			
 			vector<tuple<double,double,double,double>> regions;
 			// 先整体计算误差，取出需要split的区域
-			for (auto node : temp.nodes) {
+			for (auto node : mesh.nodes) {
 				double u = node->s[2];
 				double v = node->t[2];
 				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
 				//cout << "error : " << error << endl;
-				if (tspline.get_node(u, v) != 0 || error < 5e-4) {
+				if (tspline.get_node(u, v) != 0 || error < eps) {
 					continue;
 				}
-				auto temp = tspline.get_knot(u, v);
-				if (tspline.get_node(temp.s[2], temp.t[1]) != 0) {
-					// on the u-edge of tspline
-					regions.push_back(std::make_tuple(temp.s[1], temp.s[2], temp.t[1], temp.t[3]));
-					regions.push_back(std::make_tuple(temp.s[2], temp.s[3], temp.t[1], temp.t[3]));
-				}
-				else if (tspline.get_node(temp.s[1], temp.t[2]) != 0) {
-					// on the v-edge of tspline
-					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[1], temp.t[2]));
-					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[2], temp.t[3]));
-				}
-				else {
-					// inside the rectangle
-					regions.push_back(std::make_tuple(temp.s[1], temp.s[3], temp.t[1], temp.t[3]));
-				}
+				auto rects = tspline.region(u, v);
+				regions.insert(regions.end(), rects.begin(), rects.end());
 			}
 
 			// 分割区域
@@ -356,6 +344,7 @@ namespace t_mesh {
 			for (auto node : tspline.nodes) {
 				node->data = origin.s_map[node->s[2]][node->t[2]]->data;
 			}
+			tspline.pool.clear();
 		}
 
 		cout << "size of nodes: " << tspline.get_num() << endl;

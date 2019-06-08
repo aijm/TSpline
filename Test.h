@@ -32,6 +32,7 @@ typedef struct {
 
 class Test {
 public:
+	static void test_Nurbs_curvature();
 	static void test_TsplineSimplify();
 	static void test_generate_curves();
 	static void test_generate_curves1();

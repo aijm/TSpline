@@ -3,6 +3,15 @@
 clock_t Test::begin;
 clock_t Test::end;
 
+void Test::test_Nurbs_curvature()
+{
+	NURBSSurface surface;
+	surface.loadNURBS("../out/nurbs/venus_front.cpt");
+	surface.draw(Window::viewer, false, true, 0.01);
+	Window w;
+	w.launch();
+}
+
 void Test::test_TsplineSimplify()
 {
 	NURBSSurface surface;
@@ -11,7 +20,7 @@ void Test::test_TsplineSimplify()
 	/*Window w;
 	w.launch();*/
 	Mesh3d tspline;   
-	t_mesh::TsplineSimplify(surface, tspline, 4);
+	t_mesh::TsplineSimplify(surface, tspline, 4, 1e-4);
 	MeshRender render(&tspline, false, true, true);
 	render.launch();
 }

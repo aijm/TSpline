@@ -185,13 +185,25 @@ int NURBSSurface::find_ind(double t, int k, int n, const VectorXd& knots)
 // calculate coordinate of curve point with parameter u & v
 MatrixXd NURBSSurface::eval(double u, double v)
 {
-	//Calculating the Control Points of U-direction Isoparametric Line
-	MatrixXd v_controlP(v_num + 1, dimension); 
-	for (int i = 0; i <= v_num; i++)
-	{
-		v_controlP.row(i) = eval(u, controlPw[i], uknots);
+	MatrixXd res = MatrixXd::Zero(1, dimension);
+	// 只需计算 4*4个点
+	int uid = FindSpan(uknots, u);
+	int vid = FindSpan(vknots, v);
+
+	for (int i = uid - 1; i <= uid + 2; i++) {
+		for (int j = vid - 1; j <= vid + 2; j++) {
+			double blend = NURBSCurve::Basis(uknots, u, i - 2)*NURBSCurve::Basis(vknots, v, j - 2);
+			res += controlPw[j - 2].row(i - 2) * blend;
+		}
 	}
-	return eval(v, v_controlP, vknots); // Calculating the coordinate of parameter v
+	return res;
+	////Calculating the Control Points of U-direction Isoparametric Line
+	//MatrixXd v_controlP(v_num + 1, dimension); 
+	//for (int i = 0; i <= v_num; i++)
+	//{
+	//	v_controlP.row(i) = eval(u, controlPw[i], uknots);
+	//}
+	//return eval(v, v_controlP, vknots); // Calculating the coordinate of parameter v
 }
 
 MatrixXd NURBSSurface::eval(
@@ -321,15 +333,39 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 
 	mesh_V = MatrixXd((uspan + 1)*(vspan + 1), 3);
 	mesh_F = MatrixXi(2 * uspan*vspan, 3);
+
+	VectorXd HH = VectorXd::Zero(mesh_V.rows());
+	VectorXd KK = VectorXd::Zero(mesh_V.rows());
+	VectorXd PV11 = VectorXd::Zero(mesh_V.rows());
+	VectorXd PV22 = VectorXd::Zero(mesh_V.rows());
 	// discretize NURBS Surface into triangular mesh(V,F) in libigl mesh structure
 	// calculate mesh_V
 	for (int j = 0; j <= vspan; j++)
 		for (int i = 0; i <= uspan; i++)
 		{
-			RowVectorXd curvePoint = eval(u_low + i*u_resolution, v_low + j*v_resolution).row(0);
-			//cout << "curvepoint: " << curvePoint << endl;
-			if (isRational) { mesh_V.row(j*(uspan + 1) + i) = curvePoint.hnormalized(); }
-			else { mesh_V.row(j*(uspan + 1) + i) = curvePoint; }
+			double u = u_low + i*u_resolution;
+			double v = v_low + j*v_resolution;
+			RowVectorXd curvePoint = eval(u, v).row(0);
+
+			RowVector3d du, dv, d2u, d2v, duv;
+			derivative(u, v, du, dv, d2u, d2v, duv);
+			/*cout << "d2u: " << d2u << endl;
+			double h = 0.001;*/
+			//RowVector3d d2u_1 = (eval(u + h, v) - 2 * eval(u, v) + eval(u - h, v)) / (h*h);
+			
+			//cout << "d2u_1: " << d2u_1 << endl;
+			RowVector3d normal = du.cross(dv);
+			normal.normalize();
+			/*viewer.data().add_edges(curvePoint, curvePoint + 0.005*du.normalized(), Eigen::RowVector3d(1, 0, 0));
+			viewer.data().add_edges(curvePoint, curvePoint + 0.005*dv.normalized(), Eigen::RowVector3d(0, 1, 0));
+			viewer.data().add_edges(curvePoint, curvePoint + 0.005*normal, Eigen::RowVector3d(0, 0, 1));
+			*/
+
+			int id = j*(uspan + 1) + i;
+			KK(id) = guassian_curvature(u, v);
+
+			if (isRational) { mesh_V.row(id) = curvePoint.hnormalized(); }
+			else { mesh_V.row(id) = curvePoint; }
 		}
 
 	for (int j = 0; j<vspan; j++)
@@ -341,14 +377,21 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 			mesh_F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
 		}
 
-	Eigen::MatrixXd HN;
-	Eigen::VectorXd H;
-	Eigen::SparseMatrix<double> L, M, Minv;
-	igl::cotmatrix(mesh_V, mesh_F, L);
-	igl::massmatrix(mesh_V, mesh_F, igl::MASSMATRIX_TYPE_VORONOI, M);
+	VectorXd K;
+	// Compute integral of Gaussian curvature
+	igl::gaussian_curvature(mesh_V, mesh_F, K);
+	// Compute mass matrix
+	SparseMatrix<double> M, Minv;
+	igl::massmatrix(mesh_V, mesh_F, igl::MASSMATRIX_TYPE_DEFAULT, M);
 	igl::invert_diag(M, Minv);
-	HN = -Minv*(L*mesh_V);
-	H = HN.rowwise().norm(); //up to sign
+	// Divide by area to get integral average
+	K = (Minv*K).eval();
+	KK = KK.cwiseAbs();
+	for (int i = 0; i < KK.size(); i++) {
+		KK(i) = log(KK(i) + 1);
+	}
+
+	Eigen::VectorXd H;
 
 							 // compute curvatrue directions via quadric fitting
 	Eigen::MatrixXd PD1, PD2;
@@ -357,11 +400,16 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 	// mean curvature
 	H = 0.5*(PV1 + PV2);
 
+	for (int i = 0; i < K.rows(); i++) {
+		cout << K(i) << ", " << KK(i) << endl;
+	}
+	
+
 	viewer.data().set_mesh(mesh_V, mesh_F);
 
 	// Compute pseudocolor
 	Eigen::MatrixXd C;
-	igl::jet(H, true, C);
+	igl::parula(KK, true, C);
 	viewer.data().set_colors(C);
 }
 
@@ -636,4 +684,113 @@ void NURBSSurface::skinning(const vector<NURBSCurve>& curves, const VectorXd & c
 	//dimension = 3;
 	cout << "number of control points: " << controlPw.size()*controlPw[0].rows() << endl;
 	cout << "skinning finished!" << endl;
+}
+
+double NURBSSurface::mean_curvature(double u, double v)
+{
+	double k1, k2;
+	curvature(u, v, k1, k2);
+	return (k1 + k2) / 2;
+}
+
+double NURBSSurface::guassian_curvature(double u, double v)
+{
+	double k1, k2;
+	curvature(u, v, k1, k2);
+	return k1*k2;
+}
+
+void NURBSSurface::curvature(double u, double v, double & k1, double & k2)
+{
+	RowVector3d du = RowVector3d::Zero();
+	RowVector3d dv = RowVector3d::Zero();
+	RowVector3d d2u = RowVector3d::Zero();
+	RowVector3d d2v = RowVector3d::Zero();
+	RowVector3d duv = RowVector3d::Zero();
+	derivative(u, v, du, dv, d2u, d2v, duv);
+	RowVector3d normal = du.cross(dv);
+	normal.normalize();
+	double E = du.dot(du);
+	double F = du.dot(dv);
+	double G = dv.dot(dv);
+	double L = d2u.dot(normal);
+	double M = duv.dot(normal);
+	double N = d2v.dot(normal);
+	double b = G*L - 2 * F*M + E*N;
+	double a = E*G - F*F;
+	double c = L*N - M*M;
+	double temp = sqrt(b*b - 4 * a*c);
+	k1 = 0.5*(b - temp) / a;
+	k2 = 0.5*(b + temp) / a;
+}
+
+void NURBSSurface::derivative(double u, double v, RowVector3d & du, RowVector3d & dv, RowVector3d & d2u, RowVector3d & d2v, RowVector3d & duv)
+{
+	du = RowVector3d::Zero();
+	dv = RowVector3d::Zero();
+	d2u = RowVector3d::Zero();
+	d2v = RowVector3d::Zero();
+	duv = RowVector3d::Zero();
+	
+	double h = 0.001;
+	if (u < h) u += h;
+	if (u > 1 - h) u -= h;
+	if (v < h) v += h;
+	if (v > 1 - h) v -= h;
+
+	RowVector3d P00 = eval(u - h, v - h);
+	RowVector3d P10 = eval(u, v - h);
+	RowVector3d P20 = eval(u + h, v - h);
+	RowVector3d P01 = eval(u - h, v);
+	RowVector3d P11 = eval(u, v);
+	RowVector3d P21 = eval(u + h, v);
+
+	RowVector3d P02 = eval(u - h, v + h);
+	RowVector3d P12 = eval(u, v + h);
+	RowVector3d P22 = eval(u + h, v + h);
+
+	du = (P21 - P01) / 2.0 / h;
+	dv = (P12 - P10) / 2.0 / h;
+	d2u = (P01 - 2 * P11 + P21) / h / h;
+	d2v = (P10 - 2 * P11 + P12) / h / h;
+	duv = (P22 - P02 - P20 + P00) / 4 / h / h;
+
+	/*else {
+		int uid = FindSpan(uknots, u);
+		int vid = FindSpan(uknots, v);
+
+		for (int i = uid - 1; i <= uid + 2; i++) {
+			for (int j = uid - 1; j <= uid + 2; j++) {
+				VectorXd der_u = NURBSCurve::DersBasis(uknots, u, i - 2);
+				VectorXd der_v = NURBSCurve::DersBasis(vknots, v, j - 2);
+
+				du += controlPw[j - 2].row(i - 2) * der_u(1)*der_v(0);
+				dv += controlPw[j - 2].row(i - 2) * der_u(0)*der_v(1);
+				d2u += controlPw[j - 2].row(i - 2) * der_u(2)*der_v(0);
+				d2v += controlPw[j - 2].row(i - 2) * der_u(0)*der_v(2);
+				duv += controlPw[j - 2].row(i - 2) * der_u(1)*der_v(1);
+
+			}
+		}
+	}*/
+	
+	
+}
+
+int NURBSSurface::FindSpan(const Eigen::MatrixXd & knots, double t, int p)
+{
+	const int n = knots.size() - p - 2;
+	if (t == knots(n + 1)) return n;
+	int low = p;
+	int high = n + 1;
+	assert(t >= knots(low) && t < knots(high));
+
+	int mid = (low + high) / 2;
+	while (t < knots(mid) || t >= knots(mid + 1))
+	{
+		if (t < knots(mid)) high = mid;
+		else low = mid;
+		mid = (low + high) / 2;
+	}
+	return mid;
 }
