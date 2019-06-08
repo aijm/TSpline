@@ -14,13 +14,20 @@ void Test::test_Nurbs_curvature()
 
 void Test::test_TsplineSimplify()
 {
+	vector<int> a{ 8,9,7,4,3,5 };
+	vector<int> index(a.size());
+	iota(index.begin(), index.end(), 0);
+	sort(index.begin(), index.end(), [a](int id1, int id2) {return a[id1] > a[id2]; });
+	for (int i = 0; i < index.size(); i++) {
+		cout << "id: " << index[i] << "; value: " << a[index[i]] << endl;
+	}
 	NURBSSurface surface;
 	surface.loadNURBS("../out/nurbs/venus_front.cpt");
 	//surface.draw(Window::viewer, false, true);
 	/*Window w;
 	w.launch();*/
 	Mesh3d tspline;   
-	t_mesh::TsplineSimplify(surface, tspline, 4, 1e-4);
+	t_mesh::TsplineSimplify(surface, tspline,40, 1e-3);
 	MeshRender render(&tspline, false, true, true);
 	render.launch();
 }

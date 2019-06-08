@@ -183,7 +183,7 @@ int NURBSSurface::find_ind(double t, int k, int n, const VectorXd& knots)
 	return mid;
 }
 // calculate coordinate of curve point with parameter u & v
-MatrixXd NURBSSurface::eval(double u, double v)
+MatrixXd NURBSSurface::eval(double u, double v) const
 {
 	MatrixXd res = MatrixXd::Zero(1, dimension);
 	// 只需计算 4*4个点
@@ -686,21 +686,21 @@ void NURBSSurface::skinning(const vector<NURBSCurve>& curves, const VectorXd & c
 	cout << "skinning finished!" << endl;
 }
 
-double NURBSSurface::mean_curvature(double u, double v)
+double NURBSSurface::mean_curvature(double u, double v) const
 {
 	double k1, k2;
 	curvature(u, v, k1, k2);
 	return (k1 + k2) / 2;
 }
 
-double NURBSSurface::guassian_curvature(double u, double v)
+double NURBSSurface::guassian_curvature(double u, double v) const
 {
 	double k1, k2;
 	curvature(u, v, k1, k2);
 	return k1*k2;
 }
 
-void NURBSSurface::curvature(double u, double v, double & k1, double & k2)
+void NURBSSurface::curvature(double u, double v, double & k1, double & k2) const
 {
 	RowVector3d du = RowVector3d::Zero();
 	RowVector3d dv = RowVector3d::Zero();
@@ -724,7 +724,7 @@ void NURBSSurface::curvature(double u, double v, double & k1, double & k2)
 	k2 = 0.5*(b + temp) / a;
 }
 
-void NURBSSurface::derivative(double u, double v, RowVector3d & du, RowVector3d & dv, RowVector3d & d2u, RowVector3d & d2v, RowVector3d & duv)
+void NURBSSurface::derivative(double u, double v, RowVector3d & du, RowVector3d & dv, RowVector3d & d2u, RowVector3d & d2v, RowVector3d & duv) const
 {
 	du = RowVector3d::Zero();
 	dv = RowVector3d::Zero();

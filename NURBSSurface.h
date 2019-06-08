@@ -48,7 +48,7 @@ struct NURBSSurface
 	int find_ind(double t, int k, int n, const VectorXd& knots);
 
 	// calculate coordinate of curve point with parameter u & v
-	MatrixXd eval(double u, double v);
+	MatrixXd eval(double u, double v) const;
 
 	MatrixXd eval(double t, const MatrixXd &_controlP, const VectorXd &knots);
 
@@ -73,13 +73,13 @@ struct NURBSSurface
 	void skinning(const vector<NURBSCurve> &curves,const VectorXd& curves_param, igl::opengl::glfw::Viewer &viewer);
 
 public:
-	double mean_curvature(double u, double v);
-	double guassian_curvature(double u, double v);
+	double mean_curvature(double u, double v) const;
+	double guassian_curvature(double u, double v) const;
 
-	void curvature(double u, double v, double& k1, double& k2);
-	void derivative(double u, double v, RowVector3d& du, RowVector3d& dv, RowVector3d& d2u, RowVector3d& d2v, RowVector3d& duv);
+	void curvature(double u, double v, double& k1, double& k2) const;
+	void derivative(double u, double v, RowVector3d& du, RowVector3d& dv, RowVector3d& d2u, RowVector3d& d2v, RowVector3d& duv) const;
 
-	int FindSpan(const Eigen::MatrixXd &knots, double t, int p = 3);
+	static int FindSpan(const Eigen::MatrixXd &knots, double t, int p = 3);
 
 public:
 	bool isRational = false;

@@ -253,21 +253,34 @@ namespace t_mesh {
 			v_map[v_knots(i)] = i;
 		}
 		
+		// 控制顶点对应的参数点的高斯曲率绝对值
+		map<double, map<double, double>> curvature;
+		double max_curvature = -1;
+		double min_curvature = 1e10;
 
 		for (int i = 0; i <= surface.v_num; i++) {
 			for (int j = 0; j <= surface.u_num; j++) {
 				double u = u_knots(j + 2);
 				double v = v_knots(i + 2);
+				// 取绝对值后取对数拉伸范围
+				double h = log10((abs(surface.guassian_curvature(u, v)) + 1));
+				cout << h << endl;
+				curvature[u][v] = h;
+				if (h < min_curvature) min_curvature = h;
+				if (h > max_curvature) max_curvature = h;
+				
 				origin.insert_helper(u, v, false);
 				auto node = origin.get_node(u, v);
 				node->data.fromVectorXd(surface.controlPw[i].row(j));
 			}
 		}
+		cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
 		origin.pool.clear();
 		if (!origin.check_valid()) {
 			cout << "error: invalid tspline mesh!" << endl;
 			return;
 		}
+		
 
 		// create an initial tspline patch
 		
@@ -309,8 +322,9 @@ namespace t_mesh {
 				tspline.merge_all();
 			}
 		};
-
-		for (int i = 0; i < maxIterNum; i++) {
+		int i = 0;
+		while(true) {
+			cout << i << " ***********************************************************" << endl;
 			cout << "size of nodes: " << tspline.get_num() << endl;
 			// 节点插入加细到与B样条曲面一致
 			Mesh3d mesh(tspline);
@@ -321,33 +335,70 @@ namespace t_mesh {
 				}
 			}
 			
-			vector<tuple<double,double,double,double>> regions;
+			vector<tuple<double, double, double, double>> regions;
+			vector<double> distance;
+			//cout << "mesh after insert :" << mesh.get_num() << endl;
 			// 先整体计算误差，取出需要split的区域
 			for (auto node : mesh.nodes) {
+
 				double u = node->s[2];
 				double v = node->t[2];
 				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
-				//cout << "error : " << error << endl;
-				if (tspline.get_node(u, v) != 0 || error < eps) {
+				
+				double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
+				
+				factor = factor*factor*factor;
+				factor = max(factor,  0.05);
+				
+		
+				if (tspline.get_node(u,v) != 0 || error < eps) {
 					continue;
 				}
+				
 				auto rects = tspline.region(u, v);
-				regions.insert(regions.end(), rects.begin(), rects.end());
+				for (auto rect : rects) {
+					regions.push_back(rect);
+					distance.push_back(error - eps);
+				}
+				
+				
 			}
 
-			// 分割区域
-			for (const auto& rect : regions) {
-				split(rect);
+			// 计算误差由大到小排序的索引
+			vector<int> index(distance.size());
+			iota(index.begin(), index.end(), 0);
+			sort(index.begin(), index.end(),
+				[distance](int id1, int id2) {return distance[id1] > distance[id2]; });
+
+			if (regions.empty()) {
+				break;
 			}
+			if (tspline.nodes.size() < origin.nodes.size()* 0.2) {
+				for (auto rect : regions) {
+					split(rect);
+				}
+			}
+			else {
+				// 分割区域,从大到小选取一定数目split
+				for (int i = 0; i < 10; i++) {
+					if (i >= index.size()) {
+						break;
+					}
+					split(regions[index[i]]);
+				}
+			}
+			
 
 			// 更新 tspline
 			for (auto node : tspline.nodes) {
 				node->data = origin.s_map[node->s[2]][node->t[2]]->data;
 			}
 			tspline.pool.clear();
+			i++;
 		}
 
 		cout << "size of nodes: " << tspline.get_num() << endl;
+		
 
 	}
 };

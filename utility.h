@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<list>
+#include<random>
 #include<vector>
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/cotmatrix.h>
