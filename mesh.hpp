@@ -57,6 +57,8 @@ namespace t_mesh{
 			void drawControlpolygon();
 			void drawSurface(double resolution = 0.01);
 			bool isConnnected(Node<T>* node1, Node<T>* node2, int op);
+			void adjRect(Node<T>* node, vector <tuple<double, double, double, double>>& rects, int op);
+			void search(vector<std::tuple<double, double, double, double>>&, Node<T>* node1, Node<T>* node2, int op, int dir);
 			void adjust(Node<T>* n, bool changedata = true);
             
             
@@ -162,6 +164,13 @@ namespace t_mesh{
 			 vector<tuple<double, double, double, double>> res;
 			 // find the rectangle region of param u,v
 			 if (get_node(u, v) != 0) {
+				 auto node = get_node(u, v);
+				 if (node->adj[3] && node->adj[1]) {
+					 adjRect(node, res, 0);
+				 }
+				 if (node->adj[0] && node->adj[2]) {
+					 adjRect(node, res, 1);
+				 }
 				 return res;
 			 }
 			 Node<T> temp = get_knot(u, v);
@@ -171,55 +180,8 @@ namespace t_mesh{
 				 Node<T>* node1 = get_node(temp.s[2], temp.t[1]);
 				 Node<T>* node2 = get_node(temp.s[2], temp.t[3]);
 				 if (node1->adj[2] == node2 && node2->adj[0] == node1) {
-					 // 找到左边的矩形
-					 double vlow = temp.t[1];
-					 double vhigh = temp.t[3];
-					 double ulow;
-
-					 int count = 0;
-					 for (auto it = s_map.begin(); it != s_map.end(); it++) {
-						 double u_now = it->first;
-						 if (u_now >= u) {
-							 break;
-						 }
-						 
-						 auto nodeL = get_node(u_now, temp.t[1]);
-						 auto nodeR = get_node(u_now, temp.t[3]);
-						 if (isConnnected(nodeL, nodeR,1)) {
-							 ulow = u_now;
-							 count++;
-						 }
-					 }
-					 if (count != 0) {
-						 auto nodeL = get_node(ulow, temp.t[1]);
-						 auto nodeR = get_node(ulow, temp.t[3]);
-						 if (isConnnected(nodeR, node2, 0) && isConnnected(nodeL, node1, 0)) {
-							 res.push_back(make_tuple(ulow, u, vlow, vhigh));
-						 }
-						 
-					 }
-
-					 double uhigh;
-					 count = 0;
-					 for (auto it = s_map.rbegin(); it != s_map.rend(); it++) {
-						 double u_now = it->first;
-						 if (u_now <= u) {
-							 break;
-						 }
-						 auto nodeL = get_node(u_now, temp.t[1]);
-						 auto nodeR = get_node(u_now, temp.t[3]);
-						 if (isConnnected(nodeL, nodeR, 1)) {
-							 uhigh = u_now;
-							 count++;
-						 }
-					 }
-					 if (count != 0) {
-						 auto nodeL = get_node(uhigh, temp.t[1]);
-						 auto nodeR = get_node(uhigh, temp.t[3]);
-						 if (isConnnected(node2, nodeR, 0) && isConnnected(node1, nodeL, 0)) {
-							 res.push_back(make_tuple(u, uhigh, vlow, vhigh));
-						 }
-					 }
+					 search(res, node1, node2, 1, 0);
+					 search(res, node1, node2, 1, 1);
 				 }
 				
 			 }
@@ -229,57 +191,8 @@ namespace t_mesh{
 				 Node<T>* node1 = get_node(temp.s[1], temp.t[2]);
 				 Node<T>* node2 = get_node(temp.s[3], temp.t[2]);
 				 if (node1->adj[1] == node2 && node2->adj[3] == node1) {
-					 // 找到下面的矩形
-					 double ulow = temp.s[1];
-					 double uhigh = temp.s[3];
-
-					 double vlow;
-					 
-					 int count = 0;
-					 for (auto it = t_map.begin(); it != t_map.end(); it++) {
-						 double v_now = it->first;
-						 if (v_now >= v) {
-							 break;
-						 }
-						 auto nodeL = get_node(temp.s[1], v_now);
-						 auto nodeR = get_node(temp.s[3], v_now);
-						 if (isConnnected(nodeL, nodeR, 0)) {
-							 vlow = v_now;
-							 count++;
-						 }
-					 }
-					 if (count != 0) {
-						 // 还需判断nodeL 是否与node1 相连， nodeR是否与node2相连
-						 auto nodeL = get_node(temp.s[1], vlow);
-						 auto nodeR = get_node(temp.s[3], vlow);
-						 if (isConnnected(nodeL, node1, 1) && isConnnected(nodeR, node2, 1)) {
-							 res.push_back(make_tuple(ulow, uhigh, vlow, v));
-						 }
-						 
-					 }
-
-					 double vhigh;
-					 count = 0;
-					 for (auto it = t_map.rbegin(); it != t_map.rend(); it++) {
-						 double v_now = it->first;
-						 if (v_now <= v) {
-							 break;
-						 }
-						 auto nodeL = get_node(temp.s[1], v_now);
-						 auto nodeR = get_node(temp.s[3], v_now);
-						 if (isConnnected(nodeL, nodeR, 0)) {
-							 vhigh = v_now;
-							 count++;
-						 }
-					 }
-					 if (count != 0) {
-						 auto nodeL = get_node(temp.s[1], vhigh);
-						 auto nodeR = get_node(temp.s[3], vhigh);
-						 if (isConnnected(node1, nodeL, 1) && isConnnected(node2, nodeR, 1)) {
-							 res.push_back(make_tuple(ulow, uhigh, v, vhigh));
-						 }
-						 
-					 }
+					 search(res, node1, node2, 0, 0);
+					 search(res, node1, node2, 0, 1);
 				 }
 				 
 			 }
@@ -346,9 +259,9 @@ namespace t_mesh{
 			  for (int i = 0; i < nodes.size(); i++) {
 				  array2matrixd(nodes[i]->data, P1);
 				  nodes_point.row(i) = P1;
-				  std::stringstream l1;
+				  /*std::stringstream l1;
 				  l1 << nodes[i]->s[2] << ", " << nodes[i]->t[2];
-				  viewer->data().add_label(P1, l1.str());
+				  viewer->data().add_label(P1, l1.str());*/
 			  }
 			  
 			  for (auto iter = s_map.begin(); iter != s_map.end(); ++iter) {
@@ -500,6 +413,165 @@ namespace t_mesh{
 			  }
 			  else {
 				  cout << "error: op 只能为0或1" << endl;
+			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::adjRect(Node<T>* node, vector<tuple<double, double, double, double>>& rects, int op)
+		  {
+
+			  double u = node->s[2];
+			  double v = node->t[2];
+			  // op = 0, 点在水平边上
+			  if (op == 0) {
+				  auto nodeL = node->adj[3];
+				  auto nodeR = node->adj[1];
+				  if (nodeL == NULL || nodeR == NULL) {
+					  exit(1);
+				  }
+				  if (node->adj[0] != NULL) {
+					  search(rects, nodeL, node, 0, 0);
+					  search(rects, node, nodeR, 0, 0);
+				  }
+				  else {
+					  search(rects, nodeL, nodeR, 0, 0);
+				  }
+
+				  if (node->adj[2] != NULL) {
+					  search(rects, nodeL, node, 0, 1);
+					  search(rects, node, nodeR, 0, 1);
+				  }
+				  else {
+					  search(rects, nodeL, nodeR, 0, 1);
+				  }
+
+			  }
+			  else {
+				  auto nodeL = node->adj[0];
+				  auto nodeR = node->adj[2];
+				  if (nodeL == NULL || nodeR == NULL) {
+					  exit(1);
+				  }
+				  if (node->adj[3] != NULL) {
+					  search(rects, nodeL, node, 1, 0);
+					  search(rects, node, nodeR, 1, 0);
+				  }
+				  else {
+					  search(rects, nodeL, nodeR, 1, 0);
+				  }
+
+				  if (node->adj[1] != NULL) {
+					  search(rects, nodeL, node, 1, 1);
+					  search(rects, node, nodeR, 1, 1);
+				  }
+				  else {
+					  search(rects, nodeL, nodeR, 1, 1);
+				  }
+			  }
+		  }
+
+		  template<class T>
+		  inline void Mesh<T>::search(vector<tuple<double, double, double, double>>& res, Node<T>* node1, Node<T>* node2, int op, int dir)
+		  {
+			  if (op == 0) {
+				  double v = node1->t[2];
+				  if (dir == 0) {
+					  int count = 0;
+					  double vlow;
+					  
+					  for (auto it = t_map.begin(); it != t_map.end(); it++) {
+						  double v_now = it->first;
+						  if (v_now >= v) {
+							  break;
+						  }
+						  auto nodeL = get_node(node1->s[2], v_now);
+						  auto nodeR = get_node(node2->s[2], v_now);
+						  if (isConnnected(nodeL, nodeR, 0)) {
+							  vlow = v_now;
+							  count++;
+						  }
+					  }
+					  if (count != 0) {
+						  auto nodeL = get_node(node1->s[2], vlow);
+						  auto nodeR = get_node(node2->s[2], vlow);
+						  if (isConnnected(nodeL, node1, 1) && isConnnected(nodeR, node2, 1)) {
+							  res.push_back(make_tuple(node1->s[2], node2->s[2], vlow, v));
+						  }
+					  }
+				  }
+				  else {
+					  int count = 0;
+					  double vhigh;
+					  for (auto it = t_map.rbegin(); it != t_map.rend(); it++) {
+						  double v_now = it->first;
+						  if (v_now <= v) {
+							  break;
+						  }
+						  auto nodeL = get_node(node1->s[2], v_now);
+						  auto nodeR = get_node(node2->s[2], v_now);
+						  if (isConnnected(nodeL, nodeR, 0)) {
+							  vhigh = v_now;
+							  count++;
+						  }
+					  }
+					  if (count != 0) {
+						  auto nodeL = get_node(node1->s[2], vhigh);
+						  auto nodeR = get_node(node2->s[2], vhigh);
+						  if (isConnnected(node1, nodeL, 1) && isConnnected(node2, nodeR, 1)) {
+							  res.push_back(make_tuple(node1->s[2], node2->s[2], v, vhigh));
+						  }
+					  }
+				  }
+
+			  }
+			  else {
+				  double u = node1->s[2];
+				  if (dir == 0) {
+					  int count = 0;
+					  double ulow;
+					  for (auto it = s_map.begin(); it != s_map.end(); it++) {
+						  double u_now = it->first;
+						  if (u_now >= u) {
+							  break;
+						  }
+						  auto nodeL = get_node(u_now, node1->t[2]);
+						  auto nodeR = get_node(u_now, node2->t[2]);
+						  if (isConnnected(nodeL, nodeR, 1)) {
+							  ulow = u_now;
+							  count++;
+						  }
+					  }
+					  if (count != 0) {
+						  auto nodeL = get_node(ulow, node1->t[2]);
+						  auto nodeR = get_node(ulow, node2->t[2]);
+						  if (isConnnected(nodeL, node1, 0) && isConnnected(nodeR, node2, 0)) {
+							  res.push_back(make_tuple(ulow, u, node1->t[2], node2->t[2]));
+						  }
+					  }
+				  }
+				  else {
+					  int count = 0;
+					  double uhigh;
+					  for (auto it = s_map.rbegin(); it != s_map.rend(); it++) {
+						  double u_now = it->first;
+						  if (u_now <= u) {
+							  break;
+						  }
+						  auto nodeL = get_node(u_now, node1->t[2]);
+						  auto nodeR = get_node(u_now, node2->t[2]);
+						  if (isConnnected(nodeL, nodeR, 1)) {
+							  uhigh = u_now;
+							  count++;
+						  }
+					  }
+					  if (count != 0) {
+						  auto nodeL = get_node(uhigh, node1->t[2]);
+						  auto nodeR = get_node(uhigh, node2->t[2]);
+						  if (isConnnected(node1, nodeL, 0) && isConnnected(node2, nodeR, 0)) {
+							  res.push_back(make_tuple(u, uhigh, node1->t[2], node2->t[2]));
+						  }
+					  }
+				  }
 			  }
 		  }
 

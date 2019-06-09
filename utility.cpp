@@ -365,7 +365,7 @@ namespace t_mesh {
 				}
 			}
 			
-			mesh.setViewer(&viewer);
+			/*mesh.setViewer(&viewer);
 			
 			mesh.draw(false, true, true);
 			for (auto node : mesh.nodes) {
@@ -376,7 +376,7 @@ namespace t_mesh {
 				viewer.data().add_edges(P1, P2, yellow);
 				viewer.data().add_points(P2, green);
 			}
-			viewer.launch();
+			viewer.launch();*/
 			
 			vector<pair<tuple<double, double, double, double>, double>> regions;
 			//vector<double> distance;
@@ -391,10 +391,9 @@ namespace t_mesh {
 				//double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
 			
 		
-				if (tspline.get_node(u,v) != 0 || error < eps) {
+				if (error < eps) {
 					continue;
 				}
-				
 				auto rects = tspline.region(u, v);
 				
 				for (auto rect : rects) {
@@ -404,7 +403,7 @@ namespace t_mesh {
 			if (regions.empty()) {
 				break;
 			}
-			if (tspline.nodes.size() < origin.nodes.size()*0.2) {
+			if (tspline.nodes.size() < origin.nodes.size() * 0.2) {
 				// 再按误差排序
 				sort(regions.begin(), regions.end(),
 					[](const pair<tuple<double, double, double, double>, double>& a,
@@ -430,7 +429,7 @@ namespace t_mesh {
 
 				cout << "total region size: "<<regions.size() << endl;
 				// 每次选择误差最大的5个split
-				for (int i = 0; i < 15; i++) {
+				for (int i = 0; i < 10; i++) {
 					if (i == regions.size()) {
 						break;
 					}
@@ -445,12 +444,7 @@ namespace t_mesh {
 			
 
 
-			/*if (i == 4) {
-				cout << "size: " << tspline.nodes.size() << endl;
-				if (tspline.nodes[303]->adj[0] == NULL && tspline.nodes[303]->adj[3] == 0) {
-					cout << "L型节点*****************************************************" << endl;
-				}
-			}*/
+			
 			tspline.improve();
 			// 更新 tspline
 
