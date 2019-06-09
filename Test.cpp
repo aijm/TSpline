@@ -27,7 +27,8 @@ void Test::test_TsplineSimplify()
 	/*Window w;
 	w.launch();*/
 	Mesh3d tspline;   
-	t_mesh::TsplineSimplify(surface, tspline,40, 1e-3);
+	t_mesh::TsplineSimplify(surface, tspline,20, 1e-4);
+	tspline.saveMesh("../out/tspline/fuck");
 	MeshRender render(&tspline, false, true, true);
 	render.launch();
 }
@@ -246,13 +247,17 @@ void Test::test_BsplineVolume()
 }
 void Test::test_Mesh() {
 
-	Mesh3d* mesh = new Mesh3d();
-	mesh->loadMesh("../out/tspline/simpleMesh2.cfg");
-	Mesh3d* meshcopy = new Mesh3d(*mesh); // deep copy
-	meshcopy->saveMesh("../out/tspline/simpleMesh2_copy");
-	delete mesh;
-	mesh = NULL;
-	MeshRender render(meshcopy);
+	//Mesh3d* mesh = new Mesh3d();
+	//mesh->loadMesh("../out/tspline/simpleMesh2.cfg");
+	//Mesh3d* meshcopy = new Mesh3d(*mesh); // deep copy
+	//meshcopy->saveMesh("../out/tspline/simpleMesh2_copy");
+	//delete mesh;
+	//mesh = NULL;
+	//MeshRender render(meshcopy);
+	//render.launch();
+	Mesh3d mesh;
+	mesh.loadMesh("../out/tspline/origin.cfg");
+	MeshRender render(&mesh);
 	render.launch();
 
 }

@@ -44,6 +44,7 @@ namespace t_mesh{
           
             void insert(double s,double t);
 			int insert_helper(double s, double t, bool changedata = true);
+			void improve();
 
             Node<T>*    new_node();
             Node<T>*    get_node(int num);
@@ -55,7 +56,7 @@ namespace t_mesh{
 			void drawTmesh();
 			void drawControlpolygon();
 			void drawSurface(double resolution = 0.01);
-
+			bool isConnnected(Node<T>* node1, Node<T>* node2, int op);
 			void adjust(Node<T>* n, bool changedata = true);
             
             
@@ -164,142 +165,123 @@ namespace t_mesh{
 				 return res;
 			 }
 			 Node<T> temp = get_knot(u, v);
+			 
 			 if (get_node(temp.s[2], temp.t[1]) != 0 && get_node(temp.s[2], temp.t[3]) != 0) {
-				 // on the u-edge of tspline
+				 // 点在竖直边上
+				 Node<T>* node1 = get_node(temp.s[2], temp.t[1]);
+				 Node<T>* node2 = get_node(temp.s[2], temp.t[3]);
+				 if (node1->adj[2] == node2 && node2->adj[0] == node1) {
+					 // 找到左边的矩形
+					 double vlow = temp.t[1];
+					 double vhigh = temp.t[3];
+					 double ulow;
 
-				 // 左边的矩形
-				 double ulow = temp.s[1];
-				 double u = temp.s[2];
-				 double vlow = 0;
-				 double vhigh = 0;
-				 int count = 0;
-				 for (auto it = s_map[u].begin(); it != s_map[u].end(); it++) {
-					 if (u == ulow) {
-						 break;
-					 }
-					 if (it->first >= temp.t[2]) {
-						 break;
-					 }
-					 if (it->second->adj[3] != NULL && it->second->adj[3]->s[2] == ulow) {
-						 vlow = it->first;
-						 count++;
-					 }
-				 }
-				 if (count != 0) {
-					 count = 0;
-					 for (auto it = s_map[u].rbegin(); it != s_map[u].rend(); it++) {
-						 if (it->first <= temp.t[2]) {
+					 int count = 0;
+					 for (auto it = s_map.begin(); it != s_map.end(); it++) {
+						 double u_now = it->first;
+						 if (u_now >= u) {
 							 break;
 						 }
-						 if (it->second->adj[3] != NULL && it->second->adj[3]->s[2] == ulow) {
-							 vhigh = it->first;
+						 
+						 auto nodeL = get_node(u_now, temp.t[1]);
+						 auto nodeR = get_node(u_now, temp.t[3]);
+						 if (isConnnected(nodeL, nodeR,1)) {
+							 ulow = u_now;
 							 count++;
 						 }
 					 }
 					 if (count != 0) {
-						 res.push_back(make_tuple(ulow, u, vlow, vhigh));
+						 auto nodeL = get_node(ulow, temp.t[1]);
+						 auto nodeR = get_node(ulow, temp.t[3]);
+						 if (isConnnected(nodeR, node2, 0) && isConnnected(nodeL, node1, 0)) {
+							 res.push_back(make_tuple(ulow, u, vlow, vhigh));
+						 }
+						 
 					 }
-				 }
 
-
-				 // 右边的矩形
-				 double uhigh = temp.s[3];
-				 count = 0;
-				 for (auto it = s_map[u].begin(); it != s_map[u].end(); it++) {
-					 if (u == uhigh) {
-						 break;
-					 }
-					 if (it->first >= temp.t[2]) {
-						 break;
-					 }
-					 if (it->second->adj[1] != NULL && it->second->adj[1]->s[2] == uhigh) {
-						 vlow = it->first;
-						 count++;
-					 }
-				 }
-				 if (count != 0) {
+					 double uhigh;
 					 count = 0;
-					 for (auto it = s_map[u].rbegin(); it != s_map[u].rend(); it++) {
-						 if (it->first <= temp.t[2]) {
+					 for (auto it = s_map.rbegin(); it != s_map.rend(); it++) {
+						 double u_now = it->first;
+						 if (u_now <= u) {
 							 break;
 						 }
-						 if (it->second->adj[1] != NULL && it->second->adj[1]->s[2] == uhigh) {
-							 vhigh = it->first;
+						 auto nodeL = get_node(u_now, temp.t[1]);
+						 auto nodeR = get_node(u_now, temp.t[3]);
+						 if (isConnnected(nodeL, nodeR, 1)) {
+							 uhigh = u_now;
 							 count++;
 						 }
 					 }
 					 if (count != 0) {
-						 res.push_back(make_tuple(u, uhigh, vlow, vhigh));
+						 auto nodeL = get_node(uhigh, temp.t[1]);
+						 auto nodeR = get_node(uhigh, temp.t[3]);
+						 if (isConnnected(node2, nodeR, 0) && isConnnected(node1, nodeL, 0)) {
+							 res.push_back(make_tuple(u, uhigh, vlow, vhigh));
+						 }
 					 }
 				 }
+				
 			 }
 			 else if (get_node(temp.s[1], temp.t[2]) != 0 && get_node(temp.s[3], temp.t[2]) != 0) {
-				 // on the v-edge of tspline
-				 // 下面的矩形
-				 double vlow = temp.t[1];
-				 double v = temp.t[2];
-				 double ulow = 0;
-				 double uhigh = 0;
-				 int count = 0;
-				 for (auto it = t_map[v].begin(); it != t_map[v].end(); it++) {
-					 if (v == vlow) {
-						 break;
-					 }
-					 if (it->first >= temp.s[2]) {
-						 break;
-					 }
-					 if (it->second->adj[0] != NULL && it->second->adj[0]->t[2] == vlow) {
-						 ulow = it->first;
-						 count++;
-					 }
-				 }
-				 if (count != 0) {
-					 count = 0;
-					 for (auto it = t_map[v].rbegin(); it != t_map[v].rend(); it++) {
-						 if (it->first <= temp.s[2]) {
+				 // 点在水平边上
+				 
+				 Node<T>* node1 = get_node(temp.s[1], temp.t[2]);
+				 Node<T>* node2 = get_node(temp.s[3], temp.t[2]);
+				 if (node1->adj[1] == node2 && node2->adj[3] == node1) {
+					 // 找到下面的矩形
+					 double ulow = temp.s[1];
+					 double uhigh = temp.s[3];
+
+					 double vlow;
+					 
+					 int count = 0;
+					 for (auto it = t_map.begin(); it != t_map.end(); it++) {
+						 double v_now = it->first;
+						 if (v_now >= v) {
 							 break;
 						 }
-						 if (it->second->adj[0] != NULL && it->second->adj[0]->t[2] == vlow) {
-							 uhigh = it->first;
+						 auto nodeL = get_node(temp.s[1], v_now);
+						 auto nodeR = get_node(temp.s[3], v_now);
+						 if (isConnnected(nodeL, nodeR, 0)) {
+							 vlow = v_now;
 							 count++;
 						 }
 					 }
 					 if (count != 0) {
-						 res.push_back(make_tuple(ulow, uhigh, vlow, v));
+						 // 还需判断nodeL 是否与node1 相连， nodeR是否与node2相连
+						 auto nodeL = get_node(temp.s[1], vlow);
+						 auto nodeR = get_node(temp.s[3], vlow);
+						 if (isConnnected(nodeL, node1, 1) && isConnnected(nodeR, node2, 1)) {
+							 res.push_back(make_tuple(ulow, uhigh, vlow, v));
+						 }
+						 
 					 }
-				 }
 
-
-				 // 上面的矩形
-				 double vhigh = temp.t[3];
-				 count = 0;
-				 for (auto it = t_map[v].begin(); it != t_map[v].end(); it++) {
-					 if (v == vhigh) {
-						 break;
-					 }
-					 if (it->first >= temp.s[2]) {
-						 break;
-					 }
-					 if (it->second->adj[2] != NULL && it->second->adj[2]->t[2] == vhigh) {
-						 ulow = it->first;
-						 count++;
-					 }
-				 }
-				 if (count != 0) {
+					 double vhigh;
 					 count = 0;
-					 for (auto it = t_map[v].rbegin(); it != t_map[v].rend(); it++) {
-						 if (it->first <= temp.s[2]) {
+					 for (auto it = t_map.rbegin(); it != t_map.rend(); it++) {
+						 double v_now = it->first;
+						 if (v_now <= v) {
 							 break;
 						 }
-						 if (it->second->adj[2] != NULL && it->second->adj[2]->t[2] == vhigh) {
-							 uhigh = it->first;
+						 auto nodeL = get_node(temp.s[1], v_now);
+						 auto nodeR = get_node(temp.s[3], v_now);
+						 if (isConnnected(nodeL, nodeR, 0)) {
+							 vhigh = v_now;
 							 count++;
 						 }
 					 }
 					 if (count != 0) {
-						 res.push_back(make_tuple(ulow, uhigh, v, vhigh));
+						 auto nodeL = get_node(temp.s[1], vhigh);
+						 auto nodeR = get_node(temp.s[3], vhigh);
+						 if (isConnnected(node1, nodeL, 1) && isConnnected(node2, nodeR, 1)) {
+							 res.push_back(make_tuple(ulow, uhigh, v, vhigh));
+						 }
+						 
 					 }
 				 }
+				 
 			 }
 			 else {
 				 // inside the rectangle
@@ -364,6 +346,9 @@ namespace t_mesh{
 			  for (int i = 0; i < nodes.size(); i++) {
 				  array2matrixd(nodes[i]->data, P1);
 				  nodes_point.row(i) = P1;
+				  std::stringstream l1;
+				  l1 << nodes[i]->s[2] << ", " << nodes[i]->t[2];
+				  viewer->data().add_label(P1, l1.str());
 			  }
 			  
 			  for (auto iter = s_map.begin(); iter != s_map.end(); ++iter) {
@@ -472,6 +457,50 @@ namespace t_mesh{
 			  Eigen::MatrixXd C;
 			  igl::jet(H, true, C);
 			  (*viewer).data().set_colors(C);
+		  }
+
+		  template<class T>
+		  inline bool Mesh<T>::isConnnected(Node<T>* node1, Node<T>* node2, int op)
+		  {
+			  
+			  if (op == 0) {
+				  // op = 0, 水平t边，且需要保证输入为 node1 在 node2 左侧
+				  if (node1 == NULL || node2 == NULL) {
+					  //cout << "error: node1,node2不能为空" << endl;
+					  return false;
+				  }
+				  Node<T>* pNode = node1;
+				  while (pNode->adj[1] != NULL && pNode->adj[1] != node2) {
+					  pNode = pNode->adj[1];
+				  }
+				  if (pNode->adj[1] != NULL) {
+					  return true;
+				  }
+				  else {
+					  return false;
+				  }
+
+			  }
+			  else if (op == 1) {
+				  // op = 1, 竖直s边，且需要保证输入为 node1 在 node2 下侧
+				  if (node1 == NULL || node2 == NULL) {
+					  //cout << "error: node1,node2不能为空" << endl;
+					  return false;
+				  }
+				  Node<T>* pNode = node1;
+				  while (pNode->adj[2] != NULL && pNode->adj[2] != node2) {
+					  pNode = pNode->adj[2];
+				  }
+				  if (pNode->adj[2] != NULL) {
+					  return true;
+				  }
+				  else {
+					  return false;
+				  }
+			  }
+			  else {
+				  cout << "error: op 只能为0或1" << endl;
+			  }
 		  }
 
 	template<class T>
@@ -919,6 +948,57 @@ namespace t_mesh{
             cout<<endl;*/
             return 1;
         }
+		template<class T>
+		inline void Mesh<T>::improve()
+		{
+			vector<tuple<double, double>> toBeInserted;
+
+			// 若存在L型节点，将其转换
+			for (Node<T>* node : nodes) {
+				int count = 0;
+				if (node->adj[0] == 0) {
+					count++;
+				}
+				if (node->adj[1] == 0) {
+					count++;
+				}
+				if (node->adj[2] == 0) {
+					count++;
+				}
+				if (node->adj[3] == 0) {
+					count++;
+				}
+				if (count == 2) {
+					cout << "fuck********************" << endl;
+					// L型节点
+					Node<T> temp = get_knot(node->s[2], node->t[2]);
+					if (node->adj[0] == 0 && node->adj[3] == 0) {
+						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						toBeInserted.push_back(make_tuple(temp.s[1], node->t[2]));
+
+					}else if (node->adj[1] == 0 && node->adj[2] == 0) {
+						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						toBeInserted.push_back(make_tuple(temp.s[3], node->t[2]));
+						
+					}else if (node->adj[0] == 0 && node->adj[1] == 0) {
+						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						toBeInserted.push_back(make_tuple(temp.s[3], node->t[2]));
+						
+					}else if (node->adj[2] == 0 && node->adj[3] == 0) {
+						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						toBeInserted.push_back(make_tuple(temp.s[1], node->t[2]));
+					}
+					else {
+						
+					}
+				}
+			}
+
+			for (auto param : toBeInserted) {
+				insert_helper(get<0>(param), get<1>(param));
+				merge_all();
+			}
+		}
      template<class T>
          bool Mesh<T>::check_valid(){
              for(size_t i=0;i<nodes.size();++i){

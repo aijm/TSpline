@@ -244,6 +244,7 @@ namespace t_mesh {
 		Eigen::VectorXd v_knots = surface.vknots;
 		u_knots(3) = 0.0001; u_knots(u_knots.size() - 4) = 0.9999;
 		v_knots(3) = 0.0001; v_knots(v_knots.size() - 4) = 0.9999;
+		
 		map<double, int> u_map;
 		map<double, int> v_map;
 		for (int i = 2; i <= u_knots.size()-3; i++) {
@@ -264,24 +265,24 @@ namespace t_mesh {
 				double v = v_knots(i + 2);
 				// 取绝对值后取对数拉伸范围
 				double h = log10((abs(surface.guassian_curvature(u, v)) + 1));
-				cout << h << endl;
-				curvature[u][v] = h;
+				//cout << h << endl;
+				/*curvature[u][v] = h;
 				if (h < min_curvature) min_curvature = h;
-				if (h > max_curvature) max_curvature = h;
+				if (h > max_curvature) max_curvature = h;*/
 				
 				origin.insert_helper(u, v, false);
 				auto node = origin.get_node(u, v);
 				node->data.fromVectorXd(surface.controlPw[i].row(j));
 			}
 		}
-		cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
+		//cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
+		cout << "origin pool size : " << origin.pool.size() << endl;
 		origin.pool.clear();
 		if (!origin.check_valid()) {
 			cout << "error: invalid tspline mesh!" << endl;
 			return;
 		}
-		
-
+		//origin.saveMesh("../out/tspline/origin");
 		// create an initial tspline patch
 		
 		Eigen::VectorXd init_knots(4);
@@ -294,6 +295,7 @@ namespace t_mesh {
 				tspline.s_map[u][v]->data = origin.s_map[u][v]->data;
 			}
 		}
+		cout << "pool size **********************: " << tspline.pool.size() << endl;
 		tspline.pool.clear();
 		if (!tspline.check_valid()) {
 			cout << "error: invalid tspline mesh!" << endl;
@@ -307,17 +309,22 @@ namespace t_mesh {
 			int u1 = u_map[get<1>(rect)]; // uhigh
 			int v0 = v_map[get<2>(rect)]; // vlow
 			int v1 = v_map[get<3>(rect)]; // vhigh
+			
 			if (u1 - u0 >= v1 - v0) {
 				int u_insert = (u0 + u1) / 2;
-				tspline.insert_helper(u_knots(u_insert), v_knots(v0),false);
+				
+				tspline.insert_helper(u_knots( u_insert), v_knots(v0),false);
 				tspline.merge_all();
+				
 				tspline.insert_helper(u_knots(u_insert), v_knots(v1),false);
 				tspline.merge_all();
 			}
 			else {
 				int v_insert = (v0 + v1) / 2;
+				
 				tspline.insert_helper(u_knots(u0), v_knots(v_insert),false);
 				tspline.merge_all();
+				
 				tspline.insert_helper(u_knots(u1), v_knots(v_insert),false);
 				tspline.merge_all();
 			}
@@ -327,6 +334,29 @@ namespace t_mesh {
 			cout << i << " ***********************************************************" << endl;
 			cout << "size of nodes: " << tspline.get_num() << endl;
 			// 节点插入加细到与B样条曲面一致
+			
+			Viewer viewer;
+			//Mesh3d tspline_copy(tspline);
+
+			//for (auto node : tspline.nodes) {
+			//	double u = node->s[2];
+			//	double v = node->t[2];
+			//	if (origin.get_node(u, v) == 0 || origin.get_node(u,v)->data != node->data) {
+			//		cout << "error: *********************" << endl;
+			//		return;
+			//	}
+			//}
+
+			//tspline_copy.setViewer(&viewer);
+
+			//tspline_copy.draw(false, true, true);
+			///*for (auto node : origin.nodes) {
+			//	MatrixXd P;
+			//	array2matrixd(node->data, P);
+			//	viewer.data().add_points(P, green);
+			//}*/
+			//viewer.launch();
+
 			Mesh3d mesh(tspline);
 			cout << "size of mesh: " << mesh.get_num() << endl;
 			for (auto node : origin.nodes) {
@@ -335,8 +365,21 @@ namespace t_mesh {
 				}
 			}
 			
-			vector<tuple<double, double, double, double>> regions;
-			vector<double> distance;
+			mesh.setViewer(&viewer);
+			
+			mesh.draw(false, true, true);
+			for (auto node : mesh.nodes) {
+				auto node_origin = origin.get_node(node->s[2], node->t[2]);
+				MatrixXd P1, P2;
+				array2matrixd(node->data, P1);
+				array2matrixd(node_origin->data, P2);
+				viewer.data().add_edges(P1, P2, yellow);
+				viewer.data().add_points(P2, green);
+			}
+			viewer.launch();
+			
+			vector<pair<tuple<double, double, double, double>, double>> regions;
+			//vector<double> distance;
 			//cout << "mesh after insert :" << mesh.get_num() << endl;
 			// 先整体计算误差，取出需要split的区域
 			for (auto node : mesh.nodes) {
@@ -345,55 +388,83 @@ namespace t_mesh {
 				double v = node->t[2];
 				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
 				
-				double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
-				
-				factor = factor*factor*factor;
-				factor = max(factor,  0.05);
-				
+				//double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
+			
 		
 				if (tspline.get_node(u,v) != 0 || error < eps) {
 					continue;
 				}
 				
 				auto rects = tspline.region(u, v);
+				
 				for (auto rect : rects) {
-					regions.push_back(rect);
-					distance.push_back(error - eps);
-				}
-				
-				
+					regions.push_back(make_pair(rect, error));
+				}	
 			}
-
-			// 计算误差由大到小排序的索引
-			vector<int> index(distance.size());
-			iota(index.begin(), index.end(), 0);
-			sort(index.begin(), index.end(),
-				[distance](int id1, int id2) {return distance[id1] > distance[id2]; });
-
 			if (regions.empty()) {
 				break;
 			}
-			if (tspline.nodes.size() < origin.nodes.size()* 0.2) {
+			if (tspline.nodes.size() < origin.nodes.size()*0.2) {
+				// 再按误差排序
+				sort(regions.begin(), regions.end(),
+					[](const pair<tuple<double, double, double, double>, double>& a,
+						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
+				cout << "最大误差: " << regions[0].second << endl;
 				for (auto rect : regions) {
-					split(rect);
+					split(rect.first);
 				}
 			}
 			else {
-				// 分割区域,从大到小选取一定数目split
-				for (int i = 0; i < 10; i++) {
-					if (i >= index.size()) {
+				// 去除regions的重复元素
+				sort(regions.begin(), regions.end(),
+					[](const pair<tuple<double, double, double, double>, double>& a,
+						const pair<tuple<double, double, double, double>, double>& b) {return a.first < b.first; });
+				regions.erase(unique(regions.begin(), regions.end(),
+					[](const pair<tuple<double, double, double, double>, double>& a,
+						const pair<tuple<double, double, double, double>, double>& b) {return a.first == b.first; }), regions.end());
+
+				// 再按误差排序
+				sort(regions.begin(), regions.end(),
+					[](const pair<tuple<double, double, double, double>, double>& a,
+						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
+
+				cout << "total region size: "<<regions.size() << endl;
+				// 每次选择误差最大的5个split
+				for (int i = 0; i < 15; i++) {
+					if (i == regions.size()) {
 						break;
 					}
-					split(regions[index[i]]);
+					else {
+						cout << "误差:" << regions[i].second << endl;
+						cout << "split: " << get<0>(regions[i].first)<<", " << get<1>(regions[i].first) << ", "
+							<< get<2>(regions[i].first) << ", " << get<3>(regions[i].first) << endl;
+						split(regions[i].first);
+					}
 				}
 			}
 			
 
+
+			/*if (i == 4) {
+				cout << "size: " << tspline.nodes.size() << endl;
+				if (tspline.nodes[303]->adj[0] == NULL && tspline.nodes[303]->adj[3] == 0) {
+					cout << "L型节点*****************************************************" << endl;
+				}
+			}*/
+			tspline.improve();
 			// 更新 tspline
+
 			for (auto node : tspline.nodes) {
 				node->data = origin.s_map[node->s[2]][node->t[2]]->data;
 			}
+
+
+
+			cout << "tspline pool size after split: "<<tspline.pool.size()<<"************************** "<< endl;
 			tspline.pool.clear();
+			if (!tspline.check_valid()) {
+				cout << "error: tspline is not valid!!!" << endl;
+			}
 			i++;
 		}
 
