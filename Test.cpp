@@ -27,7 +27,7 @@ void Test::test_TsplineSimplify()
 	/*Window w;
 	w.launch();*/
 	Mesh3d tspline;   
-	t_mesh::TsplineSimplify(surface, tspline,20, 3e-3);
+	t_mesh::TsplineSimplify(surface, tspline,20, 5e-3);
 	tspline.saveMesh("../out/tspline/fuck");
 	MeshRender render(&tspline, false, true, true);
 	render.launch();

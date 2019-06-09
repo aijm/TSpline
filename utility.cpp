@@ -266,16 +266,16 @@ namespace t_mesh {
 				// 取绝对值后取对数拉伸范围
 				double h = log10((abs(surface.guassian_curvature(u, v)) + 1));
 				//cout << h << endl;
-				/*curvature[u][v] = h;
+				curvature[u][v] = h;
 				if (h < min_curvature) min_curvature = h;
-				if (h > max_curvature) max_curvature = h;*/
+				if (h > max_curvature) max_curvature = h;
 				
 				origin.insert_helper(u, v, false);
 				auto node = origin.get_node(u, v);
 				node->data.fromVectorXd(surface.controlPw[i].row(j));
 			}
 		}
-		//cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
+		cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
 		cout << "origin pool size : " << origin.pool.size() << endl;
 		origin.pool.clear();
 		if (!origin.check_valid()) {
@@ -379,8 +379,7 @@ namespace t_mesh {
 			viewer.launch();*/
 			
 			vector<pair<tuple<double, double, double, double>, double>> regions;
-			//vector<double> distance;
-			//cout << "mesh after insert :" << mesh.get_num() << endl;
+			
 			// 先整体计算误差，取出需要split的区域
 			for (auto node : mesh.nodes) {
 
@@ -388,16 +387,22 @@ namespace t_mesh {
 				double v = node->t[2];
 				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
 				
-				//double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
-			
+				double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
+				if (factor < 0.4) {
+					factor = 0.7*factor;
+				}
+				else {
+					factor = (1 + factor) / 2;
+				}
+				factor = max(factor, 0.05);
 		
-				if (error < eps) {
+				if (error < factor*eps) {
 					continue;
 				}
 				auto rects = tspline.region(u, v);
 				
 				for (auto rect : rects) {
-					regions.push_back(make_pair(rect, error));
+					regions.push_back(make_pair(rect, error - factor*eps));
 				}	
 			}
 			if (regions.empty()) {
