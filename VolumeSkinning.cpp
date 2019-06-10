@@ -98,8 +98,8 @@ void VolumeSkinning::calculate()
 
 void VolumeSkinning::update()
 {
-	map<double, int> id;
-	for (int i = 0; i < volume.w_knots.size()-2; i++) {
+	map<double, int> id; // 记录w方向参数对应的控制点下标
+	for (int i = 0; i < volume.w_knots.size()-4; i++) {
 		id[volume.w_knots(i + 2)] = i;
 	}
 	for (int i = 1; i < surfaces_num - 1; i++) {
@@ -117,7 +117,7 @@ void VolumeSkinning::update()
 			Point3d X = mesh_left->nodes[k]->data;
 			Point3d Y = mesh_right->nodes[k]->data;
 			Point3d V = surfaces[i].nodes[k]->data;
-			mesh->nodes[k]->data = V.add(-a*X).add(-c*Y).scale(1.0 / b);
+			mesh->nodes[k]->data = (1.0 / b)*(V - a*X - c*Y);
 		}
 	}
 }

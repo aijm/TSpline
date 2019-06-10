@@ -171,7 +171,7 @@ void Test::test_generate_curves1()
 void Test::test_generate_surfaces()
 {
 	BsplineVolume volume;
-	volume.readVolume("../out/volume/venus_bspline.txt");
+	volume.readVolume("../out/volume/tooth_bspline.txt");
 	
 
 	int sample_num = 5;
@@ -208,7 +208,7 @@ void Test::test_generate_surfaces()
 
 	vector<Mesh3d> tsplines(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
-		TsplineSimplify(nurbs[i], tsplines[i], 20, 5e-3);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
@@ -226,11 +226,12 @@ void Test::test_generate_surfaces()
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	VolumePiaMethod method(tsplines, 12, 1e-5);
-	method.setViewer(&Window::viewer);
-	method.calculate();
-	method.volume.saveAsHex("../out/volume/venus_skinning", 0.02);
-	VolumeRender render(&method.volume, false, false, true, 0.02);
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 12, 1e-5);
+	//VolumeSkinning* method = new VolumeSkinning(tsplines);
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	method->volume.saveAsHex("../out/volume/venus_skinning", 0.02);
+	VolumeRender render(&method->volume, false, false, true, 0.02);
 	render.launch();
 	/*Window w;
 	w.launch();*/

@@ -12,32 +12,32 @@ void VolumePiaMethod::calculate()
 	pia();
 	update();
 
-	for (int i = 0; i < 3; i++) {
-		pia();
-		update();
-	}
+	//for (int i = 0; i < 3; i++) {
+	//	pia();
+	//	update();
+	//}
 
-	for (int j = 0; j < 0; j++) {
-		Point3d low, high;
-		param_helper_points(low, high); // 辅助点参数化
+	//for (int j = 0; j < 0; j++) {
+	//	Point3d low, high;
+	//	param_helper_points(low, high); // 辅助点参数化
 
-		//fitPoints = curve_points;
-		fitPoints.clear();
-		fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
-		for (auto point : inter_points) {
-			if (!point.inRectangle(low, high)) {
-				fitPoints.push_back(point);
-			}
-		}
-		for (auto point : surface_points) {
-			if (!point.inRectangle(low, high)) {
-				fitPoints.push_back(point);
-			}
-		}
-		fit();
-		pia();
-	}
-	update();
+	//	//fitPoints = curve_points;
+	//	fitPoints.clear();
+	//	fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
+	//	for (auto point : inter_points) {
+	//		if (!point.inRectangle(low, high)) {
+	//			fitPoints.push_back(point);
+	//		}
+	//	}
+	//	for (auto point : surface_points) {
+	//		if (!point.inRectangle(low, high)) {
+	//			fitPoints.push_back(point);
+	//		}
+	//	}
+	//	fit();
+	//	pia();
+	//}
+	//update();
 }
 
 void VolumePiaMethod::param_helper_points(Point3d & low, Point3d & high)
@@ -48,7 +48,7 @@ void VolumePiaMethod::param_helper_points(Point3d & low, Point3d & high)
 
 void VolumePiaMethod::sample_fitPoints_2()
 {
-	const int sampleNum = 10;
+	const int sampleNum =20;
 	for (int i = 1; i < surfaces_num - 1; i++) {
 
 		for (int j = 0; j <= sampleNum; j++) {
@@ -66,8 +66,8 @@ void VolumePiaMethod::sample_fitPoints_2()
 
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 10;
-	const int u_sample_num = 10;
+	const int v_sample_num = 20;
+	const int u_sample_num = 20;
 	const int w_sample_num = 30;
 
 	VectorXd params = w_params;
@@ -112,6 +112,10 @@ void VolumePiaMethod::sample_fitPoints_2()
 				point.param[1] = 1.0*kk / v_sample_num;
 				point.param[2] = 1.0*i / w_sample_num;
 				point.origin.fromVectorXd(sample_curves[jj][kk].eval(point.param[2]));
+				/*cout << "param: " << point.param[1] << ", " << point.param[1] << ", " << point.param[2] << endl;
+				cout << "sample origin: ";
+				point.origin.output(cout);
+				cout << endl;*/
 				inter_points.push_back(point);
 			}
 		}	
@@ -179,7 +183,17 @@ void VolumePiaMethod::fit()
 {
 	error = 0.0;
 	for (auto& point : fitPoints) {
+		/*cout << "param: " << point.param[0] << ", " << point.param[1] << ", " << point.param[2] << endl;
+		cout << "origin: ";
+		point.origin.output(cout);
+		cout << endl;*/
+
 		point.eval = volume.eval(point.param[0], point.param[1],point.param[2]);
+
+		/*cout << "eval: ";
+		point.eval.output(cout);
+		cout << endl;*/
+
 		point.error = point.geterror();
 		error += point.error;
 	}
@@ -193,12 +207,16 @@ void VolumePiaMethod::pia()
 		int layer = 0;
 		for (auto &entry : volume.w_map) {
 			// 一层
+			if (entry.first <= 0.0001 || entry.first >= 0.9999) {
+				layer++;
+				continue;
+			}
 			auto nodes = entry.second->nodes;
 
 			for (auto node : nodes) {
-				if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
+				/*if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
 					continue;
-				}
+				}*/
 				double sum1 = 0;
 				Point3d sum2;
 				for (auto point : fitPoints) {
