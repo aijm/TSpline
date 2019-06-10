@@ -32,7 +32,7 @@ typedef struct {
 
 class Test {
 public:
-	
+	static void test_chess();
 	static void test_generate_surfaces();
 	static void test_Nurbs_curvature();
 	static void test_TsplineSimplify();

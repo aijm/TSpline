@@ -21,6 +21,7 @@ int main(int argc,char** argv){
 	//Test::test_TsplineSimplify();
 	//Test::test_Nurbs_curvature();
 	Test::test_generate_surfaces();
+	//Test::test_chess();
 	
     return 0;
 }

@@ -165,6 +165,48 @@ void Test::test_generate_curves1()
 }
 
 /**
+   棋子蒙皮
+*/
+void Test::test_chess()
+{
+	
+	vector<MatrixXd> curve_points(13);
+	// 读取文件，得到散点
+	for (int i = 0; i < curve_points.size(); i++) {
+		string filename = "../out/curves/selected_point" + to_string(i + 1) + ".txt";
+		ifstream in(filename);
+		if (!in.is_open()) {
+			cout << "error : can't open file: " << filename << endl;
+			return;
+		}
+		string line;
+		char c; // 读取'v'
+		while (getline(in, line)) {
+			curve_points[i].conservativeResize(curve_points[i].rows() + 1, 3);
+			int lastid = curve_points[i].rows() - 1;
+			stringstream ss(line);
+			ss >> c >> curve_points[i](lastid, 0) >> curve_points[i](lastid, 1) >> curve_points[i](lastid, 2);
+		}
+		in.close();
+	}
+	
+	// 插值得到B样条曲线
+	vector<NURBSCurve> nurbs_curves(curve_points.size());
+	for (int i = 0; i < curve_points.size(); i++) {
+		nurbs_curves[i].interpolate(curve_points[i]);
+		nurbs_curves[i].draw(Window::viewer, false, true);
+		Window::viewer.data().add_points(curve_points[i], green);
+	}
+
+	Skinning* method = new PiaMinJaeMethod(nurbs_curves, 20);
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	MeshRender render(&method->tspline, false, true, true);
+	render.launch();
+
+}
+
+/**
  从B样条体中生成一组B样条曲面
  用于后续简化为T样条曲面，进一步进行Volume Skinning
 */
@@ -208,6 +250,8 @@ void Test::test_generate_surfaces()
 
 	vector<Mesh3d> tsplines(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
+		// venus_bspline.txt ---> 5e-3
+		// tooth_bspline.txt ---> 3
 		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
 		tsplines[i].setViewer(&Window::viewer);
@@ -230,8 +274,9 @@ void Test::test_generate_surfaces()
 	//VolumeSkinning* method = new VolumeSkinning(tsplines);
 	method->setViewer(&Window::viewer);
 	method->calculate();
-	method->volume.saveAsHex("../out/volume/venus_skinning", 0.02);
-	VolumeRender render(&method->volume, false, false, true, 0.02);
+	method->volume.saveVolume("../out/volume/tooth_skinning");
+	method->volume.saveAsHex("../out/volume/tooth_skinning", 0.02);
+	VolumeRender render(&method->volume, false, false, true, 0.01);
 	render.launch();
 	/*Window w;
 	w.launch();*/

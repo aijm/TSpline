@@ -3,24 +3,28 @@
 void Skinning::parameterize()
 {
 	// 1. compute s-knot for curves
-	/*assert(curves.size() > 0);
+	assert(curves.size() > 0);
 	const int dimension = curves[0].controlPw.cols();
 
 	MatrixXd u_cpts(curves_num, dimension);
 	for (int i = 0; i < u_cpts.rows(); i++) {
-		u_cpts.row(i) = curves[i].controlPw.row(0);
+		u_cpts.row(i) = curves[i].controlPw.colwise().mean();
 	}
 	s_knots = NURBSCurve::parameterize(u_cpts);
+	// 将s_knots调整，使得任意两个节点间距是0.01的倍数
+	for (int i = 0; i < s_knots.size(); i++) {
+		s_knots(i) = 1.0 * (int)(s_knots(i) * 100 + 0.5) / 100;
+	}
 	s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
 
-	cout << "s_knots: " << s_knots.transpose() << endl;*/
+	cout << "s_knots: " << s_knots.transpose() << endl;
 
 	// 均匀参数化
-	s_knots = Eigen::VectorXd::Zero(curves_num);
+	/*s_knots = Eigen::VectorXd::Zero(curves_num);
 	for (int i = 0; i < curves.size(); i++) {
 		s_knots(i) = 1.0*i / (curves_num-1);
 	}
-	s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;
+	s_knots(0) = 0.0001; s_knots(s_knots.size() - 1) = 0.9999;*/
 }
 
 void Skinning::update()
