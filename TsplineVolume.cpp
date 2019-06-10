@@ -110,7 +110,7 @@ void TsplineVolume::drawTmesh()
 
 			(*viewer).data().add_points(point, red);
 
-			points.conservativeResize(point.rows() + 1, 3);
+			points.conservativeResize(points.rows() + 1, 3);
 			points.row(points.rows() - 1) = point;
 
 			// 若与下一层有相同的(u,v)节点，则连接成边

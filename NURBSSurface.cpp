@@ -347,22 +347,22 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 			double v = v_low + j*v_resolution;
 			RowVectorXd curvePoint = eval(u, v).row(0);
 
-			RowVector3d du, dv, d2u, d2v, duv;
-			derivative(u, v, du, dv, d2u, d2v, duv);
+			/*RowVector3d du, dv, d2u, d2v, duv;
+			derivative(u, v, du, dv, d2u, d2v, duv);*/
 			/*cout << "d2u: " << d2u << endl;
 			double h = 0.001;*/
 			//RowVector3d d2u_1 = (eval(u + h, v) - 2 * eval(u, v) + eval(u - h, v)) / (h*h);
 			
 			//cout << "d2u_1: " << d2u_1 << endl;
-			RowVector3d normal = du.cross(dv);
-			normal.normalize();
+			/*RowVector3d normal = du.cross(dv);
+			normal.normalize();*/
 			/*viewer.data().add_edges(curvePoint, curvePoint + 0.005*du.normalized(), Eigen::RowVector3d(1, 0, 0));
 			viewer.data().add_edges(curvePoint, curvePoint + 0.005*dv.normalized(), Eigen::RowVector3d(0, 1, 0));
 			viewer.data().add_edges(curvePoint, curvePoint + 0.005*normal, Eigen::RowVector3d(0, 0, 1));
 			*/
 
 			int id = j*(uspan + 1) + i;
-			KK(id) = guassian_curvature(u, v);
+			//KK(id) = guassian_curvature(u, v);
 
 			if (isRational) { mesh_V.row(id) = curvePoint.hnormalized(); }
 			else { mesh_V.row(id) = curvePoint; }
@@ -377,19 +377,19 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 			mesh_F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
 		}
 
-	VectorXd K;
-	// Compute integral of Gaussian curvature
-	igl::gaussian_curvature(mesh_V, mesh_F, K);
-	// Compute mass matrix
-	SparseMatrix<double> M, Minv;
-	igl::massmatrix(mesh_V, mesh_F, igl::MASSMATRIX_TYPE_DEFAULT, M);
-	igl::invert_diag(M, Minv);
-	// Divide by area to get integral average
-	K = (Minv*K).eval();
-	KK = KK.cwiseAbs();
-	for (int i = 0; i < KK.size(); i++) {
-		KK(i) = log(KK(i) + 1);
-	}
+	//VectorXd K;
+	//// Compute integral of Gaussian curvature
+	//igl::gaussian_curvature(mesh_V, mesh_F, K);
+	//// Compute mass matrix
+	//SparseMatrix<double> M, Minv;
+	//igl::massmatrix(mesh_V, mesh_F, igl::MASSMATRIX_TYPE_DEFAULT, M);
+	//igl::invert_diag(M, Minv);
+	//// Divide by area to get integral average
+	//K = (Minv*K).eval();
+	//KK = KK.cwiseAbs();
+	//for (int i = 0; i < KK.size(); i++) {
+	//	KK(i) = log(KK(i) + 1);
+	//}
 
 	Eigen::VectorXd H;
 
@@ -400,16 +400,16 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 	// mean curvature
 	H = 0.5*(PV1 + PV2);
 
-	for (int i = 0; i < K.rows(); i++) {
+	/*for (int i = 0; i < K.rows(); i++) {
 		cout << K(i) << ", " << KK(i) << endl;
-	}
+	}*/
 	
 
 	viewer.data().set_mesh(mesh_V, mesh_F);
 
 	// Compute pseudocolor
 	Eigen::MatrixXd C;
-	igl::parula(KK, true, C);
+	igl::parula(H, true, C);
 	viewer.data().set_colors(C);
 }
 
@@ -419,6 +419,10 @@ void NURBSSurface::draw(
 	bool showpolygon,bool showsurface,
 	double resolution){
 
+	if (id == -1) {
+		id = viewer.append_mesh();
+	}
+	viewer.selected_data_index = id;
 	if(controlP.size()!=controlPw.size()){
 		controlP = vector<MatrixXd>(controlPw.size());
 	}

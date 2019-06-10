@@ -18,7 +18,8 @@ using namespace Eigen;
 using namespace std;
 struct NURBSSurface
 {
-	NURBSSurface(){}
+	NURBSSurface():id(-1),isRational(false){}
+
 	/*input format:
 	_order       : // _order(0):u direction; _order(1): v direction
 	_controlP: _controlP[i] represents u direction control point ,matrix (m+1) by 3 or 4
@@ -96,6 +97,7 @@ public:
 	// use libigl mesh(V,F) structure to show the surface
 	MatrixXd mesh_V;
 	MatrixXi mesh_F;
+	int id;
 };
 
 

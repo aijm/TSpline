@@ -2,11 +2,15 @@
 
 void VolumeSkinning::parameterize()
 {
-	Eigen::MatrixXd points(surfaces_num, 3);
+	/*Eigen::MatrixXd points(surfaces_num, 3);
 	for (int i = 0; i < surfaces_num; i++) {
 		points.row(i) = centerOfmesh(surfaces[i]).toVectorXd();
 	}
-	w_params = NURBSCurve::parameterize(points);
+	w_params = NURBSCurve::parameterize(points);*/
+	w_params = VectorXd::Zero(surfaces_num);
+	for (int i = 0; i < surfaces_num; i++) {
+		w_params(i) = 1.0*i / (surfaces_num - 1);
+	}
 	w_params(0) = 0.0001; w_params(w_params.size() - 1) = 0.9999;
 	cout << "w_params: " << w_params.transpose() << endl;
 }

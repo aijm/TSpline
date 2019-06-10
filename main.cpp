@@ -18,8 +18,9 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning();
 	//Test::test_generate_curves();
 	//Test::test_generate_curves1();
-	Test::test_TsplineSimplify();
+	//Test::test_TsplineSimplify();
 	//Test::test_Nurbs_curvature();
+	Test::test_generate_surfaces();
 	
     return 0;
 }

@@ -275,8 +275,8 @@ namespace t_mesh {
 				node->data.fromVectorXd(surface.controlPw[i].row(j));
 			}
 		}
-		cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
-		cout << "origin pool size : " << origin.pool.size() << endl;
+		/*cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
+		cout << "origin pool size : " << origin.pool.size() << endl;*/
 		origin.pool.clear();
 		if (!origin.check_valid()) {
 			cout << "error: invalid tspline mesh!" << endl;
@@ -295,7 +295,7 @@ namespace t_mesh {
 				tspline.s_map[u][v]->data = origin.s_map[u][v]->data;
 			}
 		}
-		cout << "pool size **********************: " << tspline.pool.size() << endl;
+		//cout << "pool size **********************: " << tspline.pool.size() << endl;
 		tspline.pool.clear();
 		if (!tspline.check_valid()) {
 			cout << "error: invalid tspline mesh!" << endl;
@@ -331,11 +331,11 @@ namespace t_mesh {
 		};
 		int i = 0;
 		while(true) {
-			cout << i << " ***********************************************************" << endl;
-			cout << "size of nodes: " << tspline.get_num() << endl;
+			/*cout << i << " ***********************************************************" << endl;
+			cout << "size of nodes: " << tspline.get_num() << endl;*/
 			// 节点插入加细到与B样条曲面一致
 			
-			Viewer viewer;
+			//Viewer viewer;
 			//Mesh3d tspline_copy(tspline);
 
 			//for (auto node : tspline.nodes) {
@@ -358,7 +358,7 @@ namespace t_mesh {
 			//viewer.launch();
 
 			Mesh3d mesh(tspline);
-			cout << "size of mesh: " << mesh.get_num() << endl;
+			//cout << "size of mesh: " << mesh.get_num() << endl;
 			for (auto node : origin.nodes) {
 				if (mesh.get_node(node->s[2], node->t[2]) == 0) {
 					mesh.insert(node->s[2], node->t[2]);
@@ -413,7 +413,7 @@ namespace t_mesh {
 				sort(regions.begin(), regions.end(),
 					[](const pair<tuple<double, double, double, double>, double>& a,
 						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
-				cout << "最大误差: " << regions[0].second << endl;
+				//cout << "最大误差: " << regions[0].second << endl;
 				for (auto rect : regions) {
 					split(rect.first);
 				}
@@ -432,16 +432,16 @@ namespace t_mesh {
 					[](const pair<tuple<double, double, double, double>, double>& a,
 						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
 
-				cout << "total region size: "<<regions.size() << endl;
+				//cout << "total region size: "<<regions.size() << endl;
 				// 每次选择误差最大的5个split
 				for (int i = 0; i < 10; i++) {
 					if (i == regions.size()) {
 						break;
 					}
 					else {
-						cout << "误差:" << regions[i].second << endl;
+						/*cout << "误差:" << regions[i].second << endl;
 						cout << "split: " << get<0>(regions[i].first)<<", " << get<1>(regions[i].first) << ", "
-							<< get<2>(regions[i].first) << ", " << get<3>(regions[i].first) << endl;
+							<< get<2>(regions[i].first) << ", " << get<3>(regions[i].first) << endl;*/
 						split(regions[i].first);
 					}
 				}
@@ -459,7 +459,7 @@ namespace t_mesh {
 
 
 
-			cout << "tspline pool size after split: "<<tspline.pool.size()<<"************************** "<< endl;
+			//cout << "tspline pool size after split: "<<tspline.pool.size()<<"************************** "<< endl;
 			tspline.pool.clear();
 			if (!tspline.check_valid()) {
 				cout << "error: tspline is not valid!!!" << endl;
@@ -467,7 +467,7 @@ namespace t_mesh {
 			i++;
 		}
 
-		cout << "size of nodes: " << tspline.get_num() << endl;
+		//cout << "size of nodes: " << tspline.get_num() << endl;
 		
 
 	}

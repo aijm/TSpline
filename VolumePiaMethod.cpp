@@ -12,12 +12,12 @@ void VolumePiaMethod::calculate()
 	pia();
 	update();
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 3; i++) {
 		pia();
 		update();
 	}
 
-	for (int j = 0; j < 5; j++) {
+	for (int j = 0; j < 0; j++) {
 		Point3d low, high;
 		param_helper_points(low, high); // 辅助点参数化
 
@@ -68,7 +68,7 @@ void VolumePiaMethod::sample_fitPoints_2()
 	// 纵向采样，拟合出一个B样条曲线
 	const int v_sample_num = 10;
 	const int u_sample_num = 10;
-	const int w_sample_num = 10;
+	const int w_sample_num = 30;
 
 	VectorXd params = w_params;
 	params(0) = 0; params(params.size() - 1) = 1;

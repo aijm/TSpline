@@ -70,7 +70,7 @@ namespace t_mesh{
 			map<double, map<double, Node<T>*> > t_map; // t_map[t][s]
 			list<Node<T> >              pool;
 			vector<Node<T>*>    nodes;
-
+			int id;
 		private:
 			double width;
 			double height;
@@ -80,7 +80,7 @@ namespace t_mesh{
 			Eigen::MatrixXd mesh_V;
 			Eigen::MatrixXi mesh_F;
 			Viewer* viewer;
-			int id;
+			
     };
 
 	template<class T>
@@ -1041,23 +1041,23 @@ namespace t_mesh{
 					count++;
 				}
 				if (count == 2) {
-					cout << "fuck********************" << endl;
+					//cout << "fuck********************" << endl;
 					// L型节点
 					Node<T> temp = get_knot(node->s[2], node->t[2]);
 					if (node->adj[0] == 0 && node->adj[3] == 0) {
-						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						//cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
 						toBeInserted.push_back(make_tuple(temp.s[1], node->t[2]));
 
 					}else if (node->adj[1] == 0 && node->adj[2] == 0) {
-						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						//cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
 						toBeInserted.push_back(make_tuple(temp.s[3], node->t[2]));
 						
 					}else if (node->adj[0] == 0 && node->adj[1] == 0) {
-						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						//cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
 						toBeInserted.push_back(make_tuple(temp.s[3], node->t[2]));
 						
 					}else if (node->adj[2] == 0 && node->adj[3] == 0) {
-						cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
+						//cout << "improve: " << node->s[2] << ", " << node->t[2] << endl;
 						toBeInserted.push_back(make_tuple(temp.s[1], node->t[2]));
 					}
 					else {

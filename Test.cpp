@@ -93,21 +93,7 @@ void Test::test_generate_curves1()
 
 	NURBSSurface surface;
 
-	/*surface.u_num = volume.control_grid.size() - 1;
-	surface.v_num = volume.control_grid[0][0].size() - 1;
-	surface.u_order = 4;
-	surface.v_order = 4;
-	surface.dimension = 3;
-	surface.isRational = false;
-	surface.uknots = volume.knot_vector[0];
-	surface.vknots = volume.knot_vector[2];
-	surface.controlPw.resize(surface.v_num + 1);
-	for (int i = 0; i <= surface.v_num; i++) {
-		surface.controlPw[i].resize(surface.u_num + 1, 3);
-		for (int j = 0; j <= surface.u_num; j++) {
-			surface.controlPw[i].row(j) = volume.control_grid[j][0][i].toVectorXd();
-		}
-	}*/
+	
 	surface.loadNURBS("../out/nurbs/venus_front.cpt");
 	surface.saveAsObj("../out/OBJ/venus_surface", 0.01);
 	//surface.draw(Window::viewer, false, true, 0.01);
@@ -178,9 +164,77 @@ void Test::test_generate_curves1()
 	render.launch();
 }
 
+/**
+ 从B样条体中生成一组B样条曲面
+ 用于后续简化为T样条曲面，进一步进行Volume Skinning
+*/
 void Test::test_generate_surfaces()
 {
+	BsplineVolume volume;
+	volume.readVolume("../out/volume/venus_bspline.txt");
+	
 
+	int sample_num = 5;
+	vector<NURBSSurface> nurbs(sample_num + 1);
+	MatrixXd controlpoints;
+	// 采样生成B样条曲面
+	for (int i = 0; i <= sample_num; i++) {
+		double param = 1.0*i / sample_num;
+		nurbs[i].u_num = volume.control_grid.size() - 1;
+		nurbs[i].v_num = volume.control_grid[0][0].size() - 1;
+		nurbs[i].u_order = 4;
+		nurbs[i].v_order = 4;
+		nurbs[i].dimension = 3;
+		nurbs[i].isRational = false;
+		nurbs[i].uknots = volume.knot_vector[0];
+		nurbs[i].vknots = volume.knot_vector[2];
+		nurbs[i].controlPw.resize(nurbs[i].v_num + 1);
+
+		// nurbs[i] 的控制顶点坐标
+		for (int j = 0; j <= nurbs[i].v_num; j++) {
+
+			nurbs[i].controlPw[j] = MatrixXd::Zero(nurbs[i].u_num + 1, nurbs[i].dimension);
+			for (int k = 0; k <= nurbs[i].u_num; k++) {		
+				for (int m = 0; m < volume.control_grid[0].size(); m++) {
+					nurbs[i].controlPw[j].row(k) += volume.control_grid[k][m][j].toVectorXd() * Basis(volume.knot_vector[1], param, m);
+
+				}
+				controlpoints.conservativeResize(controlpoints.rows() + 1, 3);
+				controlpoints.row(controlpoints.rows() - 1) = nurbs[i].controlPw[j].row(k);
+			}
+			
+		}
+	}
+
+	vector<Mesh3d> tsplines(sample_num + 1);
+	for (int i = 0; i <= sample_num; i++) {
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 5e-3);
+		cout << "number of nodes: " << tsplines[i].get_num() << endl;
+		tsplines[i].setViewer(&Window::viewer);
+		tsplines[i].draw(false, false, true, 0.01);
+		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
+	}
+	
+	/*for (auto& surface : nurbs) {
+		surface.draw(Window::viewer, false, true);
+	}*/
+	for (auto& data : Window::viewer.data_list) {
+		data.set_face_based(true);
+		data.show_lines = false;
+		data.invert_normals = true;
+	}
+	cout << "controlpoints: " << controlpoints.rows() << endl;
+	Window::viewer.core.align_camera_center(controlpoints);
+
+	VolumePiaMethod method(tsplines, 12, 1e-5);
+	method.setViewer(&Window::viewer);
+	method.calculate();
+	method.volume.saveAsHex("../out/volume/venus_skinning", 0.02);
+	VolumeRender render(&method.volume, false, false, true, 0.02);
+	render.launch();
+	/*Window w;
+	w.launch();*/
+	
 }
 
 void Test::test_nurbs()
