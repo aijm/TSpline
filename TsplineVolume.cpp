@@ -22,12 +22,22 @@ TsplineVolume::~TsplineVolume()
 Point3d TsplineVolume::eval(double u, double v, double w)
 {
 	Point3d res;
-	int i = 0;
-	for (auto w_it = w_map.begin(); w_it != w_map.end(); w_it++,i++) {
+
+	/*int i = 0;
+	for (auto w_it = w_map.begin(); w_it != w_map.end(); w_it++, i++) {
 		Mesh3d* tmesh = w_it->second;
 		double w_basis = Basis(w_knots, w, i);
 		res.add(w_basis * tmesh->eval(u, v));
+	}*/
+	VectorXd w_knots_change = w_knots;
+	w_knots_change(3) = 0.0; w_knots_change(w_knots_change.size() - 4) = 1.0;
+	int wid = FindSpan(w_knots_change, w);
+	for (int i = wid - 1; i <= wid + 2; i++) {
+		double w_basis = Basis(w_knots_change, w, i - 2);
+		Mesh3d* mesh = w_map[w_knots(i)];
+		res.add(w_basis*mesh->eval(u, v));
 	}
+
 	return res;
 }
 

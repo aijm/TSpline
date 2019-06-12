@@ -53,6 +53,9 @@ struct NURBSSurface
 
 	MatrixXd eval(double t, const MatrixXd &_controlP, const VectorXd &knots);
 
+	// 获取等参线
+	void get_isoparam_curve(NURBSCurve& curve, double t, char dir = 'u');
+
 	// knot insertion
 	bool insert(double s, char dir='u');
 	// kont insertion

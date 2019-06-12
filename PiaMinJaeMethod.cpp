@@ -317,7 +317,7 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 			points.row(j) = curves[j].eval(v);
 		}
 		sample_curves[i].interpolate(points, knots);
-		sample_curves[i].draw(*viewer, false, true, 0.001);
+		//sample_curves[i].draw(*viewer, false, true, 0.001);
 	}
 
 

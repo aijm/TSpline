@@ -21,7 +21,6 @@ private:
 public:
 	map<double, Mesh3d*>       w_map;   
 	Eigen::VectorXd            w_knots;     // w向节点向量
-
 	
 };
 

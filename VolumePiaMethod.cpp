@@ -207,7 +207,7 @@ void VolumePiaMethod::pia()
 		int layer = 0;
 		for (auto &entry : volume.w_map) {
 			// Ò»²ã
-			if (entry.first <= 0.0001 || entry.first >= 0.9999) {
+			if (entry.first <= 0.0000 || entry.first >= 1.0) {
 				layer++;
 				continue;
 			}

@@ -80,6 +80,8 @@ namespace t_mesh{
 			Eigen::MatrixXd mesh_V;
 			Eigen::MatrixXi mesh_F;
 			Viewer* viewer;
+			vector<map<double, double>> s_cache; // 缓存每个节点计算过的s方向基函数值
+			vector<map<double, double>> t_cache; // 缓存每个节点计算过的t方向基函数值
 			
     };
 
@@ -133,28 +135,85 @@ namespace t_mesh{
 	template<class T>
 		 T Mesh<T>::eval(double s, double t) {
 			 T result;
-			 for (int i = 0; i < nodes.size(); i++) {
-				 double blend = nodes[i]->basis(s, t);
-				 T temp(nodes[i]->data);
-				 //temp.output(cout);
-				 temp.scale(blend);
-				 result.add(temp);
+			 //for (int i = 0; i < nodes.size(); i++) {
+				// double blend = nodes[i]->basis(s, t);
+				// T temp(nodes[i]->data);
+				// //temp.output(cout);
+				// temp.scale(blend);
+				// result.add(temp);
+			 //}
+
+			 // 确定基函数在(s,t)处非0的节点，减少计算量
+			 if (s_cache.empty()) {
+				 s_cache.resize(nodes.size());
+			 }
+			 if (t_cache.empty()) {
+				 t_cache.resize(nodes.size());
 			 }
 
-			 /*for (auto it = s_map.begin(); it != s_map.end(); ++it) {
-				 for (auto it1 = (it->second).begin(); it1 != (it->second).end(); ++it1) {
-					 if (it1->second->t[4] < t)
-						 continue;
-					 if (it1->second->t[0] > t)
-						 break;
-					 if (it1->second->is_ok(s, t)) {
-						 double blend = Basis((it1->second->s).toVectorXd(), s)*Basis((it1->second->t).toVectorXd(), t);
-						 T temp = it1->second->data;
-						 temp.scale(blend);
-						 result.add(temp);
+			 for (int i = 0; i < nodes.size(); i++) {
+				 auto node = nodes[i];
+				 double s_blend;
+				 double t_blend;
+				 int id = node->order - 1;
+				 if (node->is_ok(s, t)) {
+					 map<double, double>::iterator it = s_cache[id].find(s);
+					 if (it != s_cache[id].end()) {
+						 s_blend = it->second;
 					 }
+					 else {
+						 // 记录缓存
+						 s_blend = Basis(node->s.toVectorXd(), s);
+						 s_cache[id][s] = s_blend;
+					 }
+
+					 it = t_cache[id].find(t);
+					 if (it != t_cache[id].end()) {
+						 t_blend = it->second;
+					 }
+					 else {
+						 // 记录缓存
+						 t_blend = Basis(node->t.toVectorXd(), t);
+						 t_cache[id][t] = t_blend;
+					 }
+
+					 result.add(node->data * s_blend*t_blend);
 				 }
-			 }*/
+			 }
+
+			 //for (auto entry : s_map) {
+				// for (auto t_node : entry.second) {
+				//	 auto node = t_node.second;
+				//	 if (node->t[4] < t) continue;
+				//	 if (node->t[0] > t) break;
+				//	 double s_blend;
+				//	 double t_blend;
+				//	 int id = node->order - 1;
+				//	 if (node->is_ok(s, t)) {
+				//		 map<double, double>::iterator it = s_cache[id].find(s);
+				//		 if (it != s_cache[id].end()) {
+				//			 s_blend = it->second;
+				//		 }
+				//		 else {
+				//			 // 记录缓存
+				//			 s_blend = Basis(node->s.toVectorXd(), s);
+				//			 s_cache[id][s] = s_blend;
+				//		 }
+
+				//		 it = t_cache[id].find(t);
+				//		 if (it != t_cache[id].end()) {
+				//			 t_blend = it->second;
+				//		 }
+				//		 else {
+				//			 // 记录缓存
+				//			 t_blend = Basis(node->t.toVectorXd(), t);
+				//			 t_cache[id][t] = t_blend;
+				//		 }
+
+				//		 result.add(node->data * s_blend*t_blend);
+				//	 }	 
+				// }
+			 //}
 			 return result; 
 		 }
 

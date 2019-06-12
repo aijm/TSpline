@@ -235,6 +235,38 @@ MatrixXd NURBSSurface::eval(
 	return curvePoint;
 }
 
+void NURBSSurface::get_isoparam_curve(NURBSCurve & curve, double t, char dir)
+{
+	// 只能用于3次样条
+	curve.isRational = this->isRational;
+	if (dir == 'u') {
+		curve.n = this->v_num;
+		curve.k = this->v_order;
+		curve.knots = this->vknots;
+		curve.controlPw = MatrixXd::Zero(curve.n + 1, this->dimension);
+
+		int id = FindSpan(uknots, t);
+		for (int i = 0; i <= curve.n; i++) {
+			for (int j = id - 1; j <= id + 2; j++) {
+				curve.controlPw.row(i) += this->controlPw[i].row(j - 2)*NURBSCurve::Basis(uknots, t, j - 2);
+			}
+		}
+	}
+	else if (dir == 'v') {
+		curve.n = this->u_num;
+		curve.k = this->u_order;
+		curve.knots = this->uknots;
+
+		curve.controlPw = MatrixXd::Zero(curve.n + 1, this->dimension);
+		int id = FindSpan(vknots, t);
+		for (int i = 0; i <= curve.n; i++) {
+			for (int j = id - 1; j <= id + 2; j++) {
+				curve.controlPw.row(i) += this->controlPw[j-2].row(i)*NURBSCurve::Basis(vknots, t, j - 2);
+			}
+		}
+	}
+}
+
 // knot insertion
 bool NURBSSurface::insert(double s, char dir){
 	assert(dir=='u' || dir=='v');

@@ -128,6 +128,67 @@ int BsplineVolume::saveVolume(string filename)
 	return 0;
 }
 
+// 获取等参面
+void BsplineVolume::get_isoparam_surface(NURBSSurface & surface, double t, char dir)
+{
+	surface.isRational = false;
+	surface.u_order = 4;
+	surface.v_order = 4;
+	surface.dimension = 3;
+	if (dir == 'u') {
+		surface.u_num = control_grid[0].size() - 1;
+		surface.v_num = control_grid[0][0].size() - 1;
+		surface.uknots = knot_vector[1];
+		surface.vknots = knot_vector[2];
+		surface.controlPw.resize(surface.v_num + 1);
+		int id = FindSpan(knot_vector[0], t);
+		for (int i = 0; i <= surface.v_num; i++) {
+			surface.controlPw[i] = MatrixXd::Zero(surface.u_num + 1, surface.dimension);
+			for (int j = 0; j <= surface.u_num; j++) {
+				for (int k = id - 1; k <= id + 2; k++) {
+					surface.controlPw[i].row(j) += control_grid[k - 2][j][i].toVectorXd() * Basis(knot_vector[0], t, k - 2);
+				}
+				
+			}
+		}
+		
+	}
+	else if (dir == 'v') {
+		surface.u_num = control_grid.size() - 1;
+		surface.v_num = control_grid[0][0].size() - 1;
+		surface.uknots = knot_vector[0];
+		surface.vknots = knot_vector[2];
+		surface.controlPw.resize(surface.v_num + 1);
+		int id = FindSpan(knot_vector[1], t);
+		for (int i = 0; i <= surface.v_num; i++) {
+			surface.controlPw[i] = MatrixXd::Zero(surface.u_num + 1, surface.dimension);
+			for (int j = 0; j <= surface.u_num; j++) {
+				for (int k = id - 1; k <= id + 2; k++) {
+					surface.controlPw[i].row(j) += control_grid[j][k - 2][i].toVectorXd() * Basis(knot_vector[1], t, k - 2);
+				}
+
+			}
+		}
+	}
+	else if (dir == 'w') {
+		surface.u_num = control_grid.size() - 1;
+		surface.v_num = control_grid[0].size() - 1;
+		surface.uknots = knot_vector[0];
+		surface.vknots = knot_vector[1];
+		surface.controlPw.resize(surface.v_num + 1);
+		int id = FindSpan(knot_vector[2], t);
+		for (int i = 0; i <= surface.v_num; i++) {
+			surface.controlPw[i] = MatrixXd::Zero(surface.u_num + 1, surface.dimension);
+			for (int j = 0; j <= surface.u_num; j++) {
+				for (int k = id - 1; k <= id + 2; k++) {
+					surface.controlPw[i].row(j) += control_grid[j][i][k - 2].toVectorXd() * Basis(knot_vector[2], t, k - 2);
+				}
+
+			}
+		}
+	}
+}
+
 void BsplineVolume::drawTmesh()
 {
 	assert(viewer != NULL); // use setViewer(Viewer* viewer)

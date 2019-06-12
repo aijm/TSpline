@@ -275,6 +275,8 @@ namespace t_mesh {
 				node->data.fromVectorXd(surface.controlPw[i].row(j));
 			}
 		}
+		cout << "size of original tspline: " << origin.get_num() <<"*************************"<< endl;
+		cout << "\n\n";
 		/*cout << "hmin: " << min_curvature << ", " << "hmax : " << max_curvature << endl;
 		cout << "origin pool size : " << origin.pool.size() << endl;*/
 		origin.pool.clear();
@@ -413,7 +415,7 @@ namespace t_mesh {
 				sort(regions.begin(), regions.end(),
 					[](const pair<tuple<double, double, double, double>, double>& a,
 						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
-				//cout << "最大误差: " << regions[0].second << endl;
+				cout << "iter "<<i <<" ,max(error-eps): " << regions[0].second << endl;
 				for (auto rect : regions) {
 					split(rect.first);
 				}
@@ -432,17 +434,18 @@ namespace t_mesh {
 					[](const pair<tuple<double, double, double, double>, double>& a,
 						const pair<tuple<double, double, double, double>, double>& b) {return a.second > b.second; });
 
+				cout << "iter " << i << " ,max(error-eps): " << regions[0].second << endl;
 				//cout << "total region size: "<<regions.size() << endl;
 				// 每次选择误差最大的5个split
-				for (int i = 0; i < 10; i++) {
-					if (i == regions.size()) {
+				for (int j = 0; j < 10; j++) {
+					if (j == regions.size()) {
 						break;
 					}
 					else {
-						/*cout << "误差:" << regions[i].second << endl;
-						cout << "split: " << get<0>(regions[i].first)<<", " << get<1>(regions[i].first) << ", "
-							<< get<2>(regions[i].first) << ", " << get<3>(regions[i].first) << endl;*/
-						split(regions[i].first);
+						/*cout << "误差:" << regions[j].second << endl;
+						cout << "split: " << get<0>(regions[j].first)<<", " << get<1>(regions[j].first) << ", "
+							<< get<2>(regions[j].first) << ", " << get<3>(regions[j].first) << endl;*/
+						split(regions[j].first);
 					}
 				}
 			}
@@ -465,10 +468,12 @@ namespace t_mesh {
 				cout << "error: tspline is not valid!!!" << endl;
 			}
 			i++;
+			cout << "size of nodes: " << tspline.get_num() << endl;
 		}
 
 		//cout << "size of nodes: " << tspline.get_num() << endl;
 		
-
+		cout << "simplify finished. *****************************" << endl;
+		cout << "\n\n";
 	}
 };

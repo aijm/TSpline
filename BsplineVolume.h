@@ -9,6 +9,7 @@ public:
 	int readVolume(string) override;
 	int saveVolume(string) override;
 
+	void get_isoparam_surface(NURBSSurface& surface, double t, char dir);
 private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;

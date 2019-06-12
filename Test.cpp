@@ -164,6 +164,113 @@ void Test::test_generate_curves1()
 	render.launch();
 }
 
+void Test::test_generate_curves2()
+{
+	NURBSSurface surface;
+
+
+	surface.loadNURBS("../out/nurbs/Bsurface_standard.cpt");
+	//surface.draw(Window::viewer, false, true);
+	const double resolution = 0.05;
+	const int curves_num = 1.0 / resolution;
+	cout << curves_num << endl;
+	vector<NURBSCurve> curves(curves_num + 1);
+
+	for (int i = 0; i <= curves_num; i++) {
+		double t = 1.0*i / curves_num;
+		surface.get_isoparam_curve(curves[i], t, 'u');
+		curves[i].saveNURBS("../out/nurbs/Bsurface_curve_" + to_string(i));
+		curves[i].draw(Window::viewer, false, true, 0.001);
+	}
+
+	/*Window w;
+	w.launch();*/
+	//Skinning* method = new PiaMethod(curves, 100);
+	//Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new OptMethod(curves);
+	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
+	//Skinning* method = new MinJaeMethod(curves, 40, 10);
+
+	method->setViewer(&Window::viewer);
+
+	method->calculate();
+	Mesh3d* mesh = &(method->tspline);
+	cout << "num of nodes: " << mesh->get_num() << endl;
+
+	mesh->saveMesh("../out/tspline/Bsurface_skinning1");
+	mesh->saveAsObj("../out/OBJ/Bsurface_PiaMinJae_20", 0.01);
+	MeshRender render(mesh, false, false, true, 0.01);
+	render.launch();
+}
+
+void Test::load_nurbs_surface(NURBSSurface & surface, string filename)
+{
+	// 加载另外一种文件格式的nurbs surface
+	ifstream in(filename);
+	if (!in.is_open()) {
+		cout << "error: can't open file: " << filename << endl;
+		return;
+	}
+	
+	surface.isRational = false;
+	surface.u_order = 4;
+	surface.v_order = 4;
+	surface.dimension = 3;
+
+	string line;
+	getline(in, line);
+	getline(in, line);
+	stringstream ss0(line);
+	ss0 >> surface.v_num >> surface.u_num;
+	--surface.v_num;
+	--surface.u_num;
+
+	getline(in, line);
+	surface.controlPw.resize(surface.v_num + 1);
+	for (int i = 0; i <= surface.v_num; i++) {
+		surface.controlPw[i] = MatrixXd::Zero(surface.u_num + 1, 3);
+		for (int j = 0; j <= surface.u_num; j++) {
+			getline(in, line);
+			istringstream ss(line);
+
+			ss >> surface.controlPw[i](j, 0) >> surface.controlPw[i](j, 1) >> surface.controlPw[i](j, 2);
+		
+			//cout << surface.controlPw[i](j, 0) << ", " << surface.controlPw[i](j, 1) << ", " << surface.controlPw[i](j, 2) << endl;
+		}
+	}
+	//cout << "***********************************************" << endl;
+	getline(in, line);
+	getline(in, line);
+	istringstream ss1(line);
+	surface.vknots = VectorXd::Zero(surface.v_num + 5);
+	for (int i = 0; i < surface.vknots.size(); i++) {
+		ss1 >> surface.vknots(i);
+	}
+	//cout << "vkonts: \n" << surface.vknots << endl;
+
+	getline(in, line);
+	getline(in, line);
+	istringstream ss2(line);
+	surface.uknots = VectorXd::Zero(surface.u_num + 5);
+	for (int i = 0; i < surface.uknots.size(); i++) {
+		ss2 >> surface.uknots(i);
+	}
+	//cout << "ukonts: \n" << surface.uknots << endl;
+	in.close();
+}
+
+void Test::test_load_nurbs_surface()
+{
+	string filename = "../out/nurbs/Bsurface.cpt";
+	NURBSSurface surface;
+	load_nurbs_surface(surface, filename);
+	surface.draw(Window::viewer, false, true);
+	surface.saveNURBS("../out/nurbs/Bsurface_standard");
+	Window w;
+	w.launch();
+}
+
 /**
    棋子蒙皮
 */
@@ -212,47 +319,37 @@ void Test::test_chess()
 */
 void Test::test_generate_surfaces()
 {
+	string modelname = "isis";
+	string filename = "../out/volume/" + modelname + "_bspline.txt";
 	BsplineVolume volume;
-	volume.readVolume("../out/volume/tooth_bspline.txt");
+	volume.readVolume(filename);
 	
 
 	int sample_num = 5;
 	vector<NURBSSurface> nurbs(sample_num + 1);
-	MatrixXd controlpoints;
+	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
 	// 采样生成B样条曲面
 	for (int i = 0; i <= sample_num; i++) {
 		double param = 1.0*i / sample_num;
-		nurbs[i].u_num = volume.control_grid.size() - 1;
-		nurbs[i].v_num = volume.control_grid[0][0].size() - 1;
-		nurbs[i].u_order = 4;
-		nurbs[i].v_order = 4;
-		nurbs[i].dimension = 3;
-		nurbs[i].isRational = false;
-		nurbs[i].uknots = volume.knot_vector[0];
-		nurbs[i].vknots = volume.knot_vector[2];
-		nurbs[i].controlPw.resize(nurbs[i].v_num + 1);
-
-		// nurbs[i] 的控制顶点坐标
-		for (int j = 0; j <= nurbs[i].v_num; j++) {
-
-			nurbs[i].controlPw[j] = MatrixXd::Zero(nurbs[i].u_num + 1, nurbs[i].dimension);
-			for (int k = 0; k <= nurbs[i].u_num; k++) {		
-				for (int m = 0; m < volume.control_grid[0].size(); m++) {
-					nurbs[i].controlPw[j].row(k) += volume.control_grid[k][m][j].toVectorXd() * Basis(volume.knot_vector[1], param, m);
-
-				}
-				controlpoints.conservativeResize(controlpoints.rows() + 1, 3);
-				controlpoints.row(controlpoints.rows() - 1) = nurbs[i].controlPw[j].row(k);
+		volume.get_isoparam_surface(nurbs[i], param, 'v');
+		//nurbs[i].draw(Window::viewer, false, true);
+		// 
+		for (int j = 0; j < nurbs[i].controlPw.size(); j++) {
+			int lastid = controlpoints.rows();
+			controlpoints.conservativeResize(controlpoints.rows() + nurbs[i].controlPw[j].rows(), 3);
+			for (int k = 0; k < nurbs[i].controlPw[j].rows(); k++) {
+				controlpoints.row(lastid + k) = nurbs[i].controlPw[j].row(k);
 			}
-			
 		}
-	}
 
+	}
+	
 	vector<Mesh3d> tsplines(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
-		// venus_bspline.txt ---> 5e-3
+		// venus_bspline.txt ---> 3e-3
 		// tooth_bspline.txt ---> 3
-		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
+		// isis_bspline.txt --> 5e-3
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 1e-2);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
@@ -274,10 +371,13 @@ void Test::test_generate_surfaces()
 	//VolumeSkinning* method = new VolumeSkinning(tsplines);
 	method->setViewer(&Window::viewer);
 	method->calculate();
-	method->volume.saveVolume("../out/volume/tooth_skinning");
-	method->volume.saveAsHex("../out/volume/tooth_skinning", 0.02);
+	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
+	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.02);
 	VolumeRender render(&method->volume, false, false, true, 0.01);
+	begin = clock();
 	render.launch();
+	end = clock();
+	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
 	/*Window w;
 	w.launch();*/
 	
@@ -318,20 +418,19 @@ void Test::test_nurbs()
 
 void Test::test_TsplineVolume() {
 	TsplineVolume* volume = new TsplineVolume();
-	volume->readVolume("../out/volume/test.vol");
-
-	TsplineVolume volume_copy(*volume); // deep copy
-	delete volume;
-	volume = NULL;
-	VolumeRender render(&volume_copy, false, false, true);
-	volume_copy.saveVolume("../out/volume/test_copy");
+	volume->readVolume("../out/volume/isis_skinning.vol");
+	
+	VolumeRender render(volume, false, false, true, 0.01);
+	begin = clock();
 	render.launch();
+	end = clock();
+	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
 }
 void Test::test_BsplineVolume()
 {
 	BsplineVolume volume;
 	begin = clock();
-	volume.readVolume("../out/volume/venus_bspline.txt");
+	volume.readVolume("../out/volume/tooth_bspline.txt");
 	//volume.readVolume("../out/volume/balljoint_bspline.txt");
 	//volume.readVolume("../out/volume/isis_bspline.txt");
 	//volume.readVolume("../out/volume/moai_bspline.txt");
@@ -356,9 +455,12 @@ void Test::test_Mesh() {
 	//MeshRender render(meshcopy);
 	//render.launch();
 	Mesh3d mesh;
-	mesh.loadMesh("../out/tspline/origin.cfg");
-	MeshRender render(&mesh);
+	mesh.loadMesh("../out/tspline/venus_skinning.cfg");
+	MeshRender render(&mesh, false, true, true);
+	begin = clock();
 	render.launch();
+	end = clock();
+	cout << "time for drawing tspline: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
 
 }
 
