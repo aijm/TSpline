@@ -95,6 +95,15 @@ void TsplineVolume::insert(double w, Mesh3d * mesh)
 	w_map[w] = mesh;
 }
 
+int TsplineVolume::get_num() const
+{
+	int num = 0;
+	for (auto entry : w_map) {
+		num += entry.second->get_num();
+	}
+	return num;
+}
+
 void TsplineVolume::drawTmesh()
 {
 	assert(viewer != NULL); // use setViewer(Viewer* viewer)

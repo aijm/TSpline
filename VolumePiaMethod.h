@@ -28,6 +28,7 @@ public:
 	void sample_fitPoints();
 	void fit();
 	void pia();
+	void cal_basis_cache();
 
 private:
 	const int maxIterNum;
@@ -37,6 +38,8 @@ private:
 	vector<FitPoint3D> surface_points;
 	vector<FitPoint3D> inter_points;
 	vector<FitPoint3D> helper_points;
+	vector<vector<double>> basis_cache; // (B_i(t_j)
+	vector<double> basis_cache_sum; // sum_j (B_i(t_j)
 };
 #endif // !VOLUMEPIAMETHOD_H
 

@@ -8,6 +8,7 @@ void VolumePiaMethod::calculate()
 	sample_fitPoints_2();
 	fitPoints = surface_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
+	cal_basis_cache(); // 计算基函数在fitPoints参数位置的值， 这样在fit()和pia()时不需要再重新计算
 	fit();
 	pia();
 	update();
@@ -182,18 +183,20 @@ void VolumePiaMethod::sample_fitPoints()
 void VolumePiaMethod::fit()
 {
 	error = 0.0;
-	for (auto& point : fitPoints) {
-		/*cout << "param: " << point.param[0] << ", " << point.param[1] << ", " << point.param[2] << endl;
-		cout << "origin: ";
-		point.origin.output(cout);
-		cout << endl;*/
+	for (int i = 0; i < fitPoints.size();i++) {
+		auto& point = fitPoints[i];
 
-		point.eval = volume.eval(point.param[0], point.param[1],point.param[2]);
-
-		/*cout << "eval: ";
-		point.eval.output(cout);
-		cout << endl;*/
-
+		Point3d val;
+		int count = 0;
+		for (auto entry : volume.w_map) {
+			for (auto node : entry.second->nodes) {
+				val.add(node->data * basis_cache[count][i]);
+				count++;
+			}
+			
+		}
+		point.eval = val;
+	
 		point.error = point.geterror();
 		error += point.error;
 	}
@@ -204,36 +207,39 @@ void VolumePiaMethod::pia()
 {
 	for (int i = 0; i < maxIterNum; i++) {
 		// 计算差向量并更新曲面控制点
-		int layer = 0;
+
+		int count = 0;
 		for (auto &entry : volume.w_map) {
 			// 一层
 			if (entry.first <= 0.0000 || entry.first >= 1.0) {
-				layer++;
+				count += entry.second->get_num();
 				continue;
 			}
-			auto nodes = entry.second->nodes;
 
-			for (auto node : nodes) {
+			for (auto node : entry.second->nodes) {
 				/*if (node->s[2] <= 0.0001 || node->s[2] >= 0.9999) {
 					continue;
 				}*/
-				double sum1 = 0;
+				
 				Point3d sum2;
-				for (auto point : fitPoints) {
-					double blend = node->basis(point.param[0], point.param[1])*Basis(volume.w_knots, point.param[2], layer);
-					sum1 += blend;
-					Point3d delta = point.origin - point.eval;
+				for (int j = 0; j < fitPoints.size();j++) {
+					double blend = basis_cache[count][j];
+					
+					Point3d delta = fitPoints[j].origin - fitPoints[j].eval;
 					delta.scale(blend);
 					sum2.add(delta);
 				}
+				double sum1 = basis_cache_sum[count];
 				double factor = 0.0;
 				if (abs(sum1) > 0.0001) {
 					factor = 1.0 / sum1;
 				}
 				sum2.scale(factor); // 差向量
 				node->data.add(sum2); // 更新坐标	
+
+				count++;
 			}
-			layer++;
+			
 		}
 		
 
@@ -243,5 +249,27 @@ void VolumePiaMethod::pia()
 			break;
 		}
 
+	}
+}
+
+void VolumePiaMethod::cal_basis_cache()
+{
+	basis_cache.resize(volume.get_num());
+	basis_cache_sum.resize(basis_cache.size(), 0);
+	// 计算每个节点处的基函数在要拟合点参数处的值 B_i(t_j)
+	int layer = 0; // 用于计算w向基函数
+	int count = 0;
+	for (auto entry : volume.w_map) {
+		for (auto node : entry.second->nodes) {
+			basis_cache[count].resize(fitPoints.size());
+			for (int i = 0; i < fitPoints.size(); i++) {
+				auto point = fitPoints[i];
+				double blend = node->basis(point.param[0], point.param[1]) * Basis(volume.w_knots, point.param[2], layer);
+				basis_cache[count][i] = blend;
+				basis_cache_sum[count] += blend;
+			}
+			count++;
+		}
+		layer++;
 	}
 }
