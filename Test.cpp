@@ -171,14 +171,37 @@ void Test::test_generate_curves2()
 
 	surface.loadNURBS("../out/nurbs/Bsurface_standard.cpt");
 	//surface.draw(Window::viewer, false, true);
-	const double resolution = 0.05;
-	const int curves_num = 1.0 / resolution;
-	cout << curves_num << endl;
-	vector<NURBSCurve> curves(curves_num + 1);
+	const double resolution = 0.1;
+	const int curves_num = 1.0 / resolution + 1;
+	vector<NURBSCurve> curves(curves_num);
 
-	for (int i = 0; i <= curves_num; i++) {
-		double t = 1.0*i / curves_num;
-		surface.get_isoparam_curve(curves[i], t, 'u');
+	uniform_int_distribution<unsigned> u(15, 30);
+	default_random_engine e;
+	default_random_engine e1;
+	uniform_real_distribution<double> u1(0, 1);
+
+	for (int i = 0; i < curves_num; i++) {
+		int sampleNum = u(e);
+		cout << i << " sample " << sampleNum << " points" << endl;
+		Eigen::MatrixXd points(sampleNum + 2, 3);
+		double z = i*resolution;
+
+		vector<double> x_coors;
+		x_coors.push_back(0);
+		x_coors.push_back(1);
+
+		for (int j = 0; j < sampleNum; j++) {
+			double x = 1.0*(j + 1) / (sampleNum + 1);
+			//double x = u1(e1);
+			//cout << "x: " << x << endl;
+			x_coors.push_back(x);
+		}
+		sort(x_coors.begin(), x_coors.end());
+		for (int j = 0; j < x_coors.size(); j++) {
+			points.row(j) = surface.eval(x_coors[j], z);
+		}
+		//Window::viewer.data().add_points(points, blue);
+		curves[i].interpolate(points);
 		curves[i].saveNURBS("../out/nurbs/Bsurface_curve_" + to_string(i));
 		curves[i].draw(Window::viewer, false, true, 0.001);
 	}
@@ -188,9 +211,9 @@ void Test::test_generate_curves2()
 	//Skinning* method = new PiaMethod(curves, 100);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	//Skinning* method = new PiaMinJaeMethod(curves, 100);
 	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
-	//Skinning* method = new MinJaeMethod(curves, 40, 10);
+	Skinning* method = new MinJaeMethod(curves, 40, 10);
 
 	method->setViewer(&Window::viewer);
 
@@ -199,7 +222,7 @@ void Test::test_generate_curves2()
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
 	mesh->saveMesh("../out/tspline/Bsurface_skinning1");
-	mesh->saveAsObj("../out/OBJ/Bsurface_PiaMinJae_20", 0.01);
+	mesh->saveAsObj("../out/OBJ/Bsurface_MinJae_20", 0.01);
 	MeshRender render(mesh, false, false, true, 0.01);
 	render.launch();
 }
