@@ -198,7 +198,8 @@ void Test::test_generate_curves2()
 		}
 		sort(x_coors.begin(), x_coors.end());
 		for (int j = 0; j < x_coors.size(); j++) {
-			points.row(j) = surface.eval(x_coors[j], z);
+			//points.row(j) = surface.eval(x_coors[j], z);
+			points.row(j) = surface.eval(z, x_coors[j]);
 		}
 		//Window::viewer.data().add_points(points, blue);
 		curves[i].interpolate(points);
@@ -211,7 +212,7 @@ void Test::test_generate_curves2()
 	//Skinning* method = new PiaMethod(curves, 100);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	//Skinning* method = new PiaMinJaeMethod(curves, 100);
+	//Skinning* method = new PiaMinJaeMethod(curves, 20);
 	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	Skinning* method = new MinJaeMethod(curves, 40, 10);
 
@@ -225,6 +226,40 @@ void Test::test_generate_curves2()
 	mesh->saveAsObj("../out/OBJ/Bsurface_MinJae_20", 0.01);
 	MeshRender render(mesh, false, false, true, 0.01);
 	render.launch();
+}
+
+/************************
+测试nurbs曲面pia
+*************************/
+void Test::test_nurbs_pia()
+{
+	string modelname = "venus";
+	string filename = "../out/volume/" + modelname + "_bspline.txt";
+	BsplineVolume volume;
+	volume.readVolume(filename);
+
+
+	int sample_num = 5;
+	vector<NURBSSurface> nurbs(sample_num + 1);
+	vector<NURBSSurface> pia_nurbs(sample_num + 1);
+	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
+							// 采样生成B样条曲面
+	for (int i = 0; i <= sample_num; i++) {
+		double param = 1.0*i / sample_num;
+		volume.get_isoparam_surface(nurbs[i], param, 'v');
+		string filename = "../out/nurbs/" + modelname + "_surface_" + to_string(i) + "_format";
+		save_nurbs_surface(nurbs[i], filename);
+		//NurbsPia nurbsPia(nurbs[i], 20, 1e-5, 10);
+		/*pia_nurbs[i] = nurbsPia.calculate();
+		if (i == 1) {
+			pia_nurbs[i].draw(Window::viewer, false, true);
+		}*/
+	}
+	Window w;
+	w.launch();
+	
+	
+
 }
 
 void Test::load_nurbs_surface(NURBSSurface & surface, string filename)
@@ -283,6 +318,38 @@ void Test::load_nurbs_surface(NURBSSurface & surface, string filename)
 	in.close();
 }
 
+void Test::save_nurbs_surface(const NURBSSurface & surface, string filename)
+{
+	// 加载另外一种文件格式的nurbs surface
+	filename += ".cpt";
+	ofstream out(filename);
+	if (!out.is_open()) {
+		cout << "error: can't open file: " << filename << endl;
+		return;
+	}
+	out << "#resolution of the control grid" << endl;
+	out << surface.v_num + 1 << " " << surface.u_num + 1 << endl;
+	out << "#control points" << endl;
+	for (int i = 0; i <= surface.v_num; i++) {
+		for (int j = 0; j <= surface.u_num; j++) {
+			out << surface.controlPw[i](j, 0) << " "
+				<< surface.controlPw[i](j, 1) << " "
+				<< surface.controlPw[i](j, 2) << endl;
+		}
+	}
+	out << "knot vector in u-direction" << endl;
+	for (int i = 0; i < surface.vknots.size(); i++) {
+		out << surface.vknots(i) << " ";
+	}
+	out << endl;
+	out << "knot vector in v-direction" << endl;
+	for (int i = 0; i < surface.uknots.size(); i++) {
+		out << surface.uknots(i) << " ";
+	}
+	out << endl;
+	out.close();
+}
+
 void Test::test_load_nurbs_surface()
 {
 	string filename = "../out/nurbs/Bsurface.cpt";
@@ -290,6 +357,17 @@ void Test::test_load_nurbs_surface()
 	load_nurbs_surface(surface, filename);
 	surface.draw(Window::viewer, false, true);
 	surface.saveNURBS("../out/nurbs/Bsurface_standard");
+	Window w;
+	w.launch();
+}
+
+void Test::test_save_nurbs_surface()
+{
+	string filename = "../out/nurbs/Bsurface_standard.cpt";
+	NURBSSurface surface;
+	surface.loadNURBS(filename);
+	surface.draw(Window::viewer, false, true);
+	save_nurbs_surface(surface, "../out/nurbs/Bsurface1");
 	Window w;
 	w.launch();
 }
@@ -342,7 +420,7 @@ void Test::test_chess()
 */
 void Test::test_generate_surfaces()
 {
-	string modelname = "isis";
+	string modelname = "venus";
 	string filename = "../out/volume/" + modelname + "_bspline.txt";
 	BsplineVolume volume;
 	volume.readVolume(filename);
@@ -371,11 +449,16 @@ void Test::test_generate_surfaces()
 	for (int i = 0; i <= sample_num; i++) {
 		// venus_bspline.txt ---> 3e-3
 		// tooth_bspline.txt ---> 3
-		// isis_bspline.txt --> 5e-3
-		TsplineSimplify(nurbs[i], tsplines[i], 20, 1e-2);
+		// isis_bspline.txt --> 5e-3, 1e-2
+		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
+		//nurbs[i].saveAsObj(filename_b);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3e-3);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
+		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
+		tsplines[i].saveMesh(filename);*/
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
+
 		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
 	}
 	
@@ -400,9 +483,11 @@ void Test::test_generate_surfaces()
 	begin = clock();
 	render.launch();
 	end = clock();
+	///*Window w;
+	//w.launch();*/
 	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
-	/*Window w;
-	w.launch();*/
+	///*Window w;
+	//w.launch();*/
 	
 }
 
@@ -453,7 +538,8 @@ void Test::test_BsplineVolume()
 {
 	BsplineVolume volume;
 	begin = clock();
-	volume.readVolume("../out/volume/tooth_bspline.txt");
+	volume.readVolume("../out/volume/venus_bspline.txt");
+	//volume.readVolume("../out/volume/tooth_bspline.txt");
 	//volume.readVolume("../out/volume/balljoint_bspline.txt");
 	//volume.readVolume("../out/volume/isis_bspline.txt");
 	//volume.readVolume("../out/volume/moai_bspline.txt");
@@ -478,7 +564,8 @@ void Test::test_Mesh() {
 	//MeshRender render(meshcopy);
 	//render.launch();
 	Mesh3d mesh;
-	mesh.loadMesh("../out/tspline/venus_skinning.cfg");
+	mesh.loadMesh("../out/tspline/venus_1.cfg.cfg");
+	mesh.saveAsObj("../out/tspline/venus_1");
 	MeshRender render(&mesh, false, true, true);
 	begin = clock();
 	render.launch();
@@ -529,10 +616,10 @@ void Test::test_Skinning()
 	nurbs[3].draw(Window::viewer, false);
 	
 	//Skinning* method = new MinJaeMethod(nurbs, 20, 50);
-	Skinning* method = new PiaMethod(nurbs, 100);
+	//Skinning* method = new PiaMethod(nurbs, 100);
 	//Skinning* method = new NasriMethod(nurbs);
 	//Skinning* method = new OptMethod(nurbs);
-	//Skinning* method = new PiaMinJaeMethod(nurbs, 100);
+	Skinning* method = new PiaMinJaeMethod(nurbs, 20);
 	//Skinning* method = new PiaNasriMethod(nurbs, 100);
 
 	method->setViewer(&Window::viewer);

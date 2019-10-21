@@ -18,12 +18,14 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning();
 	//Test::test_generate_curves();
 	//Test::test_generate_curves1();
-	Test::test_generate_curves2();
+	//Test::test_generate_curves2();
 	//Test::test_TsplineSimplify();
 	//Test::test_Nurbs_curvature();
-	//Test::test_generate_surfaces();
+	Test::test_generate_surfaces();
 	//Test::test_chess();
 	//Test::test_load_nurbs_surface();
+	//Test::test_save_nurbs_surface();
+	//Test::test_nurbs_pia();
 	
     return 0;
 }

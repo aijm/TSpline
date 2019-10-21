@@ -19,7 +19,7 @@
 #include "NURBSSurface.h"
 #include "VolumeSkinning.h"
 #include "VolumePiaMethod.h"
-
+#include "NurbsPia.h"
 #include <nlopt.hpp>
 
 #include "MeshRender.h"
@@ -32,8 +32,11 @@ typedef struct {
 
 class Test {
 public:
+	static void test_nurbs_pia();
 	static void load_nurbs_surface(NURBSSurface& surface, string filename);
+	static void save_nurbs_surface(const NURBSSurface& surface, string filename);
 	static void test_load_nurbs_surface();
+	static void test_save_nurbs_surface();
 	static void test_chess();
 	static void test_generate_surfaces();
 	static void test_Nurbs_curvature();
