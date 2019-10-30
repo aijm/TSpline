@@ -60,6 +60,7 @@ void VolumePiaMethod::sample_fitPoints_2()
 				point.param[2] = this->w_params(i);
 				point.origin = surfaces[i].eval(point.param[0], point.param[1]);
 				surface_points.push_back(point);
+				
 			}
 		}
 
@@ -67,8 +68,8 @@ void VolumePiaMethod::sample_fitPoints_2()
 
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 20;
-	const int u_sample_num = 20;
+	const int v_sample_num = 5;
+	const int u_sample_num = 5;
 	const int w_sample_num = 30;
 
 	VectorXd params = w_params;
@@ -87,11 +88,28 @@ void VolumePiaMethod::sample_fitPoints_2()
 			double u = 1.0*i / u_sample_num;
 			double v = 1.0*j / v_sample_num;
 			MatrixXd points(surfaces_num, 3);
+			MatrixXd tangent(surfaces_num, 3);
 			for (int k = 0; k < surfaces_num; k++) {
 				points.row(k) = surfaces[k].eval(u, v).toVectorXd();
+				tangent.row(k) = surfaces[k].normal(u, v).toVectorXd();
+				MatrixXd normal = MatrixXd::Zero(1, 3);
+				// venus --> 0.01
+				// tooth --> 5
+				double factor = 5;
+				normal.row(0) = tangent.row(k) * factor;
+				MatrixXd start = MatrixXd::Zero(1, 3);
+				start.row(0) = points.row(k);
+				//viewer->data().add_points(start, red);
+				viewer->data().add_edges(start, start + normal, green);
 			}
-			sample_curves[i][j].interpolate(points, knots);
-			sample_curves[i][j].draw(*viewer, false);
+			
+			//sample_curves[i][j].interpolate(points, knots);
+			//sample_curves[i][j].interpolate_optimize(points, tangent, params, 0.005);
+			sample_curves[i][j].interpolate_optimize1(points, tangent, params, 0.005);
+			//sample_curves[i][j].interpolate_tangent(points, tangent, params);
+			//sample_curves[i][j].interpolate_tangent_improve(points, tangent, params);
+			sample_curves[i][j].draw(*viewer, false, true, 0.001);
+			cout << "finished " <<  i << ", " << j << endl;
 		}
 	}
 

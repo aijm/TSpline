@@ -26,6 +26,8 @@ int main(int argc,char** argv){
 	//Test::test_load_nurbs_surface();
 	//Test::test_save_nurbs_surface();
 	//Test::test_nurbs_pia();
+	//Test::test_tspline_normal();
+	//Test::test_nurbscurve_interpolate_optimize();
 	
     return 0;
 }

@@ -46,6 +46,8 @@ struct NURBSCurve
 	// evaluate the coordinate of curvePoint with parameter t  
 	MatrixXd eval(double t)const;
 
+	MatrixXd eval_tangent(double t) const;
+
 	// chord length parameterization
 	static VectorXd parameterize(const MatrixXd &points);
 	// basis function N_(i,p)(t)
@@ -60,6 +62,25 @@ struct NURBSCurve
 	// interpolate with appointed knot vector
 	void interpolate(const MatrixXd &points, const VectorXd &knotvector);
 
+	// interpolate with tangent constraint
+	void interpolate_tangent(const MatrixXd &points, const MatrixXd &tangent);
+
+	// interpolate with tangent constraint
+	void interpolate_tangent(const MatrixXd &points, const MatrixXd &tangent, const VectorXd &params);
+
+	// interpolate with tangent constraint
+	void interpolate_tangent_improve(const MatrixXd &points, const MatrixXd &tangent, const VectorXd &params);
+
+
+	// interpolate with tangent constraint
+	void interpolate_optimize(const MatrixXd &points, const MatrixXd &tangent, double learning_rate = 0.01);
+
+	// interpolate with tangent constraint
+	void interpolate_optimize(const MatrixXd &points, const MatrixXd &tangent, const VectorXd &params, double learning_rate = 0.01);
+
+	// interpolate with tangent constraint
+	void interpolate_optimize1(const MatrixXd &points, const MatrixXd &tangent, const VectorXd &params, double learning_rate = 0.01);
+	
 	// pia fit by B-spline of degree 3
 	void piafit(const MatrixXd &points,int max_iter_num=100, double eps=1e-5);
 

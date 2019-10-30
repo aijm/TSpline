@@ -228,6 +228,67 @@ void Test::test_generate_curves2()
 	render.launch();
 }
 
+void Test::test_nurbscurve_interpolate_optimize()
+{
+	const double PI = 3.1415926;
+	default_random_engine e;
+	uniform_real_distribution<double> u(-16 * PI, PI);
+	vector<double> t;
+	int sampleNum = 50;
+	for (int i = 0; i <= sampleNum; i++) {
+		t.push_back(1.0 * i / sampleNum * 17 * PI - 16 * PI);
+		//t.push_back(u(e));
+	}
+	sort(t.begin(), t.end());
+	MatrixXd points = MatrixXd::Zero(sampleNum + 1, 3);
+	MatrixXd tangent = MatrixXd::Zero(sampleNum + 1, 3);
+	for (int i = 0; i <= sampleNum; i++) {
+		points(i, 0) = t[i];
+		points(i, 1) = 5 * sin(t[i]);
+		tangent(i, 0) = 1.0;
+		tangent(i, 1) = 5 * cos(t[i]);
+		tangent.row(i).normalize();
+		
+	}
+	Window::viewer.data().add_points(points, green);
+	Window::viewer.data().add_edges(points, points + tangent, blue);
+	Window::viewer.core.align_camera_center(points);
+	NURBSCurve curve;
+	curve.interpolate_optimize(points, tangent);
+	//curve.interpolate(points);
+	curve.draw(Window::viewer, true, true, 0.001);
+	Window w;
+	w.launch();
+}
+
+/*
+  测试T样曲面求法向量的正确性
+*/
+void Test::test_tspline_normal()
+{
+	Mesh3d mesh;
+	mesh.loadMesh("../out/tspline/venus_0.cfg.cfg");
+	for (int i = 0; i <= 10; i++) {
+		for (int j = 0; j <= 10; j++) {
+			double u = 1.0*i / 10;
+			double v = 1.0*j / 10;
+
+			MatrixXd point = MatrixXd::Zero(1, 3);
+			point.row(0) = mesh.eval(u, v).toVectorXd();
+
+			VectorXd normal = mesh.normal(u, v).toVectorXd() * 0.01;
+
+			MatrixXd endpoint(1, 3);
+			endpoint.row(0) = point.row(0) + normal.transpose();
+			Window::viewer.data().add_points(point, blue);
+			Window::viewer.data().add_edges(point, endpoint, red);
+		}
+		
+	}
+	MeshRender render(&mesh, false, true);
+	render.launch();
+}
+
 /************************
 测试nurbs曲面pia
 *************************/
@@ -420,7 +481,7 @@ void Test::test_chess()
 */
 void Test::test_generate_surfaces()
 {
-	string modelname = "venus";
+	string modelname = "tooth";
 	string filename = "../out/volume/" + modelname + "_bspline.txt";
 	BsplineVolume volume;
 	volume.readVolume(filename);
@@ -452,7 +513,7 @@ void Test::test_generate_surfaces()
 		// isis_bspline.txt --> 5e-3, 1e-2
 		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
 		//nurbs[i].saveAsObj(filename_b);
-		TsplineSimplify(nurbs[i], tsplines[i], 20, 3e-3);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
 		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].saveMesh(filename);*/
@@ -478,16 +539,14 @@ void Test::test_generate_surfaces()
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
-	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.02);
+	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
 	VolumeRender render(&method->volume, false, false, true, 0.01);
 	begin = clock();
 	render.launch();
 	end = clock();
-	///*Window w;
-	//w.launch();*/
 	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
-	///*Window w;
-	//w.launch();*/
+	/*Window w;
+	w.launch();*/
 	
 }
 
@@ -518,6 +577,11 @@ void Test::test_nurbs()
 	nurbs.loadNURBS("../out/nurbs/torus.cptw");
 	nurbs.draw(Window::viewer);*/
 
+	for (int i = 0; i <= 10; i++) {
+		MatrixXd point = nurbs.eval(1.0 * i / 10);
+		MatrixXd tangent = nurbs.eval_tangent(1.0 * i / 10);
+		Window::viewer.data().add_edges(point, point + tangent, red);
+	}
 	Window w;
 	w.launch();
 
@@ -576,29 +640,70 @@ void Test::test_Mesh() {
 
 void Test::test_VolumeSkinning()
 {
-	vector<Mesh3d> surfaces(3);
-	surfaces[0].loadMesh("../out/tspline/simpleMesh1.cfg");
-	surfaces[1].loadMesh("../out/tspline/simpleMesh2.cfg");
-	surfaces[2].loadMesh("../out/tspline/simpleMesh3.cfg");
-	surfaces[0].setViewer(&Window::viewer);
-	surfaces[1].setViewer(&Window::viewer);
-	surfaces[2].setViewer(&Window::viewer);
+	string modelname = "venus";
+	string prefix = "../out/nurbs/venus_surface_";
 
-	surfaces[0].draw(false, false, true);
-	surfaces[1].draw(false, false, true);
-	surfaces[2].draw(false, false, true);
-	Window::viewer.data_list[1].set_colors(blue);
-	Window::viewer.data_list[2].set_colors(blue);
-	Window::viewer.data_list[3].set_colors(blue);
+	int sample_num = 5;
+	vector<NURBSSurface> nurbs(sample_num + 1);
+	for (int i = 0; i <= sample_num; i++) {
+		string filename = prefix + to_string(i) + "_format.cpt";
+		load_nurbs_surface(nurbs[i], filename);
+	}
+	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
+							// 采样生成B样条曲面
+	for (int i = 0; i <= sample_num; i++) {
+
+		for (int j = 0; j < nurbs[i].controlPw.size(); j++) {
+			int lastid = controlpoints.rows();
+			controlpoints.conservativeResize(controlpoints.rows() + nurbs[i].controlPw[j].rows(), 3);
+			for (int k = 0; k < nurbs[i].controlPw[j].rows(); k++) {
+				controlpoints.row(lastid + k) = nurbs[i].controlPw[j].row(k);
+			}
+		}
+
+	}
+
+	vector<Mesh3d> tsplines(sample_num + 1);
+	for (int i = 0; i <= sample_num; i++) {
+		// venus_bspline.txt ---> 3e-3
+		// tooth_bspline.txt ---> 3
+		// isis_bspline.txt --> 5e-3, 1e-2
+		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
+		//nurbs[i].saveAsObj(filename_b);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3e-3);
+		cout << "number of nodes: " << tsplines[i].get_num() << endl;
+		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
+		tsplines[i].saveMesh(filename);*/
+		tsplines[i].setViewer(&Window::viewer);
+		tsplines[i].draw(false, false, true, 0.01);
+
+		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
+	}
+
+	/*for (auto& surface : nurbs) {
+	surface.draw(Window::viewer, false, true);
+	}*/
+	for (auto& data : Window::viewer.data_list) {
+		data.set_face_based(true);
+		data.show_lines = false;
+		data.invert_normals = true;
+	}
+	cout << "controlpoints: " << controlpoints.rows() << endl;
+	Window::viewer.core.align_camera_center(controlpoints);
+
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 12, 1e-5);
+	//VolumeSkinning* method = new VolumeSkinning(tsplines);
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
+	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
+	VolumeRender render(&method->volume, false, false, true, 0.01);
+	begin = clock();
+	render.launch();
+	end = clock();
+	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
 	/*Window w;
 	w.launch();*/
-	VolumeSkinning* method = new VolumePiaMethod(surfaces,15);
-	method->setViewer(&Window::viewer);
-	cout << "1" << endl;
-	method->calculate();
-	cout << "2" << endl;
-	VolumeRender w(&method->volume, false, false, true,0.01);
-	w.launch();
 }
 
 void Test::test_Skinning()
@@ -715,10 +820,10 @@ void Test::test_Basis() {
 	cout << "basis1: " << Basis1(A.toVectorXd(), t) << endl;
 }
 void Test::test_Derivative() {
-	Eigen::VectorXd knots(11);
-	knots << 0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5;
-	double t = 2.5;
-	cout << "derivative: \n" << DersBasis(knots, t, 4, 2) << endl;
+	Eigen::VectorXd knots(13);
+	knots << 0, 0, 0, 0, 1, 2, 3, 4, 4, 5, 5, 5, 5;
+	double t = 5;
+	cout << "derivative: \n" << DersBasis(knots, t, 8, 3) << endl;
 
 	t_mesh::Array<double, 5> A;
 	A.input(cin);
@@ -726,7 +831,7 @@ void Test::test_Derivative() {
 	t = 0.0;
 	cin >> t;
 
-	cout << "derivative basis: \n" << t_mesh::DersBasis(A.toVectorXd(), t) << endl;
+	cout << "derivative basis: \n" << NURBSCurve::DersBasis(A.toVectorXd(), t) << endl;
 
 }
 double Test::myfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data)

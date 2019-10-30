@@ -119,6 +119,18 @@ MatrixXd NURBSCurve::eval(double t) const
 	return temp.row(0);
 }
 
+MatrixXd NURBSCurve::eval_tangent(double t) const
+{
+	// find the knot interval of t by binary searching
+	int L = find_ind(t); //[t_L,t_(L+1)] 
+	assert(L >= k - 1 && L <= n + 1);
+	MatrixXd tangent = MatrixXd::Zero(1, this->controlPw.cols());
+	for (int i = 0; i <= n; i++) {
+		tangent.row(0) += controlPw.row(i) * DersBasis(knots, t, i)(1);
+	}
+	return tangent;
+}
+
 VectorXd NURBSCurve::parameterize(const MatrixXd & points)
 {
 	
@@ -202,6 +214,12 @@ double NURBSCurve::Basis(const VectorXd & _knots, double _t, int _i, int _p)
 
 Eigen::RowVectorXd NURBSCurve::DersBasis(const Eigen::MatrixXd & knots, double t, int i, int p)
 {
+	if (t == 0.0) {
+		t = 0.0001;
+	}
+	if (t == 1.0) {
+		t = 0.9999;
+	}
 	const int m = knots.size() - 1;
 	Eigen::RowVectorXd ders = Eigen::RowVectorXd::Zero(p + 1); // k阶导数, k= 0,1,2,...,p
 
@@ -381,6 +399,334 @@ void NURBSCurve::interpolate(const MatrixXd &points, const VectorXd &knotvector)
 	//cout << "X:\n" << X << endl;
 	controlPw.block(1, 0, K + 1, points.cols()) = X;
 	
+}
+
+void NURBSCurve::interpolate_tangent(const MatrixXd & points, const MatrixXd & tangent)
+{
+	VectorXd params(points.rows());
+	params = parameterize(points);
+	interpolate_tangent(points, tangent, params);
+}
+
+void NURBSCurve::interpolate_tangent(const MatrixXd & points, const MatrixXd & tangent, const VectorXd & params)
+{
+	assert(points.rows() == tangent.rows() && points.cols() == 3 && tangent.cols() == 3); 
+	assert(points.rows() == tangent.rows() && points.rows() == params.rows());
+
+	int np = points.rows() - 1; // P0, P1, ..., Pn
+	this->k = 4;
+	this->n = 2 * np + 1; 
+	this->isRational = false;
+	this->controlPw = MatrixXd::Zero(n + 1, 3);
+	this->knots = VectorXd::Zero(n + k + 1);
+
+	knots(0) = 0.0; knots(1) = 0.0; knots(2) = 0.0; knots(3) = 0.0;
+	knots(n + 4) = 1.0; knots(n + 3) = 1.0; knots(n + 2) = 1.0; knots(n + 1) = 1.0;
+	knots(4) = params(1) / 2; knots(n) = (params(np - 1) + 1) / 2;
+
+	for (int i = 1; i <= np - 2; i++) {
+		knots(2 * i + 3) = (2 * params(i) + params(i + 1)) / 3;
+		knots(2 * i + 4) = (params(i) + 2 * params(i + 1)) / 3;
+	}
+
+	double length = 0.0;
+	for (int i = 0; i < points.rows() - 1; i++) {
+		length += (points.row(i + 1) - points.row(i)).norm();
+	}
+	MatrixXd tangent_length = tangent * length * 0.4;
+	tangent_length.row(0) *= 0.25;
+	tangent_length.row(np) *= 0.25;
+
+	MatrixXd A = MatrixXd::Zero(n + 1, n + 1);
+	MatrixXd b = MatrixXd::Zero(n + 1, 3);
+
+	A(0, 0) = 1;
+	A(1, 0) = -1; A(1, 1) = 1;
+	A(n, n) = 1;
+	A(n - 1, n - 1) = -1; A(n - 1, n) = 1;
+	
+	b.row(0) = points.row(0);
+	b.row(1) = knots(4) / 3 * tangent_length.row(0);
+	b.row(n) = points.row(np);
+	b.row(n - 1) = (1 - knots(n)) / 3 * tangent_length.row(np);
+
+	
+
+	for (int i = 1; i <= np - 1; i++) {
+		int r = 2 * i;
+		for (int j = r - 1; j <= r + 2; j++) {
+			A(r, j) = NURBSCurve::Basis(knots, params(i), j);
+			A(r + 1, j) = NURBSCurve::DersBasis(knots, params(i), j)(1);
+		}
+		b.row(r) = points.row(i);
+		b.row(r + 1) = tangent_length.row(i);
+	}
+	this->controlPw = A.inverse() * b;
+}
+
+void NURBSCurve::interpolate_tangent_improve(const MatrixXd & points, const MatrixXd & tangent, const VectorXd & params)
+{
+	// basic nurbs interpolate without tangent constraint
+	NURBSCurve curve;
+	VectorXd curve_knots = VectorXd::Zero(points.rows() + 6);
+	curve_knots(points.rows() + 5) = 1; 
+	curve_knots(points.rows() + 4) = 1;
+	curve_knots(points.rows() + 3) = 1;
+	curve_knots.block(3, 0, points.rows(), 1) = params;
+	curve.interpolate(points, curve_knots);
+
+	assert(points.rows() == tangent.rows() && points.cols() == 3 && tangent.cols() == 3);
+	assert(points.rows() == tangent.rows() && points.rows() == params.rows());
+
+	int np = points.rows() - 1; // P0, P1, ..., Pn
+	this->k = 4;
+	this->n = 2 * np + 1;
+	this->isRational = false;
+	this->controlPw = MatrixXd::Zero(n + 1, 3);
+	this->knots = VectorXd::Zero(n + k + 1);
+
+	knots(0) = 0.0; knots(1) = 0.0; knots(2) = 0.0; knots(3) = 0.0;
+	knots(n + 4) = 1.0; knots(n + 3) = 1.0; knots(n + 2) = 1.0; knots(n + 1) = 1.0;
+	knots(4) = params(1) / 2; knots(n) = (params(np - 1) + 1) / 2;
+
+	for (int i = 1; i <= np - 2; i++) {
+		knots(2 * i + 3) = (2 * params(i) + params(i + 1)) / 3;
+		knots(2 * i + 4) = (params(i) + 2 * params(i + 1)) / 3;
+	}
+
+	double length = 0.0;
+	for (int i = 0; i < points.rows() - 1; i++) {
+		length += (points.row(i + 1) - points.row(i)).norm();
+	}
+
+	// the tangent of interpolated nurbs curve
+	MatrixXd curve_tangent = MatrixXd::Zero(points.rows(), 3);
+	for (int i = 0; i < points.rows(); i++) {
+		curve_tangent.row(i) = curve.eval_tangent(params(i));
+	}
+
+	// modify the tangent with the interpolated nurbs curve
+	MatrixXd tangent_length = MatrixXd::Zero(points.rows(), 3);
+	for (int i = 0; i < points.rows(); i++) {
+		VectorXd temp = tangent.row(i).normalized() * curve_tangent.row(i).norm();
+		tangent_length.row(i) = (curve_tangent.row(i) + temp) / 2;
+	}
+
+	MatrixXd A = MatrixXd::Zero(n + 1, n + 1);
+	MatrixXd b = MatrixXd::Zero(n + 1, 3);
+
+	A(0, 0) = 1;
+	A(1, 0) = -1; A(1, 1) = 1;
+	A(n, n) = 1;
+	A(n - 1, n - 1) = -1; A(n - 1, n) = 1;
+
+	b.row(0) = points.row(0);
+	b.row(1) = knots(4) / 3 * tangent_length.row(0);
+	b.row(n) = points.row(np);
+	b.row(n - 1) = (1 - knots(n)) / 3 * tangent_length.row(np);
+
+
+
+	for (int i = 1; i <= np - 1; i++) {
+		int r = 2 * i;
+		for (int j = r - 1; j <= r + 2; j++) {
+			A(r, j) = NURBSCurve::Basis(knots, params(i), j);
+			A(r + 1, j) = NURBSCurve::DersBasis(knots, params(i), j)(1);
+		}
+		b.row(r) = points.row(i);
+		b.row(r + 1) = tangent_length.row(i);
+	}
+	this->controlPw = A.inverse() * b;
+	
+}
+
+void NURBSCurve::interpolate_optimize(const MatrixXd & points, const MatrixXd & tangent, double learning_rate)
+{
+	VectorXd params(points.rows());
+	params = parameterize(points);
+	interpolate_optimize(points, tangent, params, learning_rate);
+}
+
+void NURBSCurve::interpolate_optimize(const MatrixXd & points, const MatrixXd & tangent, const const VectorXd &params, double learning_rate)
+{
+	assert(points.rows() == tangent.rows() && points.cols() == 3 && tangent.cols() == 3);
+	int nPoints = points.rows(); // P0, P1, ..., Pn
+	this->k = 4;
+	this->n = 2 * nPoints; // Q0, Q1, ..., Qm
+	this->isRational = false;
+	this->controlPw = MatrixXd::Zero(n + 1, 3);
+	this->controlPw.row(0) = points.row(0);
+	this->controlPw.row(n) = points.row(nPoints - 1);
+	for (int i = 0; i < nPoints; i++) {
+		controlPw.row(1 + 2 * i) = points.row(i);
+	}
+	for (int i = 0; i < nPoints - 1; i++) {
+		controlPw.row(2 + 2 * i) = (points.row(i) + points.row(i + 1)) / 2;
+	}
+	// params = t0, t1, ..., tn
+	//cout << "params: \n" << params << endl;
+	knots = VectorXd(n + k + 1);
+	// knots = 0, 0, 0, t0, (t0+t1)/2, t1, (t1+t2)/2,  ..., (tn-1+tn)/2, tn, 1, 1, 1
+	knots(0) = 0.0; knots(1) = 0.0; knots(2) = 0.0; knots(3) = 0.0;
+	knots(n + 4) = 1.0; knots(n + 3) = 1.0; knots(n + 2) = 1.0; knots(n + 1) = 1.0;
+
+	for (int i = 0; i < nPoints; i++) {
+		knots(3 + i * 2) = params(i);
+	}
+	for (int i = 0; i < nPoints - 1; i++) {
+		knots(4 + i * 2) = (params(i) + params(i + 1)) / 2;
+	}
+	/*for (int i = 0; i < knots.size(); i++) {
+	cout << "knots(" << i << ") = " << knots(i) << endl;
+	}*/
+	MatrixXd A = MatrixXd::Zero(nPoints, n + 1); // basis matrix
+	MatrixXd derA = MatrixXd::Zero(nPoints, n + 1); // derivate basis matrix
+	MatrixXd Q = MatrixXd::Zero(nPoints, 3); // Q(t0), ..., Q(tn)
+	MatrixXd derQ = MatrixXd::Zero(nPoints, 3);
+	MatrixXd grad = MatrixXd::Zero(controlPw.rows(), 3);
+	double lam = 5; // lambda as penality
+					  // intialize basis matrix and deriavate basis matrix
+	for (int i = 0; i < A.rows(); i++) {
+		for (int j = 0; j < A.cols(); j++) {
+			A(i, j) = NURBSCurve::Basis(knots, params(i), j);
+			derA(i, j) = NURBSCurve::DersBasis(knots, params(i), j)(1);
+		}
+	}
+
+
+	double error = 1.0;
+	double eps = 1e-3;
+	double max_iter_num = 500;
+
+	auto eval_object_func = [&](int step) {
+		double res1 = 0, res2 = 0;
+		Q = A * controlPw;
+		derQ = derA * controlPw;
+		for (int j = 0; j < Q.rows(); j++) {
+			//cout << "derQ.row(j) : " << derQ.row(j) << endl;
+			//cout << "tangent: " << tangent.row(j) << endl;
+			res1 += 1 - derQ.row(j).normalized().dot(tangent.row(j));
+			res2 += lam * (Q.row(j) - points.row(j)).squaredNorm();
+		}
+		//cout << "迭代 " << step << "次，res1：" << res1 << ", res2: " << res2 << endl;
+		return res1 + res2;
+	};
+
+	auto eval_grad_update = [&](int step) {
+		grad = MatrixXd::Zero(nPoints, 3);
+		// eval grad of object function
+		grad = 2 * lam * A.transpose() * (Q - points);
+		for (int i = 0; i < controlPw.rows(); i++) {
+			for (int j = 0; j < nPoints; j++) {
+				double norm = derQ.row(j).norm();
+				grad.row(i) = grad.row(i) - derA(j, i) / norm * tangent.row(j) *
+					(MatrixXd::Identity(3, 3) - pow(norm, -3) * derQ.row(j).transpose() * derQ.row(j));
+
+			}
+		}
+		
+		// update by gradient descent
+		controlPw -= learning_rate * grad.rowwise().normalized();
+	};
+
+	double pre = 0;
+
+	for (int i = 0; i < max_iter_num; i++) {
+		double cur = eval_object_func(i);
+		if (abs(cur - pre) < eps) {
+			break;
+		}
+		pre = cur;
+		eval_grad_update(i);
+	}
+}
+
+void NURBSCurve::interpolate_optimize1(const MatrixXd & points, const MatrixXd & tangent, const VectorXd & params, double learning_rate)
+{
+	assert(points.rows() == tangent.rows() && points.cols() == 3 && tangent.cols() == 3);
+	int nPoints = points.rows(); // P0, P1, ..., Pn
+	this->k = 4;
+	this->n = nPoints + 1; // Q0, Q1, ..., Qm
+	this->isRational = false;
+	this->controlPw = MatrixXd::Zero(n + 1, 3);
+	this->controlPw.row(0) = points.row(0);
+	this->controlPw.row(n) = points.row(nPoints - 1);
+	
+	for (int i = 1; i <= n - 1; i++) {
+		this->controlPw.row(i) = points.row(i - 1);
+	}
+	// params = t0, t1, ..., tn
+	//cout << "params: \n" << params << endl;
+	knots = VectorXd(n + k + 1);
+	// knots = 0, 0, 0, t0, (t0+t1)/2, t1, (t1+t2)/2,  ..., (tn-1+tn)/2, tn, 1, 1, 1
+	knots(0) = 0.0; knots(1) = 0.0; knots(2) = 0.0; knots(3) = 0.0;
+	knots(n + 4) = 1.0; knots(n + 3) = 1.0; knots(n + 2) = 1.0; knots(n + 1) = 1.0;
+
+	knots.block(3, 0, points.rows(), 1) = params;
+
+	/*for (int i = 0; i < knots.size(); i++) {
+	cout << "knots(" << i << ") = " << knots(i) << endl;
+	}*/
+	MatrixXd A = MatrixXd::Zero(nPoints, n + 1); // basis matrix
+	MatrixXd derA = MatrixXd::Zero(nPoints, n + 1); // derivate basis matrix
+	MatrixXd Q = MatrixXd::Zero(nPoints, 3); // Q(t0), ..., Q(tn)
+	MatrixXd derQ = MatrixXd::Zero(nPoints, 3);
+	MatrixXd grad = MatrixXd::Zero(controlPw.rows(), 3);
+	double alpha = 0.2; // lambda as penality
+					// intialize basis matrix and deriavate basis matrix
+	for (int i = 0; i < A.rows(); i++) {
+		for (int j = 0; j < A.cols(); j++) {
+			A(i, j) = NURBSCurve::Basis(knots, params(i), j);
+			derA(i, j) = NURBSCurve::DersBasis(knots, params(i), j)(1);
+		}
+	}
+
+
+	double error = 1.0;
+	double eps = 1e-5;
+	double max_iter_num = 1000;
+
+	auto eval_object_func = [&](int step) {
+		double res1 = 0, res2 = 0;
+		Q = A * controlPw;
+		derQ = derA * controlPw;
+		for (int j = 0; j < Q.rows(); j++) {
+			//cout << "derQ.row(j) : " << derQ.row(j) << endl;
+			//cout << "tangent: " << tangent.row(j) << endl;
+			res1 += alpha * (1 - derQ.row(j).normalized().dot(tangent.row(j)));
+			res2 += (1 - alpha) * (Q.row(j) - points.row(j)).squaredNorm();
+		}
+		//cout << "迭代 " << step << "次，res1：" << res1 << ", res2: " << res2 << endl;
+		return res1 + res2;
+	};
+
+	auto eval_grad_update = [&](int step) {
+		grad = MatrixXd::Zero(nPoints, 3);
+		// eval grad of object function
+		grad = 2 * (1 - alpha) * A.transpose() * (Q - points);
+		for (int i = 0; i < controlPw.rows(); i++) {
+			for (int j = 0; j < nPoints; j++) {
+				double norm = derQ.row(j).norm();
+				grad.row(i) = grad.row(i) - alpha * derA(j, i) / norm * tangent.row(j) *
+					(MatrixXd::Identity(3, 3) - pow(norm, -3) * derQ.row(j).transpose() * derQ.row(j));
+
+			}
+		}
+
+		// update by gradient descent
+		controlPw -= learning_rate * grad.rowwise().normalized();
+	};
+
+	double pre = 0;
+
+	for (int i = 0; i < max_iter_num; i++) {
+		double cur = eval_object_func(i);
+		if (abs(cur - pre) < eps) {
+			break;
+		}
+		pre = cur;
+		eval_grad_update(i);
+	}
 }
 
 void NURBSCurve::piafit(const MatrixXd &points, int max_iter_num, double eps)
