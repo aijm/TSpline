@@ -18,14 +18,14 @@ void VolumePiaMethod::calculate()
 	update();
 	cout << "finished update() " << endl;
 
-	for (int i = 0; i < 3; i++) {
+	/*for (int i = 0; i < 3; i++) {
 		fit();
 		cout << "finished fit() " << endl;
 		pia();
 		cout << "finished pia() " << endl;
 		update();
 		cout << "finished update() " << endl;
-	}
+	}*/
 
 	//for (int j = 0; j < 0; j++) {
 	//	Point3d low, high;
@@ -223,6 +223,8 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 			}
 		}
 	}
+	// tooth --> alpha = 0.3 delta = 0.3
+	// venus --> alpha = 0.45 delta = 0.45
 
 	double alpha = 0.3;
 	double delta = 0.3;
@@ -247,7 +249,7 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 		}*/
 		for (int jj = 0; jj <= u_sample_num; jj++) {
 			for (int kk = 0; kk <= v_sample_num; kk++) {
-				cout << "-----------------------" << endl;
+				/*cout << "-----------------------" << endl;*/
 				FitPoint3D point;
 				point.param[0] = 1.0*jj / u_sample_num;
 				point.param[1] = 1.0*kk / v_sample_num;

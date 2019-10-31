@@ -413,7 +413,7 @@ void Test::test_tspline_normal()
 *************************/
 void Test::test_nurbs_pia()
 {
-	string modelname = "venus";
+	string modelname = "tooth";
 	string filename = "../out/volume/" + modelname + "_bspline.txt";
 	BsplineVolume volume;
 	volume.readVolume(filename);
@@ -653,7 +653,7 @@ void Test::test_generate_surfaces()
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	VolumeSkinning* method = new VolumePiaMethod(tsplines, 40, 1e-6);
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 12, 1e-5);
 	//VolumeSkinning* method = new VolumeSkinning(tsplines);
 	method->setViewer(&Window::viewer);
 	method->calculate();
@@ -709,7 +709,7 @@ void Test::test_nurbs()
 
 void Test::test_TsplineVolume() {
 	TsplineVolume* volume = new TsplineVolume();
-	volume->readVolume("../out/volume/isis_skinning.vol");
+	volume->readVolume("../out/volume/tooth_skinning.vol");
 	
 	VolumeRender render(volume, false, false, true, 0.01);
 	begin = clock();
@@ -722,11 +722,13 @@ void Test::test_BsplineVolume()
 	BsplineVolume volume;
 	begin = clock();
 	volume.readVolume("../out/volume/venus_bspline.txt");
+	volume.setReverse(true);
 	//volume.readVolume("../out/volume/tooth_bspline.txt");
 	//volume.readVolume("../out/volume/balljoint_bspline.txt");
 	//volume.readVolume("../out/volume/isis_bspline.txt");
 	//volume.readVolume("../out/volume/moai_bspline.txt");
 	//volume.readVolume("../out/volume/tooth_bspline.txt");
+	volume.saveAsHex("../out/volume/venus_volume", 0.01);
 	VolumeRender render(&volume, false, false, true, 0.01);
 	/*volume.saveAsHex("../out/volume/tooth_bspline", 0.1);
 	volume.saveVolume("../out/volume/tooth_bspline");*/
@@ -759,13 +761,17 @@ void Test::test_Mesh() {
 
 void Test::test_VolumeSkinning()
 {
-	string modelname = "venus";
-	string prefix = "../out/nurbs/venus_surface_";
+	/*string modelname = "venus";
+	string prefix = "../out/nurbs/venus_surface_";*/
+
+	string modelname = "tooth";
+	string prefix = "../out/nurbs/tooth_";
 
 	int sample_num = 5;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
-		string filename = prefix + to_string(i) + "_format.cpt";
+		//string filename = prefix + to_string(i) + "_format.cpt";
+		string filename = prefix + to_string(i) + ".cpt";
 		load_nurbs_surface(nurbs[i], filename);
 	}
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
@@ -789,7 +795,7 @@ void Test::test_VolumeSkinning()
 		// isis_bspline.txt --> 5e-3, 1e-2
 		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
 		//nurbs[i].saveAsObj(filename_b);
-		TsplineSimplify(nurbs[i], tsplines[i], 20, 3e-3);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
 		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].saveMesh(filename);*/

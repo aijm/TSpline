@@ -59,7 +59,7 @@ int Volume::saveAsHex(string filename, double resolution)
 				int v_up_id = v_id + n1*n1;
 				Hex.row(hex_id) << v_id, v_id + n1, v_id + n1 + 1, v_id + 1,
 					v_up_id, v_up_id + n1, v_up_id + n1 + 1, v_up_id + 1;
-				
+
 				Vector3d du = V.row(v_id + 1) - V.row(v_id);
 				Vector3d dv = V.row(v_id + n1) - V.row(v_id);
 				Vector3d dw = V.row(v_up_id) - V.row(v_id);
@@ -100,6 +100,11 @@ int Volume::saveAsHex(string filename, double resolution)
 				dw = V.row(v_id + 1) - V.row(v_up_id + 1);
 				jacobian[hex_id * 8 + 7] = (du.cross(dv)).normalized().dot(dw.normalized());
 
+				if (reverse) {
+					for (int id = 0; id <= 7; id++) {
+						jacobian[hex_id * 8 + i] = -jacobian[hex_id * 8 + i];
+					}
+				}
 				/*for (int id = 0; id <= 7; id++) {
 					if (jacobian[hex_id * 8 + id] <= 0) {
 						cout << "save jacobian: " << jacobian[hex_id * 8 + id] << endl;
@@ -277,6 +282,13 @@ void Volume::drawVolume(double resolution)
 				dv = -dv;
 				dw = V.row(v_id + 1) - V.row(v_up_id + 1);
 				jacobian[hex_id * 8 + 7] = (du.cross(dv)).normalized().dot(dw.normalized());
+
+
+				if (reverse) {
+					for (int id = 0; id <= 7; id++) {
+						jacobian[hex_id * 8 + i] = -jacobian[hex_id * 8 + i];
+					}
+				}
 
 				for (int id = 0; id <= 7; id++) {
 					if (jacobian[hex_id * 8 + id] <= 0) {

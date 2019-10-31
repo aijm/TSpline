@@ -859,6 +859,8 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 	cout << "----7----" << endl;
 	std::vector<Point3d> conex, coney, conez;
 	//double l = FindBestratioOnSoildBysearch(move_step, conex, coney, conez, x_points, y_points, z_points);
+	// tooth --> l = 2.0
+	// venus --> l = 0.001
 	double l = 2.0;
 	cout << "l : "<< l << endl;
 	//os<<l<<std::endl;
