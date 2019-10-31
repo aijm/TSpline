@@ -3,6 +3,7 @@
 
 #include "VolumeSkinning.h"
 #include "FitPoint.hpp"
+#include "BsplineVolume.h"
 class VolumePiaMethod :public VolumeSkinning {
 public:
 	VolumePiaMethod(const vector<Mesh3d>& _surfaces,int _maxIterNum=100,double _eps = 1e-5)
@@ -25,6 +26,7 @@ public:
 	// 将辅助点参数化
 	void param_helper_points(Point3d& low, Point3d& high);
 	void sample_fitPoints_2();
+	void sample_fitPoints_bvolume();
 	void sample_fitPoints();
 	void fit();
 	void pia();

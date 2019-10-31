@@ -228,6 +228,125 @@ void Test::test_generate_curves2()
 	render.launch();
 }
 
+void Test::test_fitbsplinesolid()
+{
+	string modelname = "tooth";
+	string filename = "../out/volume/" + modelname + "_bspline.txt";
+	BsplineVolume volume;
+	volume.readVolume(filename);
+
+
+	int sample_num = 5;
+	vector<NURBSSurface> nurbs(sample_num + 1);
+	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
+							// 采样生成B样条曲面
+	for (int i = 0; i <= sample_num; i++) {
+		double param = 1.0*i / sample_num;
+		volume.get_isoparam_surface(nurbs[i], param, 'v');
+		//nurbs[i].draw(Window::viewer, false, true);
+		// 
+		for (int j = 0; j < nurbs[i].controlPw.size(); j++) {
+			int lastid = controlpoints.rows();
+			controlpoints.conservativeResize(controlpoints.rows() + nurbs[i].controlPw[j].rows(), 3);
+			for (int k = 0; k < nurbs[i].controlPw[j].rows(); k++) {
+				controlpoints.row(lastid + k) = nurbs[i].controlPw[j].row(k);
+			}
+		}
+
+	}
+
+	vector<Mesh3d> tsplines(sample_num + 1);
+	for (int i = 0; i <= sample_num; i++) {
+		// venus_bspline.txt ---> 3e-3
+		// tooth_bspline.txt ---> 3
+		// isis_bspline.txt --> 5e-3, 1e-2
+		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
+		//nurbs[i].saveAsObj(filename_b);
+		TsplineSimplify(nurbs[i], tsplines[i], 20, 3);
+		cout << "number of nodes: " << tsplines[i].get_num() << endl;
+		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
+		tsplines[i].saveMesh(filename);*/
+		tsplines[i].setViewer(&Window::viewer);
+		tsplines[i].draw(false, false, true, 0.01);
+
+		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
+	}
+
+	/*for (auto& surface : nurbs) {
+	surface.draw(Window::viewer, false, true);
+	}*/
+	for (auto& data : Window::viewer.data_list) {
+		data.set_face_based(true);
+		data.show_lines = false;
+		data.invert_normals = true;
+	}
+	cout << "controlpoints: " << controlpoints.rows() << endl;
+	Window::viewer.core.align_camera_center(controlpoints);
+
+	int x_points = 21;
+	int y_points = 21;
+	int z_points = 8;
+
+	VectorXd knots(sample_num + 7);
+	knots(0) = 0; knots(1) = 0, knots(2) = 0;
+	knots(knots.size() - 1) = 1; knots(knots.size() - 2) = 1, knots(knots.size() - 3) = 1;
+	for (int i = 0; i <= sample_num; i++) {
+		knots(i + 3) = 1.0 * i / sample_num;
+	}
+	cout << "knots for interpolate: \n" << knots << endl;
+
+	vector<vector<NURBSCurve>> sample_curves(x_points, vector<NURBSCurve>(y_points));
+
+	vector<FitPoint3D> fit_points;
+
+	for (int i = 0; i <= x_points - 1; i++) {
+		for (int j = 0; j <= y_points - 1; j++) {
+			double u = 1.0*i / (x_points - 1);
+			double v = 1.0*j / (y_points - 1);
+			MatrixXd points(sample_num + 1, 3);
+			for (int k = 0; k <= sample_num; k++) {
+				points.row(k) = tsplines[k].eval(u, v).toVectorXd();
+				FitPoint3D fit_point;
+				fit_point.origin.fromVectorXd(points.row(k).transpose());
+				fit_point.param[0] = u;
+				fit_point.param[1] = v;
+				fit_point.param[2] = 1.0 * k / sample_num;
+				fit_points.push_back(fit_point);
+			}
+
+			sample_curves[i][j].interpolate(points, knots);
+			cout << "finished " << i << ", " << j << endl;
+		}
+	}
+	
+	BsplineVolume bvolume;
+	bvolume.control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
+	bvolume.constructKnotVector(x_points, y_points, z_points);
+	for (int i = 0; i < x_points; i++) {
+		for (int j = 0; j < y_points; j++) {
+			for (int k = 0; k < z_points; k++) {
+				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+			}
+		}
+	}
+
+	double alpha = 0.3;
+	double delta = 0.3;
+	begin = clock();
+	for (int i = 0; i < 1; i++) {
+		double error = bvolume.GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
+		cout << "iter: " << i << ", error: " << error << endl;
+		bvolume.fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
+	}
+	
+	bvolume.saveAsHex("../out/volume/" + modelname + "_fitbspline", 0.01);
+	VolumeRender render(&bvolume, false, false, true, 0.01);
+	
+	render.launch();
+	end = clock();
+	cout << "time passed: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
+}
+
 void Test::test_nurbscurve_interpolate_optimize()
 {
 	const double PI = 3.1415926;
@@ -534,7 +653,7 @@ void Test::test_generate_surfaces()
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	VolumeSkinning* method = new VolumePiaMethod(tsplines, 12, 1e-5);
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 40, 1e-6);
 	//VolumeSkinning* method = new VolumeSkinning(tsplines);
 	method->setViewer(&Window::viewer);
 	method->calculate();

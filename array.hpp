@@ -26,6 +26,35 @@ namespace t_mesh{
 					data[i] = vec_data(i);
 				}
 			}
+			double squaredNorm() const {
+				double sum = 0;
+				for (int i = 0; i < num; i++) {
+					sum += data[i] * data[i];
+				}
+				return sum;
+			}
+			double norm() const {
+				return sqrt(squaredNorm());
+			}
+			Array<T, num> normalize() {
+				double length = norm();
+				for (int i = 0; i < num; i++) {
+					data[i] /= length;
+				}
+				return *this;
+			}
+			T dot(const Array<T, num>& other) const{
+				T res = 0;
+				for (int i = 0; i < num; i++) {
+					res += data[i] * other.data[i];
+				}
+				return res;
+
+			}
+
+			Array<T, num> cross(const Array<T, num>& other) {
+
+			}
 
             typedef T ValueType;
             enum{SIZE=num};
@@ -62,10 +91,16 @@ namespace t_mesh{
             Array<T,num>& add(const Array<T,num>&);
 			Array<T, num> operator+(const Array<T, num>&);
 			Array<T, num> operator-(const Array<T, num>&);
+			Array<T, num> operator/(const T&);
 			template<class T, int num>
 			friend Array<T, num> operator*(const Array<T, num>& a, const T& k);
 			template<class T, int num>
 			friend Array<T, num> operator*(const T& k, const Array<T, num>& a);
+
+			Array<T, num>& operator+=(const Array<T, num>& other);
+			Array<T, num>& operator-=(const Array<T, num>& other);
+			Array<T, num>& operator*=(const T& k);
+			Array<T, num>& operator/=(const T& k);
             void clear();
         private:
             T data[num];
@@ -117,7 +152,48 @@ namespace t_mesh{
 		return res;
 
 	}
-    template<class T,int num>
+	template<class T, int num>
+	inline Array<T, num> Array<T, num>::operator/(const T & k)
+	{
+		Array<T, num> res;
+		for (int i = 0; i < num; i++) {
+			res.data[i] = data[i] / k;
+		}
+		return res;
+	}
+	template<class T, int num>
+	inline Array<T, num>& Array<T, num>::operator+=(const Array<T, num>& other)
+	{
+		for (int i = 0; i < num; i++) {
+			data[i] += other.data[i];
+		}
+		return *this;
+	}
+	template<class T, int num>
+	inline Array<T, num>& Array<T, num>::operator-=(const Array<T, num>& other)
+	{
+		for (int i = 0; i < num; i++) {
+			data[i] -= other.data[i];
+		}
+		return *this;
+	}
+	template<class T, int num>
+	inline Array<T, num>& Array<T, num>::operator*=(const T & k)
+	{
+		for (int i = 0; i < num; i++) {
+			data[i] *= k;
+		}
+		return *this;
+	}
+	template<class T, int num>
+	inline Array<T, num>& Array<T, num>::operator/=(const T & k)
+	{
+		for (int i = 0; i < num; i++) {
+			data[i] /= k;
+		}
+		return *this;
+	}
+	template<class T,int num>
     void Array<T,num>::clear(){
         memset(data,0,sizeof(data));
     }

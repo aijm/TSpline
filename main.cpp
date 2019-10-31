@@ -28,6 +28,7 @@ int main(int argc,char** argv){
 	//Test::test_nurbs_pia();
 	//Test::test_tspline_normal();
 	//Test::test_nurbscurve_interpolate_optimize();
+	//Test::test_fitbsplinesolid();
 	
     return 0;
 }

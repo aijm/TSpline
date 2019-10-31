@@ -5,18 +5,27 @@ void VolumePiaMethod::calculate()
 	parameterize();
 	init();
 	insert();
-	sample_fitPoints_2();
+	//sample_fitPoints_2();
+	sample_fitPoints_bvolume();
 	fitPoints = surface_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
 	cal_basis_cache(); // 计算基函数在fitPoints参数位置的值， 这样在fit()和pia()时不需要再重新计算
+	cout << "finished cal_basis_cache() " << endl;
 	fit();
+	cout << "finished fit() " << endl;
 	pia();
+	cout << "finished pia() " << endl;
 	update();
+	cout << "finished update() " << endl;
 
-	//for (int i = 0; i < 3; i++) {
-	//	pia();
-	//	update();
-	//}
+	for (int i = 0; i < 3; i++) {
+		fit();
+		cout << "finished fit() " << endl;
+		pia();
+		cout << "finished pia() " << endl;
+		update();
+		cout << "finished update() " << endl;
+	}
 
 	//for (int j = 0; j < 0; j++) {
 	//	Point3d low, high;
@@ -138,6 +147,119 @@ void VolumePiaMethod::sample_fitPoints_2()
 				inter_points.push_back(point);
 			}
 		}	
+	}
+}
+
+void VolumePiaMethod::sample_fitPoints_bvolume()
+{
+	const int sampleNum = 20;
+	for (int i = 1; i < surfaces_num - 1; i++) {
+
+		for (int j = 0; j <= sampleNum; j++) {
+			for (int k = 0; k <= sampleNum; k++) {
+				FitPoint3D point;
+				point.param[0] = 1.0*j / sampleNum;
+				point.param[1] = 1.0*k / sampleNum;
+				point.param[2] = this->w_params(i);
+				point.origin = surfaces[i].eval(point.param[0], point.param[1]);
+				surface_points.push_back(point);
+
+			}
+		}
+
+	}
+
+
+	// 纵向采样，拟合出一个B样条曲线
+
+	const int x_points = 21;
+	const int y_points = 21;
+	const int z_points = surfaces_num + 2;
+
+	const int v_sample_num = 30;
+	const int u_sample_num = 30;
+	const int w_sample_num = 30;
+
+	VectorXd params = w_params;
+	params(0) = 0; params(params.size() - 1) = 1;
+	cout << "params: \n" << params << endl;
+	VectorXd knots(params.size() + 6);
+	knots(0) = 0; knots(1) = 0, knots(2) = 0;
+	knots(knots.size() - 1) = 1; knots(knots.size() - 2) = 1, knots(knots.size() - 3) = 1;
+	knots.block(3, 0, params.size(), 1) = params;
+	cout << "knots for interpolate: \n" << knots << endl;
+
+	vector<vector<NURBSCurve>> sample_curves(x_points, vector<NURBSCurve>(y_points));
+
+	vector<FitPoint3D> fit_points;
+
+	for (int i = 0; i <= x_points - 1; i++) {
+		for (int j = 0; j <= y_points - 1; j++) {
+			double u = 1.0*i / (x_points - 1);
+			double v = 1.0*j / (y_points - 1);
+			MatrixXd points(surfaces_num, 3);
+			for (int k = 0; k < surfaces_num; k++) {
+				points.row(k) = surfaces[k].eval(u, v).toVectorXd();
+				FitPoint3D fit_point;
+				fit_point.origin.fromVectorXd(points.row(k).transpose());
+				fit_point.param[0] = u;
+				fit_point.param[1] = v;
+				fit_point.param[2] = 1.0 * k / (surfaces_num - 1);
+				fit_points.push_back(fit_point);
+			}
+
+			sample_curves[i][j].interpolate(points, knots);
+			cout << "finished " << i << ", " << j << endl;
+		}
+	}
+
+	BsplineVolume bvolume;
+	bvolume.control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
+	bvolume.constructKnotVector(x_points, y_points, z_points);
+	for (int i = 0; i < x_points; i++) {
+		for (int j = 0; j < y_points; j++) {
+			for (int k = 0; k < z_points; k++) {
+				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+			}
+		}
+	}
+
+	double alpha = 0.3;
+	double delta = 0.3;
+
+	for (int i = 0; i < 20; i++) {
+		double error = bvolume.GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
+		cout << "iter: " << i << ", error: " << error << endl;
+		bvolume.fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
+	}
+	bvolume.saveAsHex("../out/volume/tooth_fitbspline", 0.01);
+
+	for (int i = 0; i <= w_sample_num; i++) {
+		/*bool valid = true;
+		for (int k = 0; k < w_params.size(); k++) {
+			if (abs(w_params(k) - 1.0*i / w_sample_num) < 0.01) {
+				valid = false;
+				break;
+			}
+		}
+		if (!valid) {
+			continue;
+		}*/
+		for (int jj = 0; jj <= u_sample_num; jj++) {
+			for (int kk = 0; kk <= v_sample_num; kk++) {
+				cout << "-----------------------" << endl;
+				FitPoint3D point;
+				point.param[0] = 1.0*jj / u_sample_num;
+				point.param[1] = 1.0*kk / v_sample_num;
+				point.param[2] = 1.0*i / w_sample_num;
+				point.origin = bvolume.eval(point.param[0], point.param[1], point.param[2]);
+				/*cout << "param: " << point.param[1] << ", " << point.param[1] << ", " << point.param[2] << endl;
+				cout << "sample origin: ";
+				point.origin.output(cout);
+				cout << endl;*/
+				inter_points.push_back(point);
+			}
+		}
 	}
 }
 

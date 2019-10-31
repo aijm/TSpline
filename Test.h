@@ -32,6 +32,7 @@ typedef struct {
 
 class Test {
 public:
+	static void test_fitbsplinesolid();
 	static void test_nurbscurve_interpolate_optimize();
 	static void test_tspline_normal();
 	static void test_nurbs_pia();

@@ -100,12 +100,12 @@ int Volume::saveAsHex(string filename, double resolution)
 				dw = V.row(v_id + 1) - V.row(v_up_id + 1);
 				jacobian[hex_id * 8 + 7] = (du.cross(dv)).normalized().dot(dw.normalized());
 
-				for (int id = 0; id <= 7; id++) {
+				/*for (int id = 0; id <= 7; id++) {
 					if (jacobian[hex_id * 8 + id] <= 0) {
 						cout << "save jacobian: " << jacobian[hex_id * 8 + id] << endl;
 						break;
 					}
-				}
+				}*/
 
 
 				hex_id++;
@@ -280,7 +280,7 @@ void Volume::drawVolume(double resolution)
 
 				for (int id = 0; id <= 7; id++) {
 					if (jacobian[hex_id * 8 + id] <= 0) {
-						cout << "negative jacobian: " << jacobian[hex_id * 8 + id] << endl;
+						//cout << "negative jacobian: " << jacobian[hex_id * 8 + id] << endl;
 						MatrixXd p0 = MatrixXd::Zero(1, 3);
 						p0.row(0) = V.row(Hex(hex_id, 0));
 						MatrixXd p1 = MatrixXd::Zero(1, 3);
@@ -327,6 +327,6 @@ void Volume::drawVolume(double resolution)
 		}
 	}
 
-	//(*viewer).data().set_mesh(V, F);
+	(*viewer).data().set_mesh(V, F);
 
 }
