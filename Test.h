@@ -38,16 +38,17 @@ public:
 	static void test_venus_skinning_helper_points();
 	static void test_Bsurface_skinning();
 	static void test_chess_skinning();
+	static void test_ring_skinning();
 
 	// volume skinning
-	static void test_generate_surfaces();
-	static void test_VolumeSkinning();
+	static void test_sample_VolumeSkinning(string modelname, double simplifyEps, int sample_num = 5, char dir = 'v');
+	static void test_VolumeSkinning(string modelname, double simplifyEps);
 
 
 	// draw curve, surface, volume
 	static void test_nurbs();
 	static void test_TsplineVolume();
-	static void test_BsplineVolume();
+	static void test_BsplineVolume(string modelname, double ratio = 0.01, bool reverse = false);
 	static void test_Mesh();
 
 	// helper function
@@ -55,7 +56,7 @@ public:
 	static void test_tspline_normal();
 	static void test_getsurface_fromvolume();
 
-	static void test_fitbsplinesolid();
+	static void test_fitbsplinesolid(string modelname, double simplifyEps);
 	static void test_Nurbs_curvature();
 	static void test_TsplineSimplify();
 

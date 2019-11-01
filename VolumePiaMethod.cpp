@@ -109,12 +109,12 @@ void VolumePiaMethod::sample_fitPoints_2()
 				MatrixXd start = MatrixXd::Zero(1, 3);
 				start.row(0) = points.row(k);
 				//viewer->data().add_points(start, red);
-				viewer->data().add_edges(start, start + normal, green);
+				//viewer->data().add_edges(start, start + normal, green);
 			}
 			
-			//sample_curves[i][j].interpolate(points, knots);
+			sample_curves[i][j].interpolate(points, knots);
 			//sample_curves[i][j].interpolate_optimize(points, tangent, params, 0.005);
-			sample_curves[i][j].interpolate_optimize1(points, tangent, params, 0.005);
+			//sample_curves[i][j].interpolate_optimize1(points, tangent, params, 0.005);
 			//sample_curves[i][j].interpolate_tangent(points, tangent, params);
 			//sample_curves[i][j].interpolate_tangent_improve(points, tangent, params);
 			sample_curves[i][j].draw(*viewer, false, true, 0.001);

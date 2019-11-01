@@ -937,7 +937,7 @@ double BsplineVolume::getConeAngleandAngle(std::vector<Point3d> &conex, std::vec
 	for (int i = 0; i<coney.size(); i++) vertial_liney += coney[i];
 	vertial_liney.normalize();
 
-	return dot(vertial_linex, vertial_liney);
+	return dot(vertial_linex, vertial_liney) * dot(vertial_linex, vertial_liney);
 }
 
 

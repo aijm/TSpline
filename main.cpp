@@ -7,16 +7,29 @@ int main(int argc,char** argv){
 	//Test::test_venus_skinning_helper_points();
 	//Test::test_Bsurface_skinning();
 	//Test::test_chess_skinning();
+	//Test::test_ring_skinning();
 
 	// volume skinning
-	//Test::test_generate_surfaces();
-	Test::test_VolumeSkinning();
+	//Test::test_sample_VolumeSkinning("tooth", 3);
+	//Test::test_sample_VolumeSkinning("venus", 3e-3);
+	//Test::test_sample_VolumeSkinning("isis", 5e-3);
+	//Test::test_sample_VolumeSkinning("isis", 1e-2);
+	Test::test_sample_VolumeSkinning("moai", 0.04, 5, 'u');
+	//Test::test_VolumeSkinning("tooth", 3);
+	//Test::test_VolumeSkinning("venus", 3e-3);
+	//Test::test_VolumeSkinning("isis", 5e-3);
+	//Test::test_VolumeSkinning("isis", 1e-2);
+	//Test::test_VolumeSkinning("moai", 3);
 
 
 	// draw curve, surface, volume
 	//Test::test_nurbs();
 	//Test::test_TsplineVolume();
-	//Test::test_BsplineVolume();
+	//Test::test_BsplineVolume("tooth", 0.01, true);
+	//Test::test_BsplineVolume("venus", 0.01, true);
+	//Test::test_BsplineVolume("moai", 0.01, true);
+	//Test::test_BsplineVolume("balljoint", 0.01, true);
+	//Test::test_BsplineVolume("isis", 0.01, true);
 	//Test::test_Mesh();
 
 	// helper function
@@ -24,7 +37,7 @@ int main(int argc,char** argv){
 	//Test::test_tspline_normal();
 	//Test::test_getsurface_fromvolume();
 
-	//Test::test_fitbsplinesolid();
+	//Test::test_fitbsplinesolid("moai", 0.04);
 	//Test::test_Nurbs_curvature();
 	//Test::test_TsplineSimplify();
 
