@@ -1,3 +1,7 @@
+# files
+*.jac
+*.hex
+
 # Compiled Object files
 *.slo
 *.lo
