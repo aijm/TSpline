@@ -33,7 +33,7 @@ void Test::test_TsplineSimplify()
 	render.launch();
 }
 
-void Test::test_generate_curves()
+void Test::test_venus_skinning()
 {
 	BsplineVolume volume;
 	volume.readVolume("../out/volume/venus_bspline.txt");
@@ -86,7 +86,7 @@ void Test::test_generate_curves()
 
 }
 
-void Test::test_generate_curves1()
+void Test::test_venus_skinning_helper_points()
 {
 	/*BsplineVolume volume;
 	volume.readVolume("../out/volume/venus_bspline.txt");*/
@@ -164,7 +164,7 @@ void Test::test_generate_curves1()
 	render.launch();
 }
 
-void Test::test_generate_curves2()
+void Test::test_Bsurface_skinning()
 {
 	NURBSSurface surface;
 
@@ -409,9 +409,9 @@ void Test::test_tspline_normal()
 }
 
 /************************
-测试nurbs曲面pia
+从体上获取等参面
 *************************/
-void Test::test_nurbs_pia()
+void Test::test_getsurface_fromvolume()
 {
 	string modelname = "tooth";
 	string filename = "../out/volume/" + modelname + "_bspline.txt";
@@ -555,7 +555,7 @@ void Test::test_save_nurbs_surface()
 /**
    棋子蒙皮
 */
-void Test::test_chess()
+void Test::test_chess_skinning()
 {
 	
 	vector<MatrixXd> curve_points(13);
@@ -831,7 +831,7 @@ void Test::test_VolumeSkinning()
 	w.launch();*/
 }
 
-void Test::test_Skinning()
+void Test::test_circle_skinning()
 {
 
 	vector<NURBSCurve> nurbs(4);

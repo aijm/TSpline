@@ -32,27 +32,38 @@ typedef struct {
 
 class Test {
 public:
-	static void test_fitbsplinesolid();
-	static void test_nurbscurve_interpolate_optimize();
-	static void test_tspline_normal();
-	static void test_nurbs_pia();
-	static void load_nurbs_surface(NURBSSurface& surface, string filename);
-	static void save_nurbs_surface(const NURBSSurface& surface, string filename);
-	static void test_load_nurbs_surface();
-	static void test_save_nurbs_surface();
-	static void test_chess();
+	// surface skinning
+	static void test_circle_skinning();
+	static void test_venus_skinning();
+	static void test_venus_skinning_helper_points();
+	static void test_Bsurface_skinning();
+	static void test_chess_skinning();
+
+	// volume skinning
 	static void test_generate_surfaces();
-	static void test_Nurbs_curvature();
-	static void test_TsplineSimplify();
-	static void test_generate_curves();
-	static void test_generate_curves1();
-	static void test_generate_curves2();
+	static void test_VolumeSkinning();
+
+
+	// draw curve, surface, volume
 	static void test_nurbs();
 	static void test_TsplineVolume();
 	static void test_BsplineVolume();
 	static void test_Mesh();
-	static void test_VolumeSkinning();
-	static void test_Skinning();
+
+	// helper function
+	static void test_nurbscurve_interpolate_optimize();
+	static void test_tspline_normal();
+	static void test_getsurface_fromvolume();
+
+	static void test_fitbsplinesolid();
+	static void test_Nurbs_curvature();
+	static void test_TsplineSimplify();
+
+	static void load_nurbs_surface(NURBSSurface& surface, string filename);
+	static void save_nurbs_surface(const NURBSSurface& surface, string filename);
+	static void test_load_nurbs_surface();
+	static void test_save_nurbs_surface();
+
 	static void test_DerOfNurbs();
 	static void test_Lspia();
 	static void test_Array();
