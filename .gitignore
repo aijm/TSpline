@@ -1,7 +1,7 @@
 # files
 *.jac
 *.hex
-
+TetProcess.h
 # Compiled Object files
 *.slo
 *.lo

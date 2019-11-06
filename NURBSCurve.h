@@ -101,13 +101,13 @@ struct NURBSCurve
 	bool insert(double t);
 
 	// display by libigl
-	void draw(igl::opengl::glfw::Viewer& viewer, bool showpolygon=true,bool showsurface=true,double resolution = 0.01);
+	void draw(igl::opengl::glfw::Viewer& viewer, bool showpolygon=true,bool showsurface=true,double resolution = 0.01, Eigen::RowVector3d color = Eigen::RowVector3d(1, 0, 0));
 
 	// draw controlpolygon
 	void drawControlPolygon(igl::opengl::glfw::Viewer &viewer);
 
 	// draw NURBS surface
-	void drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution = 0.01);
+	void drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution = 0.01, Eigen::RowVector3d color = Eigen::RowVector3d(1, 0, 0));
 
 
 	bool isRational = false;

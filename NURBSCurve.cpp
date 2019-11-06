@@ -1035,7 +1035,7 @@ void NURBSCurve::drawControlPolygon(igl::opengl::glfw::Viewer &viewer){
 }
 
 // draw NURBS surface
-void NURBSCurve::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution){
+void NURBSCurve::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolution, Eigen::RowVector3d color){
 	double left = knots(k - 1);
 	double right = knots(n + 1);
 	const int num = (right - left) / resolution;
@@ -1050,10 +1050,10 @@ void NURBSCurve::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolutio
 			viewer.data().add_edges(
 				P1.rowwise().hnormalized(),
 				P2.rowwise().hnormalized(),
-				Eigen::RowVector3d(1, 0, 0));
+				color);
 		}
 		else {
-			viewer.data().add_edges(P1, P2, Eigen::RowVector3d(1, 0, 0));
+			viewer.data().add_edges(P1, P2, color);
 		}
 
 	}
@@ -1064,7 +1064,7 @@ void NURBSCurve::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolutio
 void NURBSCurve::draw(
 	igl::opengl::glfw::Viewer& viewer, 
 	bool showpolygon,bool showsurface,
-	double resolution)
+	double resolution, Eigen::RowVector3d color)
 {
 	if(isRational){
 		controlP = controlPw.rowwise().hnormalized();
@@ -1076,7 +1076,7 @@ void NURBSCurve::draw(
 		drawControlPolygon(viewer);
 	}
 	if(showsurface){
-		drawSurface(viewer, resolution);
+		drawSurface(viewer, resolution, color);
 	}
 	viewer.core.align_camera_center(controlP);
 }

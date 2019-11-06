@@ -621,7 +621,7 @@ void BsplineVolume::constructKnotVector(int x_points, int y_points, int z_points
 //kont_vector节点向量，大小为3，表示xyz三个轴
 //result表示4*4*4的结果矩阵，每一维表示Bi*Bj*Bk
 //Bi_start_index表示返回值Bi的向量的基函数的起始节点向量的下标
-void BsplineVolume::calculateBaseFunctionOfSolidBSpline(Point3d para, double(*result)[4][4], int & Bi_start_index, int & Bj_start_index, int & Bk_start_index)
+void BsplineVolume::calculateBaseFunctionOfSolidBSpline(Point3d para, vector<vector<vector<double>>>& result, int & Bi_start_index, int & Bj_start_index, int & Bk_start_index)
 {
 	assert(knot_vector.size() == 3);
 	//result必须自己保证是4*4*4大小
@@ -666,24 +666,40 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 
 	//writeFileAdd("debug.txt" ,os.str());
 	constructKnotVector(x_points, y_points, z_points);
-	cout << "----1----" << endl;
+	//cout << "----1----" << endl;
 	//Efit 对move_step的影响
-	double matri[4][4][4];
+	//double matri[4][4][4];
 	//os<<para.size()<<std::endl;
+	if (matri.empty()) {
+		matri = vector<vector<vector<vector<double>>>>(fit_points.size());
+		for (int i = 0; i < matri.size(); i++) {
+			matri[i] = vector<vector<vector<double>>>(4, vector<vector<double>>(4, vector<double>(4)));
+		}
+		Bi_start_indexs = vector<int>(fit_points.size());
+		Bj_start_indexs = vector<int>(fit_points.size());
+		Bk_start_indexs = vector<int>(fit_points.size());
+		for (int pn = 0; pn < fit_points.size(); pn++) {
+			calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matri[pn], Bi_start_indexs[pn], Bj_start_indexs[pn], Bk_start_indexs[pn]);
+		}
+	}
 	int Bi_start_index, Bj_start_index, Bk_start_index;
 	for (int pn = 0; pn<fit_points.size(); pn++) {
-		calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matri, Bi_start_index, Bj_start_index, Bk_start_index);
+		//calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matri, Bi_start_index, Bj_start_index, Bk_start_index);
 		//cout << "----1-1----" << endl;
 		//writeFileAdd("debug.txt",os.str());
 		//Efit
+		Bi_start_index = Bi_start_indexs[pn];
+		Bj_start_index = Bj_start_indexs[pn];
+		Bk_start_index = Bk_start_indexs[pn];
+
 		Point3d phy_tet_pos = fit_points[pn].origin;
 		double x = 0, y = 0, z = 0;
 		for (int i = Bi_start_index; i<4 + Bi_start_index; i++) {
 			for (int j = Bj_start_index; j< 4 + Bj_start_index; j++) {
 				for (int k = Bk_start_index; k< 4 + Bk_start_index; k++) {
-					x += (matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][0];
-					y += (matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][1];
-					z += (matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][2];
+					x += (matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][0];
+					y += (matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][1];
+					z += (matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index])*control_grid[i][j][k][2];
 				}
 			}
 		}
@@ -696,16 +712,16 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 		for (int i = Bi_start_index; i<4 + Bi_start_index; i++) {
 			for (int j = Bj_start_index; j<4 + Bj_start_index; j++) {
 				for (int k = Bk_start_index; k<4 + Bk_start_index; k++) {
-					move_step[i][j][k][0] += (1 - alpha - delta) * 2 * x*(matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
-					move_step[i][j][k][1] += (1 - alpha - delta) * 2 * y*(matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
-					move_step[i][j][k][2] += (1 - alpha - delta) * 2 * z*(matri[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
+					move_step[i][j][k][0] += (1 - alpha - delta) * 2 * x*(matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
+					move_step[i][j][k][1] += (1 - alpha - delta) * 2 * y*(matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
+					move_step[i][j][k][2] += (1 - alpha - delta) * 2 * z*(matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index]);
 
 					//os << i << " " << j << " " << k << " (" << move_step[i][j][k][0] << ", " << move_step[i][j][k][1] << ", " << move_step[i][j][k][2] << ")" << endl;
 				}
 			}
 		}
 	}
-	cout << "----2----" << endl;
+	//cout << "----2----" << endl;
 	//e
 	//Eu ,Ev ,Ew
 	//求出每个方向上的对i,j,k位置的控制顶点的影响
@@ -771,7 +787,7 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 			}
 		}
 	}
-	cout << "----3----" << endl;
+	//cout << "----3----" << endl;
 	//Ev
 	for (int i = 0; i< x_points; i++) {
 		for (int j = 1; j< y_points - 1; j++) {
@@ -801,7 +817,7 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 			}
 		}
 	}
-	cout << "----4----" << endl;
+	//cout << "----4----" << endl;
 	//Ew
 	for (int i = 0; i< x_points; i++) {
 		for (int j = 0; j< y_points; j++) {
@@ -829,7 +845,7 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 			}
 		}
 	}
-	cout << "----5----" << endl;
+	//cout << "----5----" << endl;
 
 	//两个圆锥不相交的能量函数
 
@@ -844,7 +860,7 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 		}
 	}
 
-	cout << "----6----" << endl;
+	//cout << "----6----" << endl;
 	//移动的步长
 	//os<<"move_step: "<<std::endl;
 	for (int i = 1; i< x_points - 1; i++) {
@@ -856,12 +872,13 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 		}
 	}
 	//os<<"######"<<std::endl;
-	cout << "----7----" << endl;
+	//cout << "----7----" << endl;
 	std::vector<Point3d> conex, coney, conez;
 	//double l = FindBestratioOnSoildBysearch(move_step, conex, coney, conez, x_points, y_points, z_points);
 	// tooth --> l = 2.0
 	// venus --> l = 0.001
-	double l = 2.0;
+	// head --> 1
+	double l = 0.05;
 	cout << "l : "<< l << endl;
 	//os<<l<<std::endl;
 	for (int i = 1; i< x_points - 1; i++) {
@@ -872,9 +889,9 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 			}
 		}
 	}
-	cout << "----8----" << endl;
+	//cout << "----8----" << endl;
 	//writeFileAdd("debug.txt", os.str());
-	cout << "----9----" << endl;
+	//cout << "----9----" << endl;
 }
 
 
@@ -884,17 +901,33 @@ double BsplineVolume::GetSoildFiterror(vector<FitPoint3D>& fit_points,
 	constructKnotVector(x_points, y_points, z_points);
 
 	double fiterror = 0;
-	double matrix[4][4][4];
+
+	if (matri.empty()) {
+		matri = vector<vector<vector<vector<double>>>>(fit_points.size());
+		for (int i = 0; i < matri.size(); i++) {
+			matri[i] = vector<vector<vector<double>>>(4, vector<vector<double>>(4, vector<double>(4)));
+		}
+		Bi_start_indexs = vector<int>(fit_points.size());
+		Bj_start_indexs = vector<int>(fit_points.size());
+		Bk_start_indexs = vector<int>(fit_points.size());
+		for (int pn = 0; pn < fit_points.size(); pn++) {
+			calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matri[pn], Bi_start_indexs[pn], Bj_start_indexs[pn], Bk_start_indexs[pn]);
+		}
+	}
+	//double matrix[4][4][4];
 	int Bi_start_index, Bj_start_index, Bk_start_index;
 
 	for (int pn = 0; pn<fit_points.size(); pn++) {
-		calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matrix, Bi_start_index, Bj_start_index, Bk_start_index);
+		//calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matrix, Bi_start_index, Bj_start_index, Bk_start_index);
+		Bi_start_index = Bi_start_indexs[pn];
+		Bj_start_index = Bj_start_indexs[pn];
+		Bk_start_index = Bk_start_indexs[pn];
 
 		Point3d phy_tet_pos = fit_points[pn].origin, phy_B_pos;
 		for (int i = Bi_start_index; i<Bi_start_index + 4; i++) {
 			for (int j = Bj_start_index; j<Bj_start_index + 4; j++) {
 				for (int k = Bk_start_index; k< Bk_start_index + 4; k++)
-					phy_B_pos += control_grid[i][j][k]*matrix[i - Bi_start_index][j - Bj_start_index][k - Bk_start_index];
+					phy_B_pos += control_grid[i][j][k]*matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index];
 			}
 		}
 
@@ -908,7 +941,8 @@ double BsplineVolume::GetSoildFiterror(vector<FitPoint3D>& fit_points,
 	double coneangle=getConeAnglerror(conex)+getConeAnglerror(coney)+getConeAnglerror(conez);
 	double coneandcone=getConeAngleandAngle(conex,coney)+getConeAngleandAngle(conex,conez)+getConeAngleandAngle(coney,conez);
 	double res = 0;
-	res += (1 - alpha - delta)*fiterror/*+alpha*coneangle+delta*coneandcone*/;
+	//res += (1 - alpha - delta)*fiterror/*+alpha*coneangle+delta*coneandcone*/;
+	res = fiterror;
 	cout << "angle error : " << alpha*coneangle + delta*coneandcone << endl;
 	return res;
 }
@@ -938,6 +972,102 @@ double BsplineVolume::getConeAngleandAngle(std::vector<Point3d> &conex, std::vec
 	vertial_liney.normalize();
 
 	return dot(vertial_linex, vertial_liney) * dot(vertial_linex, vertial_liney);
+}
+
+void BsplineVolume::lspia(vector<FitPoint3D>& fit_points, int x_points, int y_points, int z_points, int max_iter_num, double eps)
+{
+	constructKnotVector(x_points, y_points, z_points);
+
+	if (matri.empty()) {
+		matri = vector<vector<vector<vector<double>>>>(fit_points.size());
+		for (int i = 0; i < matri.size(); i++) {
+			matri[i] = vector<vector<vector<double>>>(4, vector<vector<double>>(4, vector<double>(4)));
+		}
+		Bi_start_indexs = vector<int>(fit_points.size());
+		Bj_start_indexs = vector<int>(fit_points.size());
+		Bk_start_indexs = vector<int>(fit_points.size());
+		for (int pn = 0; pn < fit_points.size(); pn++) {
+			calculateBaseFunctionOfSolidBSpline(fit_points[pn].param, matri[pn], Bi_start_indexs[pn], Bj_start_indexs[pn], Bk_start_indexs[pn]);
+		}
+	}
+
+
+	for (int pn = 0; pn < fit_points.size(); pn++) {
+		int Bi_start_index = Bi_start_indexs[pn];
+		int Bj_start_index = Bj_start_indexs[pn];
+		int Bk_start_index = Bk_start_indexs[pn];
+
+		Point3d val;
+		for (int ii = Bi_start_index; ii < Bi_start_index + 4; ii++) {
+			for (int jj = Bj_start_index; jj < Bj_start_index + 4; jj++) {
+				for (int kk = Bk_start_index; kk < Bk_start_index + 4; kk++)
+					val += control_grid[ii][jj][kk] * matri[pn][ii - Bi_start_index][jj - Bj_start_index][kk - Bk_start_index];
+			}
+		}
+		fit_points[pn].eval = val;
+	}
+
+	for (int iter = 0; iter < max_iter_num; iter++) {
+
+		for (int i = 0; i < x_points; i++) {
+			for (int j = 0; j < y_points; j++) {
+				for (int k = 0; k < z_points; k++) {
+					double sum1 = 0;
+					Point3d sum2;
+
+					for (int pn = 0; pn < fit_points.size(); pn++) {
+						int Bi_start_index = Bi_start_indexs[pn];
+						int Bj_start_index = Bj_start_indexs[pn];
+						int Bk_start_index = Bk_start_indexs[pn];
+
+						double blend = 0.0;
+						if (i >= Bi_start_index && i < Bi_start_index + 4 &&
+							j >= Bj_start_index && j < Bj_start_index + 4 &&
+							k >= Bk_start_index && k < Bk_start_index + 4) {
+							blend = matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index];
+						}
+
+						sum1 += blend;
+						Point3d delta = fit_points[pn].origin - fit_points[pn].eval; // 拟合点处误差向量
+						sum2 += blend * delta;
+					}
+					double factor = 0.0;
+					if (abs(sum1) > 0.0001) {
+						factor = 1.0 / sum1; // sum1为0时，对应点不更新
+					}
+					sum2 *= factor; // 控制点更新差向量
+					control_grid[i][j][k] += sum2;
+				}
+			}
+		}
+			
+
+			double error = 0.0;
+			double maxerror = -1;
+			// 控制点更新后，计算新的拟合位置和误差
+			for (int pn = 0; pn < fit_points.size(); pn++) {
+				int Bi_start_index = Bi_start_indexs[pn];
+				int Bj_start_index = Bj_start_indexs[pn];
+				int Bk_start_index = Bk_start_indexs[pn];
+
+				Point3d val;
+				for (int ii = Bi_start_index; ii < Bi_start_index + 4; ii++) {
+					for (int jj = Bj_start_index; jj < Bj_start_index + 4; jj++) {
+						for (int kk = Bk_start_index; kk < Bk_start_index + 4; kk++)
+							val += control_grid[ii][jj][kk] * matri[pn][ii - Bi_start_index][jj - Bj_start_index][kk - Bk_start_index];
+					}
+				}
+				fit_points[pn].eval = val;
+				fit_points[pn].error = fit_points[pn].geterror();
+				maxerror = max(maxerror, fit_points[pn].error);
+				error += fit_points[pn].error;
+			}
+			error /= fit_points.size();
+			cout << "iter: " << iter + 1 << ", error: " << error <<", maxerror: " << maxerror << endl;
+			if (error < eps) {
+				break;
+			}
+		}
 }
 
 

@@ -18,14 +18,14 @@ void VolumePiaMethod::calculate()
 	update();
 	cout << "finished update() " << endl;
 
-	/*for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		fit();
 		cout << "finished fit() " << endl;
 		pia();
 		cout << "finished pia() " << endl;
 		update();
 		cout << "finished update() " << endl;
-	}*/
+	}
 
 	//for (int j = 0; j < 0; j++) {
 	//	Point3d low, high;
@@ -174,7 +174,8 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 
 	const int x_points = 21;
 	const int y_points = 21;
-	const int z_points = surfaces_num + 2;
+	//const int z_points = surfaces_num + 2;
+	const int z_points = 11;
 
 	const int v_sample_num = 30;
 	const int u_sample_num = 30;
@@ -191,6 +192,55 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 
 	vector<vector<NURBSCurve>> sample_curves(x_points, vector<NURBSCurve>(y_points));
 
+	//vector<FitPoint3D> fit_points;
+
+	//for (int i = 0; i <= x_points - 1; i++) {
+	//	for (int j = 0; j <= y_points - 1; j++) {
+	//		double u = 1.0*i / (x_points - 1);
+	//		double v = 1.0*j / (y_points - 1);
+	//		MatrixXd points(surfaces_num, 3);
+	//		for (int k = 0; k < surfaces_num; k++) {
+	//			points.row(k) = surfaces[k].eval(u, v).toVectorXd();
+	//			FitPoint3D fit_point;
+	//			fit_point.origin.fromVectorXd(points.row(k).transpose());
+	//			fit_point.param[0] = u;
+	//			fit_point.param[1] = v;
+	//			fit_point.param[2] = 1.0 * k / (surfaces_num - 1);
+	//			fit_points.push_back(fit_point);
+	//		}
+
+	//		sample_curves[i][j].interpolate(points, knots);
+	//		cout << "finished " << i << ", " << j << endl;
+	//	}
+	//}
+
+	//BsplineVolume bvolume;
+	//bvolume.control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
+	//bvolume.constructKnotVector(x_points, y_points, z_points);
+	//for (int i = 0; i < x_points; i++) {
+	//	for (int j = 0; j < y_points; j++) {
+	//		for (int k = 0; k < z_points; k++) {
+	//			bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+	//		}
+	//	}
+	//}
+	//// tooth --> alpha = 0.3 delta = 0.3   iter_num = 20
+	//// venus --> alpha = 0.45 delta = 0.45  iter_num = 20
+	//// head --> alpha = 0.495 delta = 0.495  iter_num = 1000
+	//double alpha = 0.495;
+	//double delta = 0.495;
+
+	//// tooth --> iter_num = 20
+	//for (int i = 0; i < 100; i++) {
+	//	double error = bvolume.GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
+	//	cout << "iter: " << i << ", error: " << error << endl;
+	//	bvolume.fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
+	//}
+	//// moai --> true
+	//bvolume.setReverse(true);
+	//bvolume.saveAsHex("../out/volume/tooth_fitbspline", 0.01);
+
+
 	vector<FitPoint3D> fit_points;
 
 	for (int i = 0; i <= x_points - 1; i++) {
@@ -200,18 +250,35 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 			MatrixXd points(surfaces_num, 3);
 			for (int k = 0; k < surfaces_num; k++) {
 				points.row(k) = surfaces[k].eval(u, v).toVectorXd();
-				FitPoint3D fit_point;
+				/*FitPoint3D fit_point;
 				fit_point.origin.fromVectorXd(points.row(k).transpose());
 				fit_point.param[0] = u;
 				fit_point.param[1] = v;
-				fit_point.param[2] = 1.0 * k / (surfaces_num - 1);
-				fit_points.push_back(fit_point);
+				fit_point.param[2] = 1.0 * k / sample_num;
+				fit_points.push_back(fit_point);*/
 			}
 
 			sample_curves[i][j].interpolate(points, knots);
 			cout << "finished " << i << ", " << j << endl;
 		}
 	}
+	const int u_num = 20;
+	const int v_num = 20;
+	for (int i = 0; i < surfaces_num; i++) {
+		for (int j = 0; j <= u_num; j++) {
+			for (int k = 0; k <= v_num; k++) {
+				FitPoint3D fit_point;
+				double u = 1.0 * j / u_num;
+				double v = 1.0 * k / v_num;
+				fit_point.param[0] = u;
+				fit_point.param[1] = v;
+				fit_point.param[2] = 1.0 * i / (surfaces_num - 1);
+				fit_point.origin = surfaces[i].eval(u, v);
+				fit_points.push_back(fit_point);
+			}
+		}
+	}
+
 
 	BsplineVolume bvolume;
 	bvolume.control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
@@ -219,22 +286,34 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 	for (int i = 0; i < x_points; i++) {
 		for (int j = 0; j < y_points; j++) {
 			for (int k = 0; k < z_points; k++) {
-				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+				//bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+				double w = 1.0 * k / (z_points - 1);
+				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].eval(w));
 			}
 		}
 	}
-	// tooth --> alpha = 0.3 delta = 0.3
-	// venus --> alpha = 0.45 delta = 0.45
 
-	double alpha = 0.3;
-	double delta = 0.3;
 
+	// using lspia
+	bvolume.lspia(fit_points, x_points, y_points, z_points, 10, 1e-12);
+
+
+	double alpha = 0.495;
+	double delta = 0.495;
+	
 	for (int i = 0; i < 20; i++) {
 		double error = bvolume.GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
 		cout << "iter: " << i << ", error: " << error << endl;
 		bvolume.fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
 	}
-	bvolume.saveAsHex("../out/volume/tooth_fitbspline", 0.01);
+	bvolume.setReverse(true);
+	string modelname = "moai_fitbspline";
+	//bvolume.saveVolume("../out/volume/" + modelname + "_fitbspline");
+	bvolume.saveAsHex("../out/volume/" + modelname + "_fitbspline", 0.01);
+
+
+
+
 
 	for (int i = 0; i <= w_sample_num; i++) {
 		/*bool valid = true;

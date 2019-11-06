@@ -86,7 +86,7 @@ public:
 	//result表示4*4*4的结果矩阵，每一维表示Bi*Bj*Bk
 	//Bi_start_index表示返回值Bi的向量的基函数的起始节点向量的下标
 	void calculateBaseFunctionOfSolidBSpline(Point3d para,
-		double(*result)[4][4], int &Bi_start_index, int &Bj_start_index, int &Bk_start_index);
+		vector<vector<vector<double>>>& result, int &Bi_start_index, int &Bj_start_index, int &Bk_start_index);
 
 	// 使用优化方法，生成一个拟合指定点，且雅克比值很好的B样条体
 	void fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points, int y_points, int z_points, double alpha, double delta);
@@ -98,6 +98,8 @@ public:
 	static double getConeAnglerror(std::vector<Point3d> &cones);
 
 	static double getConeAngleandAngle(std::vector<Point3d> &conex, std::vector<Point3d> &coney);
+
+	void lspia(vector<FitPoint3D>& fit_points, int x_points, int y_points, int z_points, int max_iter_num = 100, double eps = 1e-5);
 private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;
@@ -105,7 +107,10 @@ private:
 public:
 	vector<vector<vector<Point3d>>> control_grid;
 	vector<Eigen::VectorXd> knot_vector;
-	
+	vector<vector<vector<vector<double>>>> matri;
+	vector<int> Bi_start_indexs;
+	vector<int> Bj_start_indexs;
+	vector<int> Bk_start_indexs;
 };
 #endif // !BSPLINEVOLUME_H
 

@@ -56,6 +56,7 @@ public:
 	static void test_tspline_normal();
 	static void test_getsurface_fromvolume();
 
+	static void test_sample_fitbsplinesolid(string modelname, double simplifyEps);
 	static void test_fitbsplinesolid(string modelname, double simplifyEps);
 	static void test_Nurbs_curvature();
 	static void test_TsplineSimplify();
