@@ -39,6 +39,7 @@ public:
 	static void test_Bsurface_skinning();
 	static void test_chess_skinning();
 	static void test_ring_skinning();
+	static void test_helicoidal_skinning();
 
 	// volume skinning
 	static void test_sample_VolumeSkinning(string modelname, double simplifyEps, int sample_num = 5, char dir = 'v');

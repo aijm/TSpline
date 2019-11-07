@@ -88,14 +88,16 @@ void Test::test_venus_skinning()
 
 void Test::test_venus_skinning_helper_points()
 {
+	Window::viewer.data().line_width = 4.0f;
 	/*BsplineVolume volume;
 	volume.readVolume("../out/volume/venus_bspline.txt");*/
 
 	NURBSSurface surface;
 
 	
-	surface.loadNURBS("../out/nurbs/venus_front.cpt");
-	surface.saveAsObj("../out/OBJ/venus_surface", 0.01);
+	//surface.loadNURBS("../out/nurbs/venus_front.cpt");
+	load_nurbs_surface(surface, "../out/nurbs/venus_face.cpt");
+	surface.saveAsObj("../out/OBJ/venus_face", 0.01);
 	//surface.draw(Window::viewer, false, true, 0.01);
 	////surface.saveNURBS("../out/nurbs/venus_front");
 	//Window w;
@@ -142,26 +144,35 @@ void Test::test_venus_skinning_helper_points()
 	skin.saveAsObj("../out/OBJ/venus_nurbs_skin");
 	Window w;
 	w.launch();*/
-	//Skinning* method = new PiaMethod(curves, 100);
-	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
-	PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
-	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
+
+	NURBSSurface surface1;
+	surface1.skinning(curves, Window::viewer);
+	surface1.saveAsObj("../out/OBJ/venus_Nurbs", 0.01);
+	surface1.draw(Window::viewer, false);
+
+	/*Window w;
+	w.launch();*/
+
+	////Skinning* method = new PiaMethod(curves, 100);
+	////Skinning* method = new NasriMethod(curves);
+	////Skinning* method = new OptMethod(curves);
+	////PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
+	////PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	//Skinning* method = new MinJaeMethod(curves, 40, 10);
 
-	method->setViewer(&Window::viewer);
-	MatrixXd helper_points;
-	loadpoints("../out/points/helper_points.dat", helper_points);
-	//method->set_helper_points(helper_points);
+	//method->setViewer(&Window::viewer);
+	//MatrixXd helper_points;
+	//loadpoints("../out/points/helper_points.dat", helper_points);
+	////method->set_helper_points(helper_points);
 
-	method->calculate();
-	Mesh3d* mesh = &(method->tspline);
-	cout << "num of nodes: " << mesh->get_num() << endl;
+	//method->calculate();
+	//Mesh3d* mesh = &(method->tspline);
+	//cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/tspline/venus_skinning1");
-	//mesh->saveAsObj("../out/OBJ/venus_PiaMinJae_sample_400", 0.01);
-	MeshRender render(mesh,false,true,true,0.01);
-	render.launch();
+	////mesh->saveMesh("../out/tspline/venus_skinning1");
+	//mesh->saveAsObj("../out/OBJ/venus_Nurbs", 0.01);
+	//MeshRender render(mesh,false,true,true,0.01);
+	//render.launch();
 }
 
 void Test::test_Bsurface_skinning()
@@ -766,7 +777,7 @@ void Test::test_chess_skinning()
 void Test::test_ring_skinning()
 {
 	Window::viewer.data().point_size = 5.0f;
-	Window::viewer.data().line_width = 4.0f;
+	//Window::viewer.data().line_width = 4.0f;
 
 	const int curve_nums = 9;
 	string prefix = "../out/curves/";
@@ -783,9 +794,41 @@ void Test::test_ring_skinning()
 		}
 		//Window::viewer.data().add_points(points[i], red);
 	}
-	VectorXd knot_vector1(11), knot_vector2(10);
+
+	vector<VectorXd> knot_vectors(curve_nums);
+
+	knot_vectors[0] = VectorXd::Zero(11);
+	knot_vectors[0] << 0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1;
+
+	knot_vectors[1] = VectorXd::Zero(10);
+	knot_vectors[1] << 0, 0, 0, 0, 0.375, 0.625, 1, 1, 1, 1;
+
+	knot_vectors[2] = VectorXd::Zero(11);
+	knot_vectors[2] << 0, 0, 0, 0, 0.26, 0.51, 0.76, 1, 1, 1, 1;
+
+	knot_vectors[3] = VectorXd::Zero(10);
+	knot_vectors[3] << 0, 0, 0, 0, 0.385, 0.635, 1, 1, 1, 1;
+
+
+	knot_vectors[4] = VectorXd::Zero(11);
+	knot_vectors[4] << 0, 0, 0, 0, 0.24, 0.49, 0.74, 1, 1, 1, 1;
+
+
+	knot_vectors[5] = VectorXd::Zero(10);
+	knot_vectors[5] << 0, 0, 0, 0, 0.355, 0.605, 1, 1, 1, 1;
+
+	knot_vectors[6] = VectorXd::Zero(11);
+	knot_vectors[6] << 0, 0, 0, 0, 0.22, 0.48, 0.73, 1, 1, 1, 1;
+
+	knot_vectors[7] = VectorXd::Zero(10);
+	knot_vectors[7] << 0, 0, 0, 0, 0.335, 0.585, 1, 1, 1, 1;
+
+	knot_vectors[8] = VectorXd::Zero(11);
+	knot_vectors[8] << 0, 0, 0, 0, 0.2, 0.45, 0.80, 1, 1, 1, 1;
+
+	/*VectorXd knot_vector1(11), knot_vector2(10);
 	knot_vector1 << 0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1;
-	knot_vector2 << 0, 0, 0, 0, 0.375, 0.625, 1, 1, 1, 1;
+	knot_vector2 << 0, 0, 0, 0, 0.375, 0.625, 1, 1, 1, 1;*/
 	vector<NURBSCurve> curves(curve_nums);
 	VectorXd params = VectorXd::Zero(points[0].rows());
 	for (int i = 0; i < params.size(); i++) {
@@ -793,8 +836,10 @@ void Test::test_ring_skinning()
 	}
 	// fit data points with appointed knot vector using lspia fit
 	for (int i = 0; i < curve_nums; i++) {
-		VectorXd knots = i % 2 ? knot_vector2 : knot_vector1;
-		int ncpts = i % 2 ? knot_vector2.size() - 4 : knot_vector1.size() - 4;
+		/*VectorXd knots = i % 2 ? knot_vector2 : knot_vector1;
+		int ncpts = i % 2 ? knot_vector2.size() - 4 : knot_vector1.size() - 4;*/
+		VectorXd knots = knot_vectors[i];
+		int ncpts = knots.size() - 4;
 		curves[i].lspiafit(points[i], params, ncpts, knots);
 		curves[i].draw(Window::viewer, false);
 		curves[i].saveNURBS("../out/nurbs/ring" + to_string(i));
@@ -806,12 +851,120 @@ void Test::test_ring_skinning()
 	/*NURBSSurface surface;
 	surface.skinning(curves, Window::viewer);
 
+	surface.draw(Window::viewer, false);
+
+	Window w;
+	w.launch();*/
+
+	
+	//Skinning* method = new MinJaeMethod(curves, 20, 50);
+	//Skinning* method = new NasriMethod(curves);
+	//Skinning* method = new OptMethod(curves);
+	//Skinning* method = new PiaMinJaeMethod(curves, 20);
+	Skinning* method = new PiaNasriMethod(curves, 20);
+
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	Mesh3d* mesh = &(method->tspline);
+	cout << "num of nodes: " << mesh->get_num() << endl;
+
+	mesh->saveMesh("../out/tspline/ring");
+	MeshRender render(mesh);
+	render.launch();
+	
+}
+
+void Test::test_helicoidal_skinning()
+{
+	Window::viewer.data().point_size = 5.0f;
+	//Window::viewer.data().line_width = 4.0f;
+
+	const int curve_nums = 11;
+	string prefix = "../out/curves/";
+	vector<MatrixXd> points(curve_nums);
+
+	MatrixXd allpoints; // 用于显示时设置相机位置和缩放大小
+	for (int i = 0; i < curve_nums; i++) {
+		string filename = prefix + "helicoidal" + to_string(i + 1) + ".txt";
+		loadpoints(filename, points[i]);
+		int lastid = allpoints.rows();
+		allpoints.conservativeResize(lastid + points[i].rows(), 3);
+		for (int j = lastid; j < allpoints.rows(); j++) {
+			allpoints.row(j) = points[i].row(j - lastid);
+		}
+		//Window::viewer.data().add_points(points[i], red);
+	}
+	vector<VectorXd> knot_vectors(curve_nums);
+
+	knot_vectors[0] = VectorXd::Zero(11);
+	knot_vectors[0] << 0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1;
+
+	knot_vectors[1] = VectorXd::Zero(10);
+	knot_vectors[1] << 0, 0, 0, 0, 0.375, 0.625, 1, 1, 1, 1;
+
+	knot_vectors[2] = VectorXd::Zero(11);
+	knot_vectors[2] << 0, 0, 0, 0, 0.26, 0.51, 0.76, 1, 1, 1, 1;
+
+	knot_vectors[3] = VectorXd::Zero(10);
+	knot_vectors[3] << 0, 0, 0, 0, 0.385, 0.635, 1, 1, 1, 1;
+
+
+	knot_vectors[4] = VectorXd::Zero(11);
+	knot_vectors[4] << 0, 0, 0, 0, 0.24, 0.49, 0.74, 1, 1, 1, 1;
+
+
+	knot_vectors[5] = VectorXd::Zero(10);
+	knot_vectors[5] << 0, 0, 0, 0, 0.355, 0.605, 1, 1, 1, 1;
+
+	knot_vectors[6] = VectorXd::Zero(11);
+	knot_vectors[6] << 0, 0, 0, 0, 0.22, 0.48, 0.73, 1, 1, 1, 1;
+
+	knot_vectors[7] = VectorXd::Zero(10);
+	knot_vectors[7] << 0, 0, 0, 0, 0.335, 0.585, 1, 1, 1, 1;
+
+	knot_vectors[8] = VectorXd::Zero(11);
+	knot_vectors[8] << 0, 0, 0, 0, 0.2, 0.45, 0.80, 1, 1, 1, 1;
+
+	knot_vectors[9] = VectorXd::Zero(10);
+	knot_vectors[9] << 0, 0, 0, 0, 0.4, 0.7, 1, 1, 1, 1;
+
+	knot_vectors[10] = VectorXd::Zero(11);
+	knot_vectors[10] << 0, 0, 0, 0, 0.3, 0.55, 0.85, 1, 1, 1, 1;
+
+
+
+
+	/*VectorXd knot_vector1(11), knot_vector2(10);
+	knot_vector1 << 0, 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1, 1;
+	knot_vector2 << 0, 0, 0, 0, 0.375, 0.625, 1, 1, 1, 1;*/
+	vector<NURBSCurve> curves(curve_nums);
+	VectorXd params = VectorXd::Zero(points[0].rows());
+	for (int i = 0; i < params.size(); i++) {
+		params(i) = 1.0 * i / (params.size() - 1);
+	}
+	// fit data points with appointed knot vector using lspia fit
+	for (int i = 0; i < curve_nums; i++) {
+		/*VectorXd knots = i % 2 ? knot_vector2 : knot_vector1;
+		int ncpts = i % 2 ? knot_vector2.size() - 4 : knot_vector1.size() - 4;*/
+		VectorXd knots = knot_vectors[i];
+		int ncpts = knots.size() - 4;
+		curves[i].lspiafit(points[i], params, ncpts, knots);
+		curves[i].draw(Window::viewer, false);
+		curves[i].saveNURBS("../out/nurbs/helicoidal" + to_string(i));
+	}
+	Window::viewer.core.align_camera_center(allpoints);
+
+
+
+	/*NURBSSurface surface;
+	surface.skinning(curves, Window::viewer);
+
 	surface.draw(Window::viewer, false);*/
 
 	/*Window w;
 	w.launch();*/
 
-	
+
 	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
@@ -823,10 +976,9 @@ void Test::test_ring_skinning()
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/tspline/ring");
+	mesh->saveMesh("../out/tspline/helicoidal");
 	MeshRender render(mesh);
 	render.launch();
-	
 }
 
 /**
@@ -935,7 +1087,7 @@ void Test::test_nurbs()
 	}*/
 
 	NURBSSurface nurbs;
-	load_nurbs_surface(nurbs, "../out/nurbs/head_surface_0_format.cpt");
+	load_nurbs_surface(nurbs, "../out/nurbs/venus_face.cpt");
 	//nurbs.loadNURBS("../out/nurbs/head_surface_0_format.cpt");
 	nurbs.draw(Window::viewer);
 	Window w;
@@ -1067,23 +1219,40 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 
 void Test::test_circle_skinning()
 {
+	Window::viewer.data().point_size = 5.0f;
+	//Window::viewer.data().line_width = 4.0f;
 
 	vector<NURBSCurve> nurbs(4);
-	nurbs[0].loadNURBS("../out/nurbs/circle.cptw");
+	/*nurbs[0].loadNURBS("../out/nurbs/circle.cptw");
 	nurbs[1].loadNURBS("../out/nurbs/circle1_1.cptw");
 	nurbs[2].loadNURBS("../out/nurbs/circle2_1.cptw");
-	nurbs[3].loadNURBS("../out/nurbs/circle3.cptw");
+	nurbs[3].loadNURBS("../out/nurbs/circle3.cptw");*/
+
+	nurbs[0].loadNURBS("../out/nurbs/Scurve1.cpt");
+	nurbs[1].loadNURBS("../out/nurbs/Scurve2.cpt");
+	nurbs[2].loadNURBS("../out/nurbs/Scurve3.cpt");
+	nurbs[3].loadNURBS("../out/nurbs/Scurve4.cpt");
+	
 
 	nurbs[0].draw(Window::viewer, false);
 	nurbs[1].draw(Window::viewer, false);
 	nurbs[2].draw(Window::viewer, false);
 	nurbs[3].draw(Window::viewer, false);
 	
+	/*NURBSSurface surface;
+	surface.skinning(nurbs, Window::viewer);
+
+	surface.draw(Window::viewer, false);*/
+
+	/*Window w;
+	w.launch();*/
+
+
 	//Skinning* method = new MinJaeMethod(nurbs, 20, 50);
 	//Skinning* method = new PiaMethod(nurbs, 100);
-	//Skinning* method = new NasriMethod(nurbs);
+	Skinning* method = new NasriMethod(nurbs);
 	//Skinning* method = new OptMethod(nurbs);
-	Skinning* method = new PiaMinJaeMethod(nurbs, 20);
+	//Skinning* method = new PiaMinJaeMethod(nurbs, 20);
 	//Skinning* method = new PiaNasriMethod(nurbs, 100);
 
 	method->setViewer(&Window::viewer);

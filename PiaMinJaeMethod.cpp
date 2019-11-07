@@ -297,8 +297,10 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 	}
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 10;
-	const int u_sample_num = 10;
+	// others --> 10 , 10
+	// helicoidal --> 20, 20
+	const int v_sample_num = 20;
+	const int u_sample_num = 20;
 
 	VectorXd params = s_knots;
 	params(0) = 0; params(params.size() - 1) = 1;
@@ -317,7 +319,7 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 			points.row(j) = curves[j].eval(v);
 		}
 		sample_curves[i].interpolate(points, knots);
-		sample_curves[i].draw(*viewer, false, true, 0.001, blue);
+		//sample_curves[i].draw(*viewer, false, true, 0.001, blue);
 	}
 
 

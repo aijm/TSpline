@@ -4,10 +4,11 @@ int main(int argc,char** argv){
 	// surface skinning
 	//Test::test_circle_skinning();
 	//Test::test_venus_skinning();
-	//Test::test_venus_skinning_helper_points();
+	Test::test_venus_skinning_helper_points();
 	//Test::test_Bsurface_skinning();
 	//Test::test_chess_skinning();
 	//Test::test_ring_skinning();
+	//Test::test_helicoidal_skinning();
 
 	// volume skinning
 	//Test::test_sample_VolumeSkinning("tooth", 3);
@@ -21,7 +22,7 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning("isis", 5e-3);
 	//Test::test_VolumeSkinning("isis", 1e-2);
 	//Test::test_VolumeSkinning("moai", 0.04);
-	Test::test_VolumeSkinning("moai_fitbspline", 0.04);
+	//Test::test_VolumeSkinning("moai_fitbspline", 0.04);
 	//Test::test_VolumeSkinning("head", 0.01);
 
 
