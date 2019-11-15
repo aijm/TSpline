@@ -4,11 +4,14 @@ int main(int argc,char** argv){
 	// surface skinning
 	//Test::test_circle_skinning();
 	//Test::test_venus_skinning();
-	Test::test_venus_skinning_helper_points();
+	//Test::test_venus_skinning_helper_points();
 	//Test::test_Bsurface_skinning();
 	//Test::test_chess_skinning();
 	//Test::test_ring_skinning();
 	//Test::test_helicoidal_skinning();
+	Test::test_bonnet_skinning();
+	//Test::test_door_skinning();
+	//Test::test_face_skinning();
 
 	// volume skinning
 	//Test::test_sample_VolumeSkinning("tooth", 3);

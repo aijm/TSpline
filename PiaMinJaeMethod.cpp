@@ -188,8 +188,8 @@ void PiaMinJaeMethod::calculate()
 	fit();
 	pia();
 	update();
-	
-	for (int i = 0; i < 10; i++) {
+	// others --> 10
+	for (int i = 0; i < 20; i++) {
 		pia();
 		update();
 	}
@@ -299,8 +299,8 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 	// 纵向采样，拟合出一个B样条曲线
 	// others --> 10 , 10
 	// helicoidal --> 20, 20
-	const int v_sample_num = 20;
-	const int u_sample_num = 20;
+	const int v_sample_num = 40;
+	const int u_sample_num = 40;
 
 	VectorXd params = s_knots;
 	params(0) = 0; params(params.size() - 1) = 1;

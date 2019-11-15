@@ -27,6 +27,7 @@ public:
 	void param_helper_points(Point3d& low, Point3d& high);
 	void sample_fitPoints_2();
 	void sample_fitPoints_bvolume();
+	void sample_fitPoints_multiVolume();
 	void sample_fitPoints();
 	void fit();
 	void pia();

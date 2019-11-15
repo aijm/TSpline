@@ -40,6 +40,9 @@ public:
 	static void test_chess_skinning();
 	static void test_ring_skinning();
 	static void test_helicoidal_skinning();
+	static void test_bonnet_skinning();
+	static void test_door_skinning();
+	static void test_face_skinning();
 
 	// volume skinning
 	static void test_sample_VolumeSkinning(string modelname, double simplifyEps, int sample_num = 5, char dir = 'v');

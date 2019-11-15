@@ -344,6 +344,27 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 	}
 }
 
+void VolumePiaMethod::sample_fitPoints_multiVolume()
+{
+	// 分段优化生成Jacobian值全为正的B样条体，采样用于拟合的点
+	
+	const int x_points = 21;
+	const int y_points = 21;
+	//const int z_points = surfaces_num + 2;
+	const int z_points = 11;
+
+	const int v_sample_num = 30;
+	const int u_sample_num = 30;
+	const int w_sample_num = 30;
+
+	/*for (int i = 0; i < surfaces_num - 1; i++) {
+		
+	}*/
+
+
+
+}
+
 void VolumePiaMethod::sample_fitPoints()
 {
 	const int sampleNum = 10;
