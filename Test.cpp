@@ -1545,7 +1545,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].saveMesh(filename);*/
 		tsplines[i].setViewer(&Window::viewer);
-		tsplines[i].draw(false, false, true, 0.005);
+		tsplines[i].draw(false, false, true, 0.01);
 
 		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
 	}

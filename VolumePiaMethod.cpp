@@ -493,7 +493,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 			bvolumes[i].fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
 			//cout << "-----" << endl;
 		}
-		bvolumes[i].setReverse(true);
+		//bvolumes[i].setReverse(true);
 		bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
 		bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
 		const int v_sample_num = 30;
@@ -520,7 +520,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 		}
 		
 	}
-	/*MatrixXd p = MatrixXd::Zero(1, 3);
+	MatrixXd p = MatrixXd::Zero(1, 3);
 	for (int i = 0; i < surface_points.size(); i++) {
 		p.row(0) = surface_points[i].origin.toVectorXd().transpose();
 		viewer->data().add_points(p, red);
@@ -528,7 +528,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 	for (int i = 0; i < inter_points.size(); i++) {
 		p.row(0) = inter_points[i].origin.toVectorXd().transpose();
 		viewer->data().add_points(p, green);
-	}*/
+	}
 
 }
 

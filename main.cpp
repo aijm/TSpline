@@ -20,12 +20,12 @@ int main(int argc,char** argv){
 	//Test::test_sample_VolumeSkinning("isis", 1e-2);
 	//Test::test_sample_VolumeSkinning("moai", 0.04, 5, 'u');
 	//Test::test_sample_VolumeSkinning("head", 0.01);
-	//Test::test_VolumeSkinning("tooth", 3);
+	Test::test_VolumeSkinning("tooth", 3);
 	//Test::test_VolumeSkinning("venus", 3e-3);
 	//Test::test_VolumeSkinning("isis", 5e-3);
 	//Test::test_VolumeSkinning("isis", 1e-2);
 	//Test::test_VolumeSkinning("moai", 0.04);
-	Test::test_VolumeSkinning("moai_new", 0.04);
+	//Test::test_VolumeSkinning("moai_new", 0.04);
 	//Test::test_VolumeSkinning("moai_fitbspline", 0.04);
 	//Test::test_VolumeSkinning("Ssolid", 0.05);
 	//Test::test_VolumeSkinning("head", 0.01);
