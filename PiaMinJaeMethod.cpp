@@ -189,7 +189,8 @@ void PiaMinJaeMethod::calculate()
 	pia();
 	update();
 	// others --> 10
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 10; i++) {
+		fit();
 		pia();
 		update();
 	}
@@ -417,6 +418,7 @@ void PiaMinJaeMethod::sample_fitPoints()
 
 void PiaMinJaeMethod::pia()
 {
+	//cout << "after update: " << ", error: " << error << endl;
 	for (int i = 0; i < maxIterNum; i++) {
 		// 计算差向量并更新曲面控制点
 		for (auto node : tspline.nodes) {

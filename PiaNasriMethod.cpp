@@ -174,6 +174,7 @@ void PiaNasriMethod::calculate()
 	update();
 
 	for (int i = 0; i < 15; i++) {
+		fit();
 		pia();
 		update();
 	}

@@ -878,6 +878,8 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 	// tooth --> l = 2.0
 	// venus --> l = 0.001
 	// head --> 1
+	// moai --> 0.05
+	// moai_multiVolume
 	double l = 0.05;
 	cout << "l : "<< l << endl;
 	//os<<l<<std::endl;
@@ -885,6 +887,7 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 		for (int j = 1; j<y_points - 1; j++) {
 			for (int k = 1; k<z_points - 1; k++) {
 				control_grid[i][j][k] -= move_step[i][j][k]*l;
+				//cout << i << ", " << j << ", " << k << endl;
 				//os<<control_grid[i][j][k][0] <<" "<<control_grid[i][j][k][1] <<" "<<control_grid[i][j][k][2]<<std::endl;
 			}
 		}
@@ -899,7 +902,6 @@ void BsplineVolume::fitBsplineSolid(vector<FitPoint3D>& fit_points, int x_points
 double BsplineVolume::GetSoildFiterror(vector<FitPoint3D>& fit_points,
 	int x_points, int y_points, int z_points, double alpha, double delta) {
 	constructKnotVector(x_points, y_points, z_points);
-
 	double fiterror = 0;
 
 	if (matri.empty()) {
@@ -926,14 +928,20 @@ double BsplineVolume::GetSoildFiterror(vector<FitPoint3D>& fit_points,
 		Point3d phy_tet_pos = fit_points[pn].origin, phy_B_pos;
 		for (int i = Bi_start_index; i<Bi_start_index + 4; i++) {
 			for (int j = Bj_start_index; j<Bj_start_index + 4; j++) {
-				for (int k = Bk_start_index; k< Bk_start_index + 4; k++)
-					phy_B_pos += control_grid[i][j][k]*matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index];
+				for (int k = Bk_start_index; k < Bk_start_index + 4; k++) {
+					//cout << "---" << i << ", " << j << ", " << k << endl;
+					//cout << control_grid.size() << endl;
+					//cout << control_grid[0].size() << endl;
+					//cout << control_grid[0][0].size() << endl;
+					////cout << control_grid[i][j][k][0] << ", " << control_grid[i][j][k][1] << ", " << control_grid[i][j][k][2] << endl;
+					//cout << matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index] << endl;
+					phy_B_pos += control_grid[i][j][k] * matri[pn][i - Bi_start_index][j - Bj_start_index][k - Bk_start_index];
+				}
+					
 			}
 		}
-
 		fiterror += (phy_B_pos - phy_tet_pos).norm();
 	}
-
 	std::vector<Point3d> conex, coney, conez;
 	//求解出三个方向上圆锥的角度
 	int seg[]={x_points-1,y_points-1,z_points-1};

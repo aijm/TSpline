@@ -54,6 +54,7 @@ public:
 	static void test_TsplineVolume();
 	static void test_BsplineVolume(string modelname, double ratio = 0.01, bool reverse = false);
 	static void test_Mesh();
+	static void test_DrawMultiVolume();
 
 	// helper function
 	static void test_nurbscurve_interpolate_optimize();

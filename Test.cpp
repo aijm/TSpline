@@ -392,7 +392,9 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 	//string modelname = "tooth";
 	string prefix = "../out/nurbs/";
 	
-	int sample_num = 5;
+	// Ssolid --> 6
+	// others --> 5
+	int sample_num = 6;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
@@ -408,7 +410,10 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 		}
 
 	}
-
+	/*for (int i = 0; i <= sample_num; i++) {
+		nurbs[i].draw(Window::viewer, false, true, 0.01);
+		Window::viewer.data().add_label(nurbs[i].controlPw[i].row(0).transpose(), to_string(i));
+	}*/
 	vector<Mesh3d> tsplines(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
 		// venus_bspline.txt ---> 3e-3
@@ -426,9 +431,9 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
 	}
 
-	/*for (auto& surface : nurbs) {
-	surface.draw(Window::viewer, false, true);
-	}*/
+	///*for (auto& surface : nurbs) {
+	//surface.draw(Window::viewer, false, true);
+	//}*/
 	for (auto& data : Window::viewer.data_list) {
 		data.set_face_based(true);
 		data.show_lines = false;
@@ -439,7 +444,7 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 
 	int x_points = 21;
 	int y_points = 21;
-	int z_points = 11;
+	int z_points = sample_num + 3;
 
 	VectorXd knots(sample_num + 7);
 	knots(0) = 0; knots(1) = 0, knots(2) = 0;
@@ -469,6 +474,7 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 			}
 
 			sample_curves[i][j].interpolate(points, knots);
+			sample_curves[i][j].draw(Window::viewer, false, true, 0.01);
 			cout << "finished " << i << ", " << j << endl;
 		}
 	}
@@ -496,9 +502,9 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 	for (int i = 0; i < x_points; i++) {
 		for (int j = 0; j < y_points; j++) {
 			for (int k = 0; k < z_points; k++) {
-				//bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
-				double w = 1.0 * k / (z_points - 1);
-				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].eval(w));
+				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+				/*double w = 1.0 * k / (z_points - 1);
+				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].eval(w));*/
 			}
 		}
 	}
@@ -508,14 +514,14 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 	bvolume.lspia(fit_points, x_points, y_points, z_points, 10, 1e-12);
 
 
-	double alpha = 0.495;
+	/*double alpha = 0.495;
 	double delta = 0.495;
 	begin = clock();
 	for (int i = 0; i < 20; i++) {
 		double error = bvolume.GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
 		cout << "iter: " << i << ", error: " << error << endl;
 		bvolume.fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
-	}
+	}*/
 	bvolume.setReverse(true);
 	bvolume.saveVolume("../out/volume/" + modelname + "_fitbspline");
 	bvolume.saveAsHex("../out/volume/" + modelname + "_fitbspline", 0.01);
@@ -524,6 +530,8 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 	render.launch();
 	end = clock();
 	cout << "time passed: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
+	/*Window w;
+	w.launch();*/
 }
 
 void Test::test_nurbscurve_interpolate_optimize()
@@ -592,9 +600,9 @@ void Test::test_tspline_normal()
 *************************/
 void Test::test_getsurface_fromvolume()
 {
-	string modelname = "moai_fitbspline";
-	//string filename = "../out/volume/" + modelname + "_bspline.txt";
-	string filename = "../out/volume/" + modelname + ".vol";
+	string modelname = "moai_new";
+	string filename = "../out/volume/" + modelname + "_bspline.txt";
+	//string filename = "../out/volume/" + modelname + ".vol";
 	BsplineVolume volume;
 	volume.readVolume(filename);
 
@@ -607,8 +615,9 @@ void Test::test_getsurface_fromvolume()
 	for (int i = 0; i <= sample_num; i++) {
 		double param = 1.0*i / sample_num;
 		// moai --> 'u'
+		// moai_new --> 'u'
 		// moai_fitbspline --> 'w'
-		volume.get_isoparam_surface(nurbs[i], param, 'w');
+		volume.get_isoparam_surface(nurbs[i], param, 'u');
 		string filename = "../out/nurbs/" + modelname + "_" + to_string(i);
 		save_nurbs_surface(nurbs[i], filename);
 		//NurbsPia nurbsPia(nurbs[i], 20, 1e-5, 10);
@@ -1082,8 +1091,8 @@ void Test::test_bonnet_skinning()
 	surface.skinning(curves, Window::viewer);
 
 	surface.draw(Window::viewer, false);
-	surface.saveAsObj("../out/OBJ/bonnet_nurbs");*/
-	/*Window w;
+	surface.saveAsObj("../out/OBJ/bonnet_nurbs");
+	Window w;
 	w.launch();*/
 
 
@@ -1477,9 +1486,32 @@ void Test::test_Mesh() {
 
 }
 
+void Test::test_DrawMultiVolume()
+{
+	string prefix = "../out/volume/multiVolume_";
+	const int volume_nums = 5;
+	vector<BsplineVolume> volumes(volume_nums);
+	for (int i = 0; i < volume_nums; i++) {
+		volumes[i].readVolume(prefix + to_string(i) + ".vol");
+		volumes[i].setViewer(&Window::viewer);
+		volumes[i].setReverse(true);
+		volumes[i].draw(false, false, true, 0.01);
+	}
+	for (auto& data : Window::viewer.data_list) {
+		data.set_face_based(true);
+		data.show_lines = false;
+		data.invert_normals = true;
+	}
+	Window w;
+	w.launch();
+
+}
+
 void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 {
 	string prefix = "../out/nurbs/";
+	// Ssolid --> 6
+	// others --> 5
 	int sample_num = 5;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
@@ -1513,7 +1545,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].saveMesh(filename);*/
 		tsplines[i].setViewer(&Window::viewer);
-		tsplines[i].draw(false, false, true, 0.01);
+		tsplines[i].draw(false, false, true, 0.005);
 
 		Window::viewer.data_list[tsplines[i].id].set_colors(blue);
 	}
@@ -1534,7 +1566,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	// moai_fitbspline --> true
-	method->volume.setReverse(true);
+	method->volume.setReverse(false);
 	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
 	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
 	VolumeRender render(&method->volume, false, false, true, 0.01);

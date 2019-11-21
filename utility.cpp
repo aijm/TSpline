@@ -390,20 +390,26 @@ namespace t_mesh {
 				double error = (node->data - origin.s_map[u][v]->data).toVectorXd().norm();
 				
 				double factor = (max_curvature - curvature[u][v]) / (max_curvature - min_curvature);
+				//cout << "factor: " << factor << endl;
 				if (factor < 0.4) {
 					factor = 0.7*factor;
 				}
 				else {
 					factor = (1 + factor) / 2;
 				}
+				if (isnan(factor)) {
+					factor = 1.0;
+				}
 				factor = max(factor, 0.05);
-		
+				//cout << "factor: " << factor << endl;
 				if (error < factor*eps) {
 					continue;
 				}
 				auto rects = tspline.region(u, v);
 				
 				for (auto rect : rects) {
+					//cout << "error: " << error << ", factor*eps: " << error - factor*eps << endl;
+					
 					regions.push_back(make_pair(rect, error - factor*eps));
 				}	
 			}

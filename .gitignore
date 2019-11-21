@@ -1,6 +1,8 @@
 # files
-*.jac
-*.hex
+out/volume/*.jac
+out/volume/*.hex
+out/volume/*.vol
+.vs
 TetProcess.h
 # Compiled Object files
 *.slo

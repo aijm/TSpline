@@ -9,7 +9,7 @@ int main(int argc,char** argv){
 	//Test::test_chess_skinning();
 	//Test::test_ring_skinning();
 	//Test::test_helicoidal_skinning();
-	Test::test_bonnet_skinning();
+	//Test::test_bonnet_skinning();
 	//Test::test_door_skinning();
 	//Test::test_face_skinning();
 
@@ -25,7 +25,9 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning("isis", 5e-3);
 	//Test::test_VolumeSkinning("isis", 1e-2);
 	//Test::test_VolumeSkinning("moai", 0.04);
+	Test::test_VolumeSkinning("moai_new", 0.04);
 	//Test::test_VolumeSkinning("moai_fitbspline", 0.04);
+	//Test::test_VolumeSkinning("Ssolid", 0.05);
 	//Test::test_VolumeSkinning("head", 0.01);
 
 
@@ -39,13 +41,17 @@ int main(int argc,char** argv){
 	//Test::test_BsplineVolume("isis", 0.01, true);
 	//Test::test_BsplineVolume("head", 0.02, true);
 	//Test::test_BsplineVolume("head", 0.02, true);
+	//Test::test_BsplineVolume("multiVolume_4", 0.02, true);
+	//Test::test_BsplineVolume("moai_new", 0.02, true);
 	//Test::test_Mesh();
+	//Test::test_DrawMultiVolume();
 
 	// helper function
 	//Test::test_nurbscurve_interpolate_optimize();
 	//Test::test_tspline_normal();
 	//Test::test_getsurface_fromvolume();
 
+	//Test::test_fitbsplinesolid("Ssolid", 0.05);
 	//Test::test_fitbsplinesolid("moai_fitbspline", 0.04);
 	//Test::test_sample_fitbsplinesolid("moai", 0.04);
 	//Test::test_Nurbs_curvature();

@@ -130,11 +130,14 @@ int Volume::saveAsHex(string filename, double resolution)
 		out << endl;
 	}
 	sort(jacobian.begin(), jacobian.end());
+	double avg = accumulate(jacobian.begin(), jacobian.end(), 0.0) / jacobian.size();
 	out1 << "# jacobian value" << endl;
 	out1 << "min: " << jacobian.front() << endl;
 	out1 << "max: " << jacobian.back() << endl;
+	out1 << "avg: " << avg << endl;
 	cout << "minJacobian: " << jacobian.front() << endl;
 	cout << "maxJacobian: " << jacobian.back() << endl;
+	cout << "avgJacobian: " << avg << endl;
 
 	for (const auto& v : jacobian) {
 		out1 << v << endl;
