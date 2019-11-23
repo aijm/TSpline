@@ -504,7 +504,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 			bvolumes[i].fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
 			//cout << "-----" << endl;
 		}
-		bvolumes[i].setReverse(true);
+		//bvolumes[i].setReverse(true);
 		bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
 		bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
 		const int v_sample_num = 20;

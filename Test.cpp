@@ -1566,7 +1566,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	// moai_fitbspline --> true
-	method->volume.setReverse(true);
+	//method->volume.setReverse(true);
 	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
 	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
 	VolumeRender render(&method->volume, false, false, true, 0.01);
