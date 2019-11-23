@@ -178,9 +178,9 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 	const int z_points = surfaces_num + 2;
 	//const int z_points = 11;
 
-	const int v_sample_num = 30;
-	const int u_sample_num = 30;
-	const int w_sample_num = 30;
+	const int v_sample_num = 20;
+	const int u_sample_num = 20;
+	const int w_sample_num = 20;
 
 	VectorXd params = w_params;
 	params(0) = 0; params(params.size() - 1) = 1;
@@ -343,11 +343,21 @@ void VolumePiaMethod::sample_fitPoints_bvolume()
 			}
 		}
 	}
+
+	MatrixXd p = MatrixXd::Zero(1, 3);
+	for (int i = 0; i < surface_points.size(); i++) {
+		p.row(0) = surface_points[i].origin.toVectorXd().transpose();
+		viewer->data().add_points(p, red);
+	}
+	for (int i = 0; i < inter_points.size(); i++) {
+		p.row(0) = inter_points[i].origin.toVectorXd().transpose();
+		viewer->data().add_points(p, green);
+	}
 }
 
 void VolumePiaMethod::sample_fitPoints_multiVolume()
 {
-	const int sampleNum = 30;
+	const int sampleNum = 20;
 	for (int i = 0; i < surfaces_num; i++) {
 
 		for (int j = 0; j <= sampleNum; j++) {
@@ -396,19 +406,19 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 		}
 	}
 
-	BsplineVolume sample_volume;
-	sample_volume.control_grid = vector<vector<vector<Point3d>>>(xx_points, vector<vector<Point3d>>(yy_points, vector<Point3d>(zz_points)));
-	sample_volume.constructKnotVector(xx_points, yy_points, zz_points);
-	for (int i = 0; i < xx_points; i++) {
-		for (int j = 0; j < yy_points; j++) {
-			for (int k = 0; k < zz_points; k++) {
-				sample_volume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
-				/*double w = 1.0 * k / (z_points - 1);
-				bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].eval(w));*/
-			}
-		}
-	}
-	cout << "generating interpolate bspline volume has finished" << endl;
+	//BsplineVolume sample_volume;
+	//sample_volume.control_grid = vector<vector<vector<Point3d>>>(xx_points, vector<vector<Point3d>>(yy_points, vector<Point3d>(zz_points)));
+	//sample_volume.constructKnotVector(xx_points, yy_points, zz_points);
+	//for (int i = 0; i < xx_points; i++) {
+	//	for (int j = 0; j < yy_points; j++) {
+	//		for (int k = 0; k < zz_points; k++) {
+	//			sample_volume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].controlPw.row(k).transpose());
+	//			/*double w = 1.0 * k / (z_points - 1);
+	//			bvolume.control_grid[i][j][k].fromVectorXd(sample_curves[i][j].eval(w));*/
+	//		}
+	//	}
+	//}
+	//cout << "generating interpolate bspline volume has finished" << endl;
 	// 分段优化生成Jacobian值全为正的B样条体，采样用于拟合的点
 	
 	const int x_points = 21;
@@ -435,12 +445,13 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 					fit_point.param[0] = u;
 					fit_point.param[1] = v;
 					fit_point.param[2] = w;
-					fit_point.origin = sample_volume.eval(u, v, real_w);
+					fit_point.origin.fromVectorXd(sample_curves[j][k].eval(real_w).row(0).transpose());
 					bvolumes[i].control_grid[j][k][ii] = fit_point.origin;
 					fit_points.push_back(fit_point);
 				}	
 			}
 		}
+		
 		//for (int j = 0; j < x_points; j++) {
 		//	for (int k = 0; k < y_points; k++) {
 		//		double u = 1.0 * j / (x_points - 1);
@@ -493,11 +504,11 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 			bvolumes[i].fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
 			//cout << "-----" << endl;
 		}
-		//bvolumes[i].setReverse(true);
+		bvolumes[i].setReverse(true);
 		bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
 		bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
-		const int v_sample_num = 30;
-		const int u_sample_num = 30;
+		const int v_sample_num = 20;
+		const int u_sample_num = 20;
 		const int w_sample_num = 6;
 		for (int ii = 1; ii <= w_sample_num - 1; ii++) {
 			for (int jj = 0; jj <= u_sample_num; jj++) {
@@ -520,7 +531,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 		}
 		
 	}
-	MatrixXd p = MatrixXd::Zero(1, 3);
+	/*MatrixXd p = MatrixXd::Zero(1, 3);
 	for (int i = 0; i < surface_points.size(); i++) {
 		p.row(0) = surface_points[i].origin.toVectorXd().transpose();
 		viewer->data().add_points(p, red);
@@ -528,7 +539,7 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 	for (int i = 0; i < inter_points.size(); i++) {
 		p.row(0) = inter_points[i].origin.toVectorXd().transpose();
 		viewer->data().add_points(p, green);
-	}
+	}*/
 
 }
 
