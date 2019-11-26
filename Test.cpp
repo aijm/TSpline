@@ -1512,7 +1512,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	string prefix = "../out/nurbs/";
 	// Ssolid --> 6
 	// others --> 5
-	int sample_num = 5;
+	int sample_num = 6;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
 		
@@ -1571,7 +1571,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	// moai_fitbspline --> true
-	//method->volume.setReverse(true);
+	method->volume.setReverse(true);
 	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
 	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
 	VolumeRender render(&method->volume, false, false, true, 0.01);
