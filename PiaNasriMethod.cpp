@@ -169,39 +169,47 @@ void PiaNasriMethod::calculate()
 	sample_fitPoints_2();
 	fitPoints = curve_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
+
+	update();
+	fit();
+	cout << error << " " << "update" << endl;
+
 	fit();
 	pia();
 	update();
+	cout << error << " " << "update" << endl;
 
-	for (int i = 0; i < 15; i++) {
+	for (int i = 0; i < 19; i++) {
 		fit();
 		pia();
 		update();
+		fit();
+		cout << error << " " << "update" << endl;
 	}
 
-	for (int j = 0; j < 5; j++) {
-		auto grid = param_helper_points(); // 辅助点参数化
-		t_mesh::Array<double, 2> low;
-		t_mesh::Array<double, 2> high;
-		low[0] = std::get<0>(grid); high[0] = std::get<1>(grid);
-		low[1] = std::get<2>(grid); high[1] = std::get<3>(grid);
-		//fitPoints = curve_points;
-		fitPoints.clear();
-		fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
-		for (auto point : inter_points) {
-			if (!point.inRectangle(low, high)) {
-				fitPoints.push_back(point);
-			}
-		}
-		for (auto point : curve_points) {
-			if (!point.inRectangle(low, high)) {
-				fitPoints.push_back(point);
-			}
-		}
-		fit();
-		pia();
-	}
-	update();
+	//for (int j = 0; j < 5; j++) {
+	//	auto grid = param_helper_points(); // 辅助点参数化
+	//	t_mesh::Array<double, 2> low;
+	//	t_mesh::Array<double, 2> high;
+	//	low[0] = std::get<0>(grid); high[0] = std::get<1>(grid);
+	//	low[1] = std::get<2>(grid); high[1] = std::get<3>(grid);
+	//	//fitPoints = curve_points;
+	//	fitPoints.clear();
+	//	fitPoints.insert(fitPoints.end(), helper_points.begin(), helper_points.end());
+	//	for (auto point : inter_points) {
+	//		if (!point.inRectangle(low, high)) {
+	//			fitPoints.push_back(point);
+	//		}
+	//	}
+	//	for (auto point : curve_points) {
+	//		if (!point.inRectangle(low, high)) {
+	//			fitPoints.push_back(point);
+	//		}
+	//	}
+	//	fit();
+	//	pia();
+	//}
+	//update();
 
 }
 
@@ -420,10 +428,27 @@ void PiaNasriMethod::pia()
 			node->data.add(sum2); // 更新坐标	
 		}
 
-		fit();
-		cout << "iter: " << i + 1 << ", error: " << error << endl;
-		if (error < eps) {
-			break;
+		//fit();
+		//cout << "iter: " << i + 1 << ", error: " << error << endl;
+		//if (error < eps) {
+		//	break;
+		//}
+
+		double pre_error, precise;
+		if (i == 0)
+		{
+			fit();
+			pre_error = error;
+			cout << error << endl;
+		}
+		else
+		{
+			fit();
+			precise = fabs(pre_error / error - 1);
+			pre_error = error;
+			cout << error << endl;
+			if (precise < 0.0001)
+				break;
 		}
 
 	}

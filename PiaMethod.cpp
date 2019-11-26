@@ -111,9 +111,10 @@ void PiaMethod::fit()
 	for (FitPoint2D& point : fitPoints) {
 		point.eval = tspline.eval(point.param[0], point.param[1]);
 		point.error = point.geterror();
-		error += point.error;
+		error += point.error * point.error;
 	}
-	error /= fitPoints.size();
+	//error /= fitPoints.size();
+	error = sqrt(error);
 }
 
 void PiaMethod::pia()
@@ -142,7 +143,8 @@ void PiaMethod::pia()
 		}
 
 		fit();
-		cout << "iter: " << i + 1 << ", error: " << error << endl;
+		//cout << "iter: " << i + 1 << ", error: " << error << endl;
+		cout << error << endl;
 		if (error < eps) {
 			break;
 		}

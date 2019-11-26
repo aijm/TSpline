@@ -118,7 +118,7 @@ void Skinning::basis_split(const map<double, Node<Point3d>*>& fewer_map, const m
 			}
 			//bug: split_pool should be cleared
 			split_pool.clear();
-			cout << "split_pool size: " << split_pool.size() << endl;
+			//cout << "split_pool size: " << split_pool.size() << endl;
 		}
 	}
 

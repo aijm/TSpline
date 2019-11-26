@@ -871,8 +871,8 @@ void Test::test_ring_skinning()
 	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	Skinning* method = new PiaMinJaeMethod(curves, 20);
-	//Skinning* method = new PiaNasriMethod(curves, 20);
+	//Skinning* method = new PiaMinJaeMethod(curves, 20);
+	Skinning* method = new PiaNasriMethod(curves, 20);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
@@ -1540,10 +1540,15 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		// isis_bspline.txt --> 5e-3, 1e-2
 		//string filename_b = "../out/OBJ/" + modelname + "_nurbs_" + to_string(i);
 		//nurbs[i].saveAsObj(filename_b);
-		TsplineSimplify(nurbs[i], tsplines[i], 20, simpilifyEps);
+		/*TsplineSimplify(nurbs[i], tsplines[i], 20, simpilifyEps);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
-		/*string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
+		string filename = "../out/tspline/" + modelname + "_" + to_string(i);
 		tsplines[i].saveMesh(filename);*/
+
+		string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
+		tsplines[i].loadMesh(filename);
+		cout << "number of nodes: " << tsplines[i].get_num() << endl;
+
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
 
