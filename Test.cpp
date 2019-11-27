@@ -1436,8 +1436,8 @@ void Test::test_nurbs()
 
 void Test::test_TsplineVolume() {
 	TsplineVolume* volume = new TsplineVolume();
-	volume->readVolume("../out/volume/tooth_skinning.vol");
-	
+	volume->readVolume("../out/volume/moai_new_skinning.vol");
+	volume->setReverse(true);
 	VolumeRender render(volume, false, false, true, 0.01);
 	begin = clock();
 	render.launch();
@@ -1491,7 +1491,7 @@ void Test::test_DrawMultiVolume()
 	string prefix = "../out/volume/multiVolume_";
 	const int volume_nums = 5;
 	vector<BsplineVolume> volumes(volume_nums);
-	for (int i = 0; i < volume_nums; i++) {
+	for (int i = 4; i < volume_nums; i++) {
 		volumes[i].readVolume(prefix + to_string(i) + ".vol");
 		volumes[i].setViewer(&Window::viewer);
 		volumes[i].setReverse(true);
@@ -1512,7 +1512,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	string prefix = "../out/nurbs/";
 	// Ssolid --> 6
 	// others --> 5
-	int sample_num = 6;
+	int sample_num = 5;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
 		
@@ -1566,7 +1566,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	VolumeSkinning* method = new VolumePiaMethod(tsplines, 20, 1e-6);
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 10, 1e-6);
 	//VolumeSkinning* method = new VolumeSkinning(tsplines);
 	method->setViewer(&Window::viewer);
 	method->calculate();

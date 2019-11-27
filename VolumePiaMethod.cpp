@@ -19,7 +19,7 @@ void VolumePiaMethod::calculate()
 	update();
 	cout << "finished update() " << endl;
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 20; i++) {
 		fit();
 		cout << "finished fit() " << endl;
 		pia();
@@ -507,10 +507,21 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 		bvolumes[i].setReverse(true);
 		bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
 		bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
-		const int v_sample_num = 20;
-		const int u_sample_num = 20;
-		const int w_sample_num = 6;
-		for (int ii = 1; ii <= w_sample_num - 1; ii++) {
+		//bvolumes[i].readVolume("../out/volume/multiVolume_" + to_string(i) + ".vol");
+		int v_sample_num = 20;
+		int u_sample_num = 20;
+		int w_sample_num = 4;
+
+		if (i == 4) {
+			v_sample_num = 20;
+			u_sample_num = 20;
+			w_sample_num = 3;
+		}
+		int end = w_sample_num - 1;
+		/*if (i == surfaces_num - 2) {
+			end = w_sample_num;
+		}*/
+		for (int ii = 1; ii <= end; ii++) {
 			for (int jj = 0; jj <= u_sample_num; jj++) {
 				for (int kk = 0; kk <= v_sample_num; kk++) {
 					/*cout << "-----------------------" << endl;*/

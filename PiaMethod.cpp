@@ -114,7 +114,7 @@ void PiaMethod::fit()
 		error += point.error * point.error;
 	}
 	//error /= fitPoints.size();
-	error = sqrt(error);
+	//error = sqrt(error);
 }
 
 void PiaMethod::pia()
