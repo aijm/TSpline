@@ -104,6 +104,162 @@ int TsplineVolume::get_num() const
 	return num;
 }
 
+void TsplineVolume::drawParamCurve()
+{
+	string filename = "../out/OBJ/edges.obj";
+	ofstream out(filename);
+	if (!out.is_open()) {
+		cout << "failed to open file: " + filename << endl;
+		return;
+	}
+
+	assert(viewer != NULL);
+	const int samples = 5;
+	
+	Eigen::MatrixXd points;
+
+	for (auto w_it = w_map.begin(); w_it != w_map.end(); w_it++) {
+		cout << "----" << endl;
+		double w = w_it->first;
+		if (w == 0.0 || w == 1.0) {
+			continue;
+		}
+		if (w == 0.0001) {
+			w = 0.0;
+		}
+		if (w == 0.9999) {
+			w = 1.0;
+		}
+		Mesh3d* tmesh = w_it->second;
+
+
+		auto nodes = tmesh->nodes;
+
+		// nodes of one layer
+		for (int i = 0; i < nodes.size(); i++) {
+			double u = nodes[i]->s[2];
+			double v = nodes[i]->t[2];
+			bool valid = (u == 0.0 || u == 1.0) && v != 0.0001 && v != 0.9999;
+			valid = valid || ((v == 0.0 || v == 1.0) && u != 0.0001 && u != 0.9999);
+
+			// if a node of current layer has the same (u, v) of the next layer, connect them
+			if (valid && next(w_it) != w_map.end()) {
+				double w_next = next(w_it)->first; // w value of the next layer
+				Mesh3d* tmesh_next = next(w_it)->second; // mesh of the next layer 
+				auto node_next = tmesh_next->get_node(u, v);
+				if (w_next == 0.9999) {
+					w_next = 1.0;
+				}
+				if (node_next != NULL) {
+					vector<Point3d> points(samples + 1);
+					out << samples << endl;
+					for (int i = 0; i <= samples; i++) {
+						double w_val = w + 1.0 * i * (w_next - w) / samples;
+						points[i] = eval(u, v, w_val);
+						out << points[i][0] << " " << points[i][1] << " " << points[i][2] << endl;
+					}
+					for (int i = 0; i < samples; i++) {
+						MatrixXd point1 = MatrixXd::Zero(1, 3);
+						MatrixXd point2 = MatrixXd::Zero(1, 3);
+						point1.row(0) = points[i].toVectorXd().transpose();
+						point2.row(0) = points[i + 1].toVectorXd().transpose();
+						(*viewer).data().add_edges(point1, point2, green);
+					}
+					
+				}
+			}
+			
+
+		}
+		for (auto iter = tmesh->s_map.begin(); iter != tmesh->s_map.end(); ++iter) {
+			if (iter->first == 0.0 || iter->first == 1.0) {
+				continue;
+			}
+			for (auto iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
+				if ((iter1->second)->adj[2]) {
+					double s = iter->first;
+					if (s == 0.0001) {
+						s = 0.0;
+					}
+					if (s == 0.9999) {
+						s = 1.0;
+					}
+					double t = iter1->first;
+					double t_next = (iter1->second)->adj[2]->t[2];
+					if (t == 0.0 || t == 0.9999) {
+						continue;
+					}
+					if (t == 0.0001) {
+						t = 0.0;
+					}
+					if (t_next == 0.9999) {
+						t_next = 1.0;
+					}
+					vector<Point3d> points(samples + 1);
+					out << samples << endl;
+					for (int i = 0; i <= samples; i++) {
+						double t_val = t + 1.0 * i * (t_next - t) / samples;
+						points[i] = eval(s, t_val, w);
+						out << points[i][0] << " " << points[i][1] << " " << points[i][2] << endl;
+					}
+					for (int i = 0; i < samples; i++) {
+						//cout << "t1, t2: " << t1 << ", " << t2 << endl;
+ 						MatrixXd point1 = MatrixXd::Zero(1, 3);
+						MatrixXd point2 = MatrixXd::Zero(1, 3);
+						point1.row(0) = points[i].toVectorXd().transpose();
+						point2.row(0) = points[i + 1].toVectorXd().transpose();
+						(*viewer).data().add_edges(point1, point2, white);
+					}
+				}
+			}
+		}
+		for (auto iter = tmesh->t_map.begin(); iter != tmesh->t_map.end(); ++iter) {
+			if (iter->first == 0.0 || iter->first == 1.0) {
+				continue;
+			}
+			for (auto iter1 = (iter->second).begin(); iter1 != (iter->second).end(); ++iter1) {
+				if ((iter1->second)->adj[1]) {
+					double t = iter->first;
+					if (t == 0.0001) {
+						t = 0.0;
+					}
+					if (t == 0.9999) {
+						t = 1.0;
+					}
+					double s = iter1->first;
+					double s_next = (iter1->second)->adj[1]->s[2];
+					if (s == 0.0 || s == 0.9999) {
+						continue;
+					}
+					if (s == 0.0001) {
+						s = 0.0;
+					}
+					if (s_next == 0.9999) {
+						s_next = 1.0;
+					}
+					vector<Point3d> points(samples + 1);
+					out << samples << endl;
+					for (int i = 0; i <= samples; i++) {
+						double s_val = s + 1.0 * i * (s_next - s) / samples;
+						points[i] = eval(s_val, t, w);
+						out << points[i][0] << " " << points[i][1] << " " << points[i][2] << endl;
+					}
+					for (int i = 0; i < samples; i++) {
+						double s1 = s + 1.0 * i * (s_next - s) / samples;
+						double s2 = s + 1.0 * (i + 1) * (s_next - s) / samples;
+						MatrixXd point1 = MatrixXd::Zero(1, 3);
+						MatrixXd point2 = MatrixXd::Zero(1, 3);
+						point1.row(0) = points[i].toVectorXd().transpose();
+						point2.row(0) = points[i + 1].toVectorXd().transpose();
+						(*viewer).data().add_edges(point1, point2, blue);
+					}
+					
+				}
+			}
+		}
+	}
+}
+
 void TsplineVolume::drawTmesh()
 {
 	assert(viewer != NULL); // use setViewer(Viewer* viewer)

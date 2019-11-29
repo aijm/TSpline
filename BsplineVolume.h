@@ -103,6 +103,7 @@ public:
 private:
 	void drawTmesh() override;
 	void drawControlpolygon() override;
+	void drawParamCurve() override;
 
 public:
 	vector<vector<vector<Point3d>>> control_grid;

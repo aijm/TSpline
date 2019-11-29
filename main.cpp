@@ -25,7 +25,7 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning("isis", 5e-3);
 	//Test::test_VolumeSkinning("isis", 1e-2);
 	//Test::test_VolumeSkinning("moai", 0.04);
-	Test::test_VolumeSkinning("moai_new", 0.03);
+	//Test::test_VolumeSkinning("moai_new", 0.03);
 	//Test::test_VolumeSkinning("moai_fitbspline", 0.04);
 	//Test::test_VolumeSkinning("Ssolid", 0.05);
 	//Test::test_VolumeSkinning("head", 0.01);
@@ -33,7 +33,9 @@ int main(int argc,char** argv){
 
 	// draw curve, surface, volume
 	//Test::test_nurbs();
-	//Test::test_TsplineVolume();
+	//Test::test_TsplineVolume("tooth", false);
+	//Test::test_TsplineVolume("Ssolid", true);
+	Test::test_TsplineVolume("moai_new", true);
 	//Test::test_BsplineVolume("tooth", 0.01, true);
 	//Test::test_BsplineVolume("venus", 0.01, true);
 	//Test::test_BsplineVolume("moai", 0.02, true);
@@ -60,7 +62,7 @@ int main(int argc,char** argv){
 	
 	//Test::test_load_nurbs_surface();
 	//Test::test_save_nurbs_surface();
-
+	//Test::test_save_quadObj();
 	//Test::test_DerOfNurbs();
 	//Test::test_Lspia();
 	//Test::test_Array();

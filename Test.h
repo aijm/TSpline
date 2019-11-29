@@ -51,7 +51,7 @@ public:
 
 	// draw curve, surface, volume
 	static void test_nurbs();
-	static void test_TsplineVolume();
+	static void test_TsplineVolume(const string& modelname, bool reverse = false);
 	static void test_BsplineVolume(string modelname, double ratio = 0.01, bool reverse = false);
 	static void test_Mesh();
 	static void test_DrawMultiVolume();
@@ -70,6 +70,7 @@ public:
 	static void save_nurbs_surface(const NURBSSurface& surface, string filename);
 	static void test_load_nurbs_surface();
 	static void test_save_nurbs_surface();
+	static void test_save_quadObj();
 
 	static void test_DerOfNurbs();
 	static void test_Lspia();

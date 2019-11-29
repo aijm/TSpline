@@ -1170,3 +1170,8 @@ void BsplineVolume::drawControlpolygon()
 	(*viewer).core.align_camera_center(points);
 
 }
+
+void BsplineVolume::drawParamCurve()
+{
+	cout << "to be continued..." << endl;
+}

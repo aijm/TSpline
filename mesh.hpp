@@ -26,6 +26,7 @@ namespace t_mesh{
             int saveMesh(string);
 			ostream& saveMesh(ostream&);
 			void saveAsObj(string, double resolution=0.01);
+			void saveAsQuadObj(string, double resolution = 0.01);
 			T eval(double s,double t);
 			vector<std::tuple<double, double, double, double>> region(double u, double v);
 			void draw(bool tmesh, bool polygon, bool surface,double resolution = 0.01);
@@ -850,8 +851,8 @@ namespace t_mesh{
 			const int vspan = (v_high - v_low) / resolution;
 			double v_resolution = (v_high - v_low) / vspan;
 			cout << "v_low: " << v_low << ", v_high: " << v_high << endl;
-			mesh_V = Eigen::MatrixXd((uspan + 1)*(vspan + 1), 3);
-			mesh_F = Eigen::MatrixXi(2 * uspan*vspan, 3);
+			MatrixXd V = Eigen::MatrixXd((uspan + 1)*(vspan + 1), 3);
+			MatrixXi F = Eigen::MatrixXi(2 * uspan*vspan, 3);
 			// discretize T-Spline Surface into triangular mesh(V,F) in libigl mesh structure
 			// calculate 
 
@@ -861,18 +862,63 @@ namespace t_mesh{
 					double u = u_low + i*u_resolution;
 					double v = v_low + j*v_resolution;
 					array2matrixd(eval(u_low + i*u_resolution, v_low + j*v_resolution), curvePoint);
-					mesh_V.row(j*(uspan + 1) + i) = curvePoint;
+					V.row(j*(uspan + 1) + i) = curvePoint;
 				}
 
 			for (int j = 0; j<vspan; j++)
 				for (int i = 0; i < uspan; i++) {
 					int V_index = j*(uspan + 1) + i;
 					int F_index = 2 * j*uspan + 2 * i;
-					mesh_F.row(F_index) << V_index, V_index + 1, V_index + uspan + 1;
-					mesh_F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
+					F.row(F_index) << V_index, V_index + 1, V_index + uspan + 1;
+					F.row(F_index + 1) << V_index + uspan + 1, V_index + 1, V_index + uspan + 2;
 				}
 
-			igl::writeOBJ(filename, mesh_V, mesh_F);
+			igl::writeOBJ(filename, V, F);
+		}
+
+		template<class T>
+		inline void Mesh<T>::saveAsQuadObj(string filename, double resolution)
+		{
+			filename += ".obj";
+			ofstream out(filename);
+			if (!out.is_open()) {
+				cout << "error, can't open file: " << filename << endl;
+				return;
+			}
+
+			double u_low = s_map.begin()->first;
+			double u_high = s_map.rbegin()->first;
+
+			cout << "u_low: " << u_low << ", u_high: " << u_high << endl;
+			const int uspan = (u_high - u_low) / resolution;
+			double u_resolution = (u_high - u_low) / uspan;
+			double v_low = t_map.begin()->first;
+			double v_high = t_map.rbegin()->first;
+			const int vspan = (v_high - v_low) / resolution;
+			double v_resolution = (v_high - v_low) / vspan;
+			cout << "v_low: " << v_low << ", v_high: " << v_high << endl;
+			MatrixXd V = Eigen::MatrixXd((uspan + 1)*(vspan + 1), 3);
+			MatrixXi F = Eigen::MatrixXi(uspan*vspan, 4);
+			// discretize T-Spline Surface into triangular mesh(V,F) in libigl mesh structure
+			// calculate 
+
+			for (int j = 0; j <= vspan; j++)
+				for (int i = 0; i <= uspan; i++) {
+					Eigen::MatrixXd curvePoint;
+					double u = u_low + i*u_resolution;
+					double v = v_low + j*v_resolution;
+					array2matrixd(eval(u_low + i*u_resolution, v_low + j*v_resolution), curvePoint);
+					V.row(j*(uspan + 1) + i) = curvePoint;
+				}
+
+			for (int j = 0; j<vspan; j++)
+				for (int i = 0; i < uspan; i++) {
+					int V_index = j*(uspan + 1) + i;
+					int F_index = j*uspan + i;
+					F.row(F_index) << V_index, V_index + 1, V_index + uspan + 2, V_index + uspan + 1;
+				}
+
+			igl::writeOBJ(filename, V, F);
 		}
 
     template<class T>

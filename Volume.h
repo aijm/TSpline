@@ -23,6 +23,7 @@ public:
 protected:
 	virtual void drawTmesh() = 0;
 	virtual void drawControlpolygon() = 0;
+	virtual void drawParamCurve() = 0;
 	virtual void drawVolume(double resolution = 0.01);
 
 protected:

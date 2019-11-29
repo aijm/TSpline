@@ -743,6 +743,13 @@ void Test::test_save_nurbs_surface()
 	w.launch();
 }
 
+void Test::test_save_quadObj()
+{
+	Mesh3d mesh;
+	mesh.loadMesh("../out/tspline/moai_new_5.cfg");
+	mesh.saveAsQuadObj("../out/OBJ/moai_new_5_quad");
+}
+
 /**
    Æå×ÓÃÉÆ¤
 */
@@ -871,8 +878,8 @@ void Test::test_ring_skinning()
 	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
 	//Skinning* method = new OptMethod(curves);
-	//Skinning* method = new PiaMinJaeMethod(curves, 20);
-	Skinning* method = new PiaNasriMethod(curves, 20);
+	Skinning* method = new PiaMinJaeMethod(curves, 20);
+	//Skinning* method = new PiaNasriMethod(curves, 20);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
@@ -1434,11 +1441,13 @@ void Test::test_nurbs()
 	
 }
 
-void Test::test_TsplineVolume() {
+void Test::test_TsplineVolume(const string& modelname, bool reverse) {
 	TsplineVolume* volume = new TsplineVolume();
-	volume->readVolume("../out/volume/moai_new_skinning.vol");
-	volume->setReverse(true);
+	volume->readVolume("../out/volume/" + modelname + "_skinning.vol");
+	volume->setReverse(reverse);
+	//volume->saveAsHex("../out/volume/" + modelname + "_skinning_002", 0.02);
 	VolumeRender render(volume, false, false, true, 0.01);
+	cout << "num of control points: " << volume->get_num() << endl;
 	begin = clock();
 	render.launch();
 	end = clock();
@@ -1548,7 +1557,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].loadMesh(filename);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
-
+		tsplines[i].saveAsQuadObj("../out/OBJ/" + modelname + "_" + to_string(i) + "_quad", 0.02);
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
 
@@ -1566,21 +1575,21 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	VolumeSkinning* method = new VolumePiaMethod(tsplines, 10, 1e-6);
-	//VolumeSkinning* method = new VolumeSkinning(tsplines);
-	method->setViewer(&Window::viewer);
-	method->calculate();
-	// moai_fitbspline --> true
-	method->volume.setReverse(true);
-	method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
-	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
-	VolumeRender render(&method->volume, false, false, true, 0.01);
-	begin = clock();
-	render.launch();
-	end = clock();
-	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
-	/*Window w;
-	w.launch();*/
+	//VolumeSkinning* method = new VolumePiaMethod(tsplines, 10, 1e-6);
+	////VolumeSkinning* method = new VolumeSkinning(tsplines);
+	//method->setViewer(&Window::viewer);
+	//method->calculate();
+	//// moai_fitbspline --> true
+	//method->volume.setReverse(true);
+	//method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
+	//method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
+	//VolumeRender render(&method->volume, false, false, true, 0.01);
+	//begin = clock();
+	//render.launch();
+	//end = clock();
+	//cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
+	Window w;
+	w.launch();
 }
 
 void Test::test_circle_skinning()
@@ -1683,6 +1692,9 @@ void Test::test_Lspia() {
 	w.launch();
 }
 void Test::test_Array() {
+	MatrixXd C;
+	cout << C.rows() << endl;
+
 	t_mesh::Array<double, 5> A;
 	A.input(cin);
 	A = 2.0*A;
