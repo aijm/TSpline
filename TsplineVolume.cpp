@@ -163,7 +163,7 @@ void TsplineVolume::drawParamCurve()
 						MatrixXd point2 = MatrixXd::Zero(1, 3);
 						point1.row(0) = points[i].toVectorXd().transpose();
 						point2.row(0) = points[i + 1].toVectorXd().transpose();
-						(*viewer).data().add_edges(point1, point2, green);
+						(*viewer).data().add_edges(point1, point2, black);
 					}
 					
 				}
@@ -208,7 +208,7 @@ void TsplineVolume::drawParamCurve()
 						MatrixXd point2 = MatrixXd::Zero(1, 3);
 						point1.row(0) = points[i].toVectorXd().transpose();
 						point2.row(0) = points[i + 1].toVectorXd().transpose();
-						(*viewer).data().add_edges(point1, point2, white);
+						(*viewer).data().add_edges(point1, point2, black);
 					}
 				}
 			}
@@ -251,7 +251,7 @@ void TsplineVolume::drawParamCurve()
 						MatrixXd point2 = MatrixXd::Zero(1, 3);
 						point1.row(0) = points[i].toVectorXd().transpose();
 						point2.row(0) = points[i + 1].toVectorXd().transpose();
-						(*viewer).data().add_edges(point1, point2, blue);
+						(*viewer).data().add_edges(point1, point2, black);
 					}
 					
 				}

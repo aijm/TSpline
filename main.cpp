@@ -33,9 +33,9 @@ int main(int argc,char** argv){
 
 	// draw curve, surface, volume
 	//Test::test_nurbs();
-	//Test::test_TsplineVolume("tooth", false);
+	Test::test_TsplineVolume("tooth", false);
 	//Test::test_TsplineVolume("Ssolid", true);
-	Test::test_TsplineVolume("moai_new", true);
+	//Test::test_TsplineVolume("moai_new", true);
 	//Test::test_BsplineVolume("tooth", 0.01, true);
 	//Test::test_BsplineVolume("venus", 0.01, true);
 	//Test::test_BsplineVolume("moai", 0.02, true);
