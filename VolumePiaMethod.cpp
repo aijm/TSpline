@@ -7,19 +7,22 @@ void VolumePiaMethod::calculate()
 	insert();
 	//sample_fitPoints_2();
 	//sample_fitPoints_bvolume();
-	sample_fitPoints_multiVolume();
+	// 生成形状引导线，分段优化生成Jacobian值全为正的B样条体，采样用于拟合的点
+	sample_fitPoints_multiVolume(); 
 	fitPoints = surface_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
 	cal_basis_cache(); // 计算基函数在fitPoints参数位置的值， 这样在fit()和pia()时不需要再重新计算
 	cout << "finished cal_basis_cache() " << endl;
 	fit();
 	cout << "finished fit() " << endl;
+	// lspia拟合采样得到的数据点
 	pia();
 	cout << "finished pia() " << endl;
+	// 更新控制点以满足插值性
 	update();
 	cout << "finished update() " << endl;
 
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 5; i++) {
 		fit();
 		cout << "finished fit() " << endl;
 		pia();
@@ -78,9 +81,9 @@ void VolumePiaMethod::sample_fitPoints_2()
 
 
 	// 纵向采样，拟合出一个B样条曲线
-	const int v_sample_num = 5;
-	const int u_sample_num = 5;
-	const int w_sample_num = 30;
+	const int v_sample_num = 10;
+	const int u_sample_num = 10;
+	const int w_sample_num = 10;
 
 	VectorXd params = w_params;
 	params(0) = 0; params(params.size() - 1) = 1;
@@ -101,14 +104,14 @@ void VolumePiaMethod::sample_fitPoints_2()
 			MatrixXd tangent(surfaces_num, 3);
 			for (int k = 0; k < surfaces_num; k++) {
 				points.row(k) = surfaces[k].eval(u, v).toVectorXd();
-				tangent.row(k) = surfaces[k].normal(u, v).toVectorXd();
-				MatrixXd normal = MatrixXd::Zero(1, 3);
+				//tangent.row(k) = surfaces[k].normal(u, v).toVectorXd();
+				//MatrixXd normal = MatrixXd::Zero(1, 3);
 				// venus --> 0.01
 				// tooth --> 5
-				double factor = 5;
-				normal.row(0) = tangent.row(k) * factor;
-				MatrixXd start = MatrixXd::Zero(1, 3);
-				start.row(0) = points.row(k);
+				//double factor = 5;
+				//normal.row(0) = tangent.row(k) * factor;
+				//MatrixXd start = MatrixXd::Zero(1, 3);
+				//start.row(0) = points.row(k);
 				//viewer->data().add_points(start, red);
 				//viewer->data().add_edges(start, start + normal, green);
 			}
@@ -118,7 +121,7 @@ void VolumePiaMethod::sample_fitPoints_2()
 			//sample_curves[i][j].interpolate_optimize1(points, tangent, params, 0.005);
 			//sample_curves[i][j].interpolate_tangent(points, tangent, params);
 			//sample_curves[i][j].interpolate_tangent_improve(points, tangent, params);
-			sample_curves[i][j].draw(*viewer, false, true, 0.001);
+			sample_curves[i][j].draw(*viewer, false, true, 0.01);
 			cout << "finished " <<  i << ", " << j << endl;
 		}
 	}
@@ -429,94 +432,94 @@ void VolumePiaMethod::sample_fitPoints_multiVolume()
 	vector<BsplineVolume> bvolumes(surfaces_num - 1);
 
 	for (int i = 0; i < surfaces_num - 1; i++) {
-		bvolumes[i].control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
-		bvolumes[i].constructKnotVector(x_points, y_points, z_points);
+	//	bvolumes[i].control_grid = vector<vector<vector<Point3d>>>(x_points, vector<vector<Point3d>>(y_points, vector<Point3d>(z_points)));
+	//	bvolumes[i].constructKnotVector(x_points, y_points, z_points);
 
-		vector<FitPoint3D> fit_points;
+	//	vector<FitPoint3D> fit_points;
 
-		for (int j = 0; j < x_points; j++) {
-			for (int k = 0; k < y_points; k++) {
-				for (int ii = 0; ii < z_points; ii++) {
-					double u = 1.0 * j / (x_points - 1);
-					double v = 1.0 * k / (y_points - 1);
-					double w = 1.0 * ii / (z_points - 1);
-					double real_w = (w + 1.0 * i) / (surfaces_num - 1);
-					FitPoint3D fit_point;
-					fit_point.param[0] = u;
-					fit_point.param[1] = v;
-					fit_point.param[2] = w;
-					fit_point.origin.fromVectorXd(sample_curves[j][k].eval(real_w).row(0).transpose());
-					bvolumes[i].control_grid[j][k][ii] = fit_point.origin;
-					fit_points.push_back(fit_point);
-				}	
-			}
-		}
-		
-		//for (int j = 0; j < x_points; j++) {
-		//	for (int k = 0; k < y_points; k++) {
-		//		double u = 1.0 * j / (x_points - 1);
-		//		double v = 1.0 * k / (y_points - 1);
-		//		Point3d p1 = surfaces[i].eval(u, v);
-		//		Point3d p2 = surfaces[i + 1].eval(u, v);
+	//	for (int j = 0; j < x_points; j++) {
+	//		for (int k = 0; k < y_points; k++) {
+	//			for (int ii = 0; ii < z_points; ii++) {
+	//				double u = 1.0 * j / (x_points - 1);
+	//				double v = 1.0 * k / (y_points - 1);
+	//				double w = 1.0 * ii / (z_points - 1);
+	//				double real_w = (w + 1.0 * i) / (surfaces_num - 1);
+	//				FitPoint3D fit_point;
+	//				fit_point.param[0] = u;
+	//				fit_point.param[1] = v;
+	//				fit_point.param[2] = w;
+	//				fit_point.origin.fromVectorXd(sample_curves[j][k].eval(real_w).row(0).transpose());
+	//				bvolumes[i].control_grid[j][k][ii] = fit_point.origin;
+	//				fit_points.push_back(fit_point);
+	//			}	
+	//		}
+	//	}
+	//	
+	//	//for (int j = 0; j < x_points; j++) {
+	//	//	for (int k = 0; k < y_points; k++) {
+	//	//		double u = 1.0 * j / (x_points - 1);
+	//	//		double v = 1.0 * k / (y_points - 1);
+	//	//		Point3d p1 = surfaces[i].eval(u, v);
+	//	//		Point3d p2 = surfaces[i + 1].eval(u, v);
 
-		//		bvolumes[i].control_grid[j][k][0] = p1;
-		//		bvolumes[i].control_grid[j][k][1] = (2.0 * p1 + p2) / 3;
-		//		bvolumes[i].control_grid[j][k][2] = (p1 + 2.0 * p2) / 3;
-		//		bvolumes[i].control_grid[j][k][3] = p2;
-		//	}
-		//}
+	//	//		bvolumes[i].control_grid[j][k][0] = p1;
+	//	//		bvolumes[i].control_grid[j][k][1] = (2.0 * p1 + p2) / 3;
+	//	//		bvolumes[i].control_grid[j][k][2] = (p1 + 2.0 * p2) / 3;
+	//	//		bvolumes[i].control_grid[j][k][3] = p2;
+	//	//	}
+	//	//}
 
-		////generate fit_points
-		
-		//const int u_num = 30;
-		//const int v_num = 30;
+	//	////generate fit_points
+	//	
+	//	//const int u_num = 30;
+	//	//const int v_num = 30;
 
-		//for (int jj = 0; jj <= u_num; jj++) {
-		//	for (int kk = 0; kk <= v_num; kk++) {
-		//		FitPoint3D fit_point;
-		//		double u = 1.0 * jj / u_num;
-		//		double v = 1.0 * kk / v_num;
-		//		fit_point.param[0] = u;
-		//		fit_point.param[1] = v;
-		//		fit_point.param[2] = 0.0;
-		//		fit_point.origin = surfaces[i].eval(u, v);
-		//		fit_points.push_back(fit_point);
+	//	//for (int jj = 0; jj <= u_num; jj++) {
+	//	//	for (int kk = 0; kk <= v_num; kk++) {
+	//	//		FitPoint3D fit_point;
+	//	//		double u = 1.0 * jj / u_num;
+	//	//		double v = 1.0 * kk / v_num;
+	//	//		fit_point.param[0] = u;
+	//	//		fit_point.param[1] = v;
+	//	//		fit_point.param[2] = 0.0;
+	//	//		fit_point.origin = surfaces[i].eval(u, v);
+	//	//		fit_points.push_back(fit_point);
 
-		//		fit_point.param[2] = 1.0;
-		//		fit_point.origin = surfaces[i + 1].eval(u, v);
-		//		fit_points.push_back(fit_point);
-		//	}
-		//}
+	//	//		fit_point.param[2] = 1.0;
+	//	//		fit_point.origin = surfaces[i + 1].eval(u, v);
+	//	//		fit_points.push_back(fit_point);
+	//	//	}
+	//	//}
 
-		// using lspia
-		
-		bvolumes[i].lspia(fit_points, x_points, y_points, z_points, 25, 1e-12);
-		
-		
+	//	// using lspia
+	//	
+	//	bvolumes[i].lspia(fit_points, x_points, y_points, z_points, 25, 1e-12);
+	//	
+	//	
 
-		// fit bspline solid
-		double alpha = 0.495;
-		double delta = 0.495;
-		vector<int> iter(surfaces_num - 1, 10);
-		for (int ii = 0; ii < iter[i]; ii++) {
-			double error = bvolumes[i].GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
-			cout << "iter: " << ii << ", error: " << error << endl;
-			bvolumes[i].fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
-			//cout << "-----" << endl;
-		}
-		bvolumes[i].setReverse(true);
-		bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
-		bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
-		//bvolumes[i].readVolume("../out/volume/multiVolume_" + to_string(i) + ".vol");
-		int v_sample_num = 20;
-		int u_sample_num = 20;
+	//	// fit bspline solid
+	//	double alpha = 0.495;
+	//	double delta = 0.495;
+	//	vector<int> iter(surfaces_num - 1, 10);
+	//	for (int ii = 0; ii < iter[i]; ii++) {
+	//		double error = bvolumes[i].GetSoildFiterror(fit_points, x_points, y_points, z_points, alpha, delta);
+	//		cout << "iter: " << ii << ", error: " << error << endl;
+	//		bvolumes[i].fitBsplineSolid(fit_points, x_points, y_points, z_points, alpha, delta);
+	//		//cout << "-----" << endl;
+	//	}
+	//	bvolumes[i].setReverse(true);
+	//	bvolumes[i].saveAsHex("../out/volume/multiVolume_" + to_string(i));
+	//	bvolumes[i].saveVolume("../out/volume/multiVolume_" + to_string(i));
+		bvolumes[i].readVolume("../out/volume/multiVolume_" + to_string(i) + ".vol");
+		int v_sample_num = 40;
+		int u_sample_num = 40;
 		int w_sample_num = 4;
 
-		if (i == 4) {
+		/*if (i == 4) {
 			v_sample_num = 20;
 			u_sample_num = 20;
 			w_sample_num = 3;
-		}
+		}*/
 		int end = w_sample_num - 1;
 		/*if (i == surfaces_num - 2) {
 			end = w_sample_num;

@@ -29,14 +29,17 @@ int main(int argc,char** argv){
 	//Test::test_VolumeSkinning("moai_fitbspline", 0.04);
 	//Test::test_VolumeSkinning("Ssolid", 0.05);
 	//Test::test_VolumeSkinning("head", 0.01);
+	//Test::test_VolumeSkinning("duck", 2);
+	//Test::test_VolumeSkinning("duck_new", 2);
 
 
 	// draw curve, surface, volume
 	//Test::test_nurbs();
-	Test::test_TsplineVolume("tooth", false);
+	//Test::test_TsplineVolume("duck_new", true);
+	//Test::test_TsplineVolume("tooth", false);
 	//Test::test_TsplineVolume("Ssolid", true);
 	//Test::test_TsplineVolume("moai_new", true);
-	//Test::test_BsplineVolume("tooth", 0.01, true);
+	Test::test_BsplineVolume("tooth", 0.02, true);
 	//Test::test_BsplineVolume("venus", 0.01, true);
 	//Test::test_BsplineVolume("moai", 0.02, true);
 	//Test::test_BsplineVolume("balljoint", 0.01, true);
@@ -45,6 +48,8 @@ int main(int argc,char** argv){
 	//Test::test_BsplineVolume("head", 0.02, true);
 	//Test::test_BsplineVolume("multiVolume_4", 0.02, true);
 	//Test::test_BsplineVolume("moai_new", 0.02, true);
+	//Test::test_BsplineVolume("duck", 0.02, true);
+	//Test::test_BsplineVolume("duck_new", 0.02, true);
 	//Test::test_Mesh();
 	//Test::test_DrawMultiVolume();
 
@@ -66,10 +71,8 @@ int main(int argc,char** argv){
 	//Test::test_DerOfNurbs();
 	//Test::test_Lspia();
 	//Test::test_Array();
-	//Test::test_Integral();
 	//Test::test_Basis();
 	//Test::test_Derivative();
-	//Test::test_Nlopt();
     return 0;
 }
 

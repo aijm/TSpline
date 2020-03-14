@@ -28,7 +28,7 @@ public:
 
 public:
 	void sample_fitPoints_1();
-	void sample_fitPoints_2();
+	void sample_fitPoints_2();  // 生成引导线，并采样得到数据点
 	void sample_fitPoints() override;
 	void pia() override;
 

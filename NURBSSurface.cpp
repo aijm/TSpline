@@ -451,7 +451,9 @@ void NURBSSurface::drawSurface(igl::opengl::glfw::Viewer &viewer, double resolut
 	igl::principal_curvature(mesh_V, mesh_F, PD1, PD2, PV1, PV2);
 	// mean curvature
 	H = 0.5*(PV1 + PV2);
-
+	cout << "min: " << H.minCoeff() << endl;
+	cout << "max: " << H.maxCoeff() << endl;
+	cout << "avg: " << H.mean() << endl;
 	viewer.data().set_mesh(mesh_V, mesh_F);
 
 	// Compute pseudocolor

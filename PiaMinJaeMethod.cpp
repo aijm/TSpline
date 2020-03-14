@@ -182,15 +182,16 @@ void PiaMinJaeMethod::calculate()
 	parameterize();
 	init();
 	insert();
-	sample_fitPoints_2();
+	sample_fitPoints_2();  // 生成引导线，并采样得到数据点
 	fitPoints = curve_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
 
 	update();
 	fit();
 	cout << error << " " << "update" << endl;
-
+	// lspia逼近引导线上采样得到的数据点
 	pia();
+	// 更新控制点坐标满足插值性
 	update();
 	fit();
 	cout << error << " " << "update" << endl;
@@ -333,7 +334,7 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 
 
 	for (int i = 0; i <= u_sample_num; i++) {
-		bool valid = true;
+		/*bool valid = true;
 		for (int k = 0; k < s_knots.size(); k++) {
 			if (abs(s_knots(k) - 1.0*i / u_sample_num) < 0.01) {
 				valid = false;
@@ -342,7 +343,7 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 		}
 		if (!valid) {
 			continue;
-		}
+		}*/
 		for (int j = 0; j <= v_sample_num; j++) {
 			FitPoint2D point;
 			point.param[0] = 1.0*i / u_sample_num;
@@ -351,9 +352,9 @@ void PiaMinJaeMethod::sample_fitPoints_2()
 			point.origin.fromVectorXd(sample_curves[j].eval(point.param[0]));
 			inter_points.push_back(point);
 
-			/*MatrixXd P;
+			MatrixXd P;
 			array2matrixd(point.origin, P);
-			(*viewer).data().add_points(P, green);*/
+			//(*viewer).data().add_points(P, green);
 		}
 	}
 	

@@ -27,6 +27,7 @@ public:
 	void param_helper_points(Point3d& low, Point3d& high);
 	void sample_fitPoints_2();
 	void sample_fitPoints_bvolume();
+	// 生成形状引导线，分段优化生成Jacobian值全为正的B样条体，采样用于拟合的点
 	void sample_fitPoints_multiVolume();
 	void sample_fitPoints();
 	void fit();

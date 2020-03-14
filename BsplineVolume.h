@@ -106,9 +106,11 @@ private:
 	void drawParamCurve() override;
 
 public:
-	vector<vector<vector<Point3d>>> control_grid;
-	vector<Eigen::VectorXd> knot_vector;
-	vector<vector<vector<vector<double>>>> matri;
+	vector<vector<vector<Point3d>>> control_grid;   // 控制网格
+	vector<Eigen::VectorXd> knot_vector;            // u,v,w方向的节点向量
+
+	// 用于体拟合迭代时缓存相应基函数的值
+	vector<vector<vector<vector<double>>>> matri;   
 	vector<int> Bi_start_indexs;
 	vector<int> Bj_start_indexs;
 	vector<int> Bk_start_indexs;

@@ -11,6 +11,7 @@ public:
 	}
 
 	void init() override;
+	// 插入一列中间线
 	void insert() override;
 };
 

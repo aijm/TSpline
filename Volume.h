@@ -12,10 +12,14 @@ public:
 		this->viewer = viewer; // 在头文件中内联，若在cpp中用inline，会导致其他文件找不到定义
 	}
 	void draw(bool tmesh, bool polygon, bool surface, double resolution = 0.01);
+	// calculate the coordinate at paramter (u,v,w)
 	virtual Point3d eval(double u, double v, double w) = 0;
 
+	// read volume from file
 	virtual int readVolume(string) = 0;
+	// save volume to file
 	virtual int saveVolume(string) = 0;
+	// 通过将参数域按resolution分割，将体离散为六面体网格
 	int saveAsHex(string, double resolution = 0.01);
 	void setReverse(bool _reverse) {
 		reverse = _reverse;
@@ -29,7 +33,7 @@ protected:
 protected:
 	Viewer* viewer;
 	int id;
-	bool reverse;
+	bool reverse;   // u,v,w是否满足右手法则，不满足则需要设置为true
 };
 
 

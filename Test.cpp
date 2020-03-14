@@ -71,17 +71,16 @@ void Test::test_venus_skinning()
 
 	//Skinning* method = new PiaMethod(curves, 1000);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
-	//Skinning* method = new PiaMinJaeMethod(curves, 1000);
+	Skinning* method = new PiaMinJaeMethod(curves, 1000);
 	//Skinning* method = new PiaNasriMethod(curves, 1000);
-	Skinning* method = new MinJaeMethod(curves, 40, 20);
+	//Skinning* method = new MinJaeMethod(curves, 40, 20);
 
 	method->setViewer(&Window::viewer);
 	method->calculate();
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/tspline/" + modelname + "_skinning");
+	//mesh->saveMesh("../out/tspline/" + modelname + "_skinning");
 	MeshRender render(mesh, false, false, true, 0.001);
 	render.launch();
 
@@ -89,7 +88,7 @@ void Test::test_venus_skinning()
 
 void Test::test_venus_skinning_helper_points()
 {
-	Window::viewer.data().line_width = 4.0f;
+	//Window::viewer.data().line_width = 4.0f;
 	/*BsplineVolume volume;
 	volume.readVolume("../out/volume/venus_bspline.txt");*/
 
@@ -146,34 +145,33 @@ void Test::test_venus_skinning_helper_points()
 	Window w;
 	w.launch();*/
 
-	NURBSSurface surface1;
-	surface1.skinning(curves, Window::viewer);
-	surface1.saveAsObj("../out/OBJ/venus_Nurbs", 0.01);
-	surface1.draw(Window::viewer, false);
+	//NURBSSurface surface1;
+	//surface1.skinning(curves, Window::viewer);
+	////surface1.saveAsObj("../out/OBJ/venus_Nurbs", 0.01);
+	//surface1.draw(Window::viewer, false);
 
-	/*Window w;
-	w.launch();*/
+	//Window w;
+	//w.launch();
 
-	////Skinning* method = new PiaMethod(curves, 100);
-	////Skinning* method = new NasriMethod(curves);
-	////Skinning* method = new OptMethod(curves);
-	////PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 100);
-	////PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
-	//Skinning* method = new MinJaeMethod(curves, 40, 10);
+	//Skinning* method = new PiaMethod(curves, 100);
+	//Skinning* method = new NasriMethod(curves);
+	//PiaMinJaeMethod* method = new PiaMinJaeMethod(curves, 20);
+	PiaNasriMethod* method = new PiaNasriMethod(curves, 40);
+	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 
-	//method->setViewer(&Window::viewer);
-	//MatrixXd helper_points;
-	//loadpoints("../out/points/helper_points.dat", helper_points);
-	////method->set_helper_points(helper_points);
+	method->setViewer(&Window::viewer);
+	MatrixXd helper_points;
+	loadpoints("../out/points/helper_points.dat", helper_points);
+	//method->set_helper_points(helper_points);
 
-	//method->calculate();
-	//Mesh3d* mesh = &(method->tspline);
-	//cout << "num of nodes: " << mesh->get_num() << endl;
+	method->calculate();
+	Mesh3d* mesh = &(method->tspline);
+	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	////mesh->saveMesh("../out/tspline/venus_skinning1");
-	//mesh->saveAsObj("../out/OBJ/venus_Nurbs", 0.01);
-	//MeshRender render(mesh,false,true,true,0.01);
-	//render.launch();
+	//mesh->saveMesh("../out/tspline/venus_skinning1");
+	mesh->saveAsObj("../out/OBJ/venus_PiaNasri", 0.01);
+	MeshRender render(mesh,false,true,true,0.01);
+	render.launch();
 }
 
 void Test::test_Bsurface_skinning()
@@ -224,7 +222,6 @@ void Test::test_Bsurface_skinning()
 	w.launch();*/
 	//Skinning* method = new PiaMethod(curves, 100);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
 	Skinning* method = new PiaMinJaeMethod(curves, 20);
 	//PiaNasriMethod* method = new PiaNasriMethod(curves, 100);
 	//Skinning* method = new MinJaeMethod(curves, 40, 10);
@@ -252,7 +249,7 @@ void Test::test_sample_fitbsplinesolid(string modelname, double simplifyEps)
 	int sample_num = 5;
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
-							// 采样生成B样条曲面
+	// 采样生成B样条曲面
 	for (int i = 0; i <= sample_num; i++) {
 		double param = 1.0*i / sample_num;
 		// moai --> 'v'
@@ -398,7 +395,7 @@ void Test::test_fitbsplinesolid(string modelname, double simplifyEps)
 	vector<NURBSSurface> nurbs(sample_num + 1);
 
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
-							// 采样生成B样条曲面
+	// 采样生成B样条曲面
 	for (int i = 0; i <= sample_num; i++) {
 		load_nurbs_surface(nurbs[i], prefix + modelname + "_" + to_string(i) + ".cpt");
 		for (int j = 0; j < nurbs[i].controlPw.size(); j++) {
@@ -568,7 +565,7 @@ void Test::test_nurbscurve_interpolate_optimize()
 }
 
 /*
-  测试T样曲面求法向量的正确性
+测试T样曲面求法向量的正确性
 */
 void Test::test_tspline_normal()
 {
@@ -600,7 +597,7 @@ void Test::test_tspline_normal()
 *************************/
 void Test::test_getsurface_fromvolume()
 {
-	string modelname = "moai_new";
+	string modelname = "duck_new";
 	string filename = "../out/volume/" + modelname + "_bspline.txt";
 	//string filename = "../out/volume/" + modelname + ".vol";
 	BsplineVolume volume;
@@ -611,13 +608,15 @@ void Test::test_getsurface_fromvolume()
 	vector<NURBSSurface> nurbs(sample_num + 1);
 	vector<NURBSSurface> pia_nurbs(sample_num + 1);
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
-							// 采样生成B样条曲面
+	// 采样生成B样条曲面
 	for (int i = 0; i <= sample_num; i++) {
 		double param = 1.0*i / sample_num;
 		// moai --> 'u'
 		// moai_new --> 'u'
 		// moai_fitbspline --> 'w'
-		volume.get_isoparam_surface(nurbs[i], param, 'u');
+		// duck --> 'v'
+		// duck_new --> 'w'
+		volume.get_isoparam_surface(nurbs[i], param, 'w');
 		string filename = "../out/nurbs/" + modelname + "_" + to_string(i);
 		save_nurbs_surface(nurbs[i], filename);
 		//NurbsPia nurbsPia(nurbs[i], 20, 1e-5, 10);
@@ -691,7 +690,7 @@ void Test::load_nurbs_surface(NURBSSurface & surface, string filename)
 
 void Test::save_nurbs_surface(const NURBSSurface & surface, string filename)
 {
-	// 加载另外一种文件格式的nurbs surface
+	// 保存nurbs surface为另外一种文件格式
 	filename += ".cpt";
 	ofstream out(filename);
 	if (!out.is_open()) {
@@ -751,7 +750,7 @@ void Test::test_save_quadObj()
 }
 
 /**
-   棋子蒙皮
+棋子蒙皮
 */
 void Test::test_chess_skinning()
 {
@@ -794,8 +793,8 @@ void Test::test_chess_skinning()
 
 void Test::test_ring_skinning()
 {
-	Window::viewer.data().point_size = 5.0f;
-	//Window::viewer.data().line_width = 4.0f;
+	Window::viewer.data().point_size = 8.0f;
+	Window::viewer.data().line_width = 4.0f;
 
 	const int curve_nums = 9;
 	string prefix = "../out/curves/";
@@ -870,14 +869,13 @@ void Test::test_ring_skinning()
 	surface.skinning(curves, Window::viewer);
 
 	surface.draw(Window::viewer, false);
-
+	surface.saveAsObj("../out/OBJ/ring_nurbs");
 	Window w;
 	w.launch();*/
 
 	
 	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
 	Skinning* method = new PiaMinJaeMethod(curves, 20);
 	//Skinning* method = new PiaNasriMethod(curves, 20);
 
@@ -886,10 +884,12 @@ void Test::test_ring_skinning()
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/tspline/ring");
-	MeshRender render(mesh);
-	render.launch();
-	
+	//mesh->saveMesh("../out/tspline/ring");
+	//mesh->saveAsObj("../out/OBJ/ring_minjae");
+	/*MeshRender render(mesh);
+	render.launch();*/
+	Window w;
+	w.launch(); 
 }
 
 void Test::test_helicoidal_skinning()
@@ -977,16 +977,15 @@ void Test::test_helicoidal_skinning()
 	/*NURBSSurface surface;
 	surface.skinning(curves, Window::viewer);
 
-	surface.draw(Window::viewer, false);*/
-
-	/*Window w;
+	surface.draw(Window::viewer, false);
+	surface.saveAsObj("../out/OBJ/helicoidal_nurbs");
+	Window w;
 	w.launch();*/
 
 
-	//Skinning* method = new MinJaeMethod(curves, 20, 50);
+	Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
-	Skinning* method = new PiaMinJaeMethod(curves, 20);
+	//Skinning* method = new PiaMinJaeMethod(curves, 20);
 	//Skinning* method = new PiaNasriMethod(curves, 20);
 
 	method->setViewer(&Window::viewer);
@@ -994,7 +993,8 @@ void Test::test_helicoidal_skinning()
 	Mesh3d* mesh = &(method->tspline);
 	cout << "num of nodes: " << mesh->get_num() << endl;
 
-	mesh->saveMesh("../out/tspline/helicoidal");
+	//mesh->saveMesh("../out/tspline/helicoidal");
+	mesh->saveAsObj("../out/OBJ/helicoidal_minjae");
 	MeshRender render(mesh);
 	render.launch();
 }
@@ -1094,18 +1094,17 @@ void Test::test_bonnet_skinning()
 
 
 
-	/*NURBSSurface surface;
-	surface.skinning(curves, Window::viewer);
+	//NURBSSurface surface;
+	//surface.skinning(curves, Window::viewer);
 
-	surface.draw(Window::viewer, false);
-	surface.saveAsObj("../out/OBJ/bonnet_nurbs");
-	Window w;
-	w.launch();*/
+	//surface.draw(Window::viewer, false);
+	////surface.saveAsObj("../out/OBJ/bonnet_nurbs");
+	//Window w;
+	//w.launch();
 
 
 	//Skinning* method = new MinJaeMethod(curves, 50, 50);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
 	Skinning* method = new PiaMinJaeMethod(curves, 50);
 	//Skinning* method = new PiaNasriMethod(curves, 50);
 
@@ -1116,7 +1115,7 @@ void Test::test_bonnet_skinning()
 
 	mesh->saveMesh("../out/tspline/bonnet");
 	//mesh->saveAsObj("../out/OBJ/bonnet_MinJae1");
-	MeshRender render(mesh);
+	MeshRender render(mesh, false, true, true, 0.05);
 	render.launch();
 }
 
@@ -1222,7 +1221,6 @@ void Test::test_door_skinning()
 
 	////Skinning* method = new MinJaeMethod(curves, 20, 50);
 	////Skinning* method = new NasriMethod(curves);
-	////Skinning* method = new OptMethod(curves);
 	//Skinning* method = new PiaMinJaeMethod(curves, 20);
 	////Skinning* method = new PiaNasriMethod(curves, 20);
 
@@ -1312,7 +1310,6 @@ void Test::test_face_skinning()
 
 	//Skinning* method = new MinJaeMethod(curves, 20, 50);
 	//Skinning* method = new NasriMethod(curves);
-	//Skinning* method = new OptMethod(curves);
 	Skinning* method = new PiaMinJaeMethod(curves, 20);
 	//Skinning* method = new PiaNasriMethod(curves, 20);
 
@@ -1327,8 +1324,8 @@ void Test::test_face_skinning()
 }
 
 /**
- 从B样条体中生成一组B样条曲面
- 用于后续简化为T样条曲面，进一步进行Volume Skinning
+从B样条体中生成一组B样条曲面
+用于后续简化为T样条曲面，进一步进行Volume Skinning
 */
 void Test::test_sample_VolumeSkinning(string modelname, double simplifyEps, int sample_num, char dir)
 {
@@ -1401,9 +1398,9 @@ void Test::test_sample_VolumeSkinning(string modelname, double simplifyEps, int 
 void Test::test_nurbs()
 {
 	// bezier curve
-	/*NURBSCurve nurbs;
-	nurbs.loadNURBS("../out/nurbs/bezier.cpt");
-	nurbs.draw(Window::viewer);*/
+	NURBSCurve nurbs;
+	nurbs.loadNURBS("../out/nurbs/bezier1.cpt");
+	nurbs.draw(Window::viewer);
 
 	// bezier surface
 	/*NURBSSurface nurbs;
@@ -1431,10 +1428,10 @@ void Test::test_nurbs()
 		Window::viewer.data().add_edges(point, point + tangent, red);
 	}*/
 
-	NURBSSurface nurbs;
-	load_nurbs_surface(nurbs, "../out/nurbs/Bsurface_smooth.cpt");
-	//nurbs.loadNURBS("../out/nurbs/head_surface_0_format.cpt");
-	nurbs.draw(Window::viewer, false);
+	//NURBSSurface nurbs;
+	//load_nurbs_surface(nurbs, "../out/nurbs/Bsurface_smooth.cpt");
+	////nurbs.loadNURBS("../out/nurbs/head_surface_0_format.cpt");
+	//nurbs.draw(Window::viewer, false);
 	Window w;
 	w.launch();
 
@@ -1464,7 +1461,7 @@ void Test::test_BsplineVolume(string modelname, double ratio, bool reverse)
 	//volume.readVolume("../out/volume/isis_bspline.txt");
 	//volume.readVolume("../out/volume/moai_bspline.txt");
 	//volume.readVolume("../out/volume/tooth_bspline.txt");
-	volume.saveAsHex("../out/volume/" + modelname + "_volume", ratio);
+	//volume.saveAsHex("../out/volume/" + modelname + "_volume", ratio);
 	VolumeRender render(&volume, false, false, true, ratio);
 	/*volume.saveAsHex("../out/volume/tooth_bspline", 0.1);
 	volume.saveVolume("../out/volume/tooth_bspline");*/
@@ -1485,8 +1482,8 @@ void Test::test_Mesh() {
 	//MeshRender render(meshcopy);
 	//render.launch();
 	Mesh3d mesh;
-	mesh.loadMesh("../out/tspline/venus_1.cfg.cfg");
-	mesh.saveAsObj("../out/tspline/venus_1");
+	mesh.loadMesh("../out/tspline/bonnet.cfg");
+	//mesh.saveAsObj("../out/tspline/venus_1");
 	MeshRender render(&mesh, false, true, true);
 	begin = clock();
 	render.launch();
@@ -1500,12 +1497,18 @@ void Test::test_DrawMultiVolume()
 	string prefix = "../out/volume/multiVolume_";
 	const int volume_nums = 5;
 	vector<BsplineVolume> volumes(volume_nums);
-	for (int i = 4; i < volume_nums; i++) {
+	/*for (int i = 0; i < volume_nums; i++) {
 		volumes[i].readVolume(prefix + to_string(i) + ".vol");
 		volumes[i].setViewer(&Window::viewer);
 		volumes[i].setReverse(true);
 		volumes[i].draw(false, false, true, 0.01);
-	}
+	}*/
+	int id = 0;
+	volumes[id].readVolume(prefix + to_string(id) + ".vol");
+	volumes[id].setViewer(&Window::viewer);
+	volumes[id].setReverse(true);
+	volumes[id].draw(false, false, true, 0.01);
+
 	for (auto& data : Window::viewer.data_list) {
 		data.set_face_based(true);
 		data.show_lines = false;
@@ -1529,7 +1532,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		load_nurbs_surface(nurbs[i], filename);
 	}
 	MatrixXd controlpoints; // 用于显示时设置相机位置和缩放大小
-							// 采样生成B样条曲面
+	// 采样生成B样条曲面
 	for (int i = 0; i <= sample_num; i++) {
 
 		for (int j = 0; j < nurbs[i].controlPw.size(); j++) {
@@ -1544,6 +1547,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 
 	vector<Mesh3d> tsplines(sample_num + 1);
 	for (int i = 0; i <= sample_num; i++) {
+		//if (i != 1) continue;
 		// venus_bspline.txt ---> 3e-3
 		// tooth_bspline.txt ---> 3
 		// isis_bspline.txt --> 5e-3, 1e-2
@@ -1557,7 +1561,7 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 		string filename = "../out/tspline/" + modelname + "_" + to_string(i) + ".cfg";
 		tsplines[i].loadMesh(filename);
 		cout << "number of nodes: " << tsplines[i].get_num() << endl;
-		tsplines[i].saveAsQuadObj("../out/OBJ/" + modelname + "_" + to_string(i) + "_quad", 0.02);
+		//tsplines[i].saveAsQuadObj("../out/OBJ/" + modelname + "_" + to_string(i) + "_quad", 0.02);
 		tsplines[i].setViewer(&Window::viewer);
 		tsplines[i].draw(false, false, true, 0.01);
 
@@ -1575,27 +1579,28 @@ void Test::test_VolumeSkinning(string modelname, double simpilifyEps)
 	cout << "controlpoints: " << controlpoints.rows() << endl;
 	Window::viewer.core.align_camera_center(controlpoints);
 
-	//VolumeSkinning* method = new VolumePiaMethod(tsplines, 10, 1e-6);
-	////VolumeSkinning* method = new VolumeSkinning(tsplines);
-	//method->setViewer(&Window::viewer);
-	//method->calculate();
-	//// moai_fitbspline --> true
-	//method->volume.setReverse(true);
-	//method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
-	//method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);
-	//VolumeRender render(&method->volume, false, false, true, 0.01);
-	//begin = clock();
-	//render.launch();
-	//end = clock();
-	//cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
-	Window w;
-	w.launch();
+	VolumeSkinning* method = new VolumePiaMethod(tsplines, 20, 1e-6);
+	//VolumeSkinning* method = new VolumeSkinning(tsplines);
+	method->setViewer(&Window::viewer);
+	method->calculate();
+	// moai_fitbspline --> true
+	// duck_new --> true
+	method->volume.setReverse(true);
+	/*method->volume.saveVolume("../out/volume/" + modelname + "_skinning");
+	method->volume.saveAsHex("../out/volume/" + modelname + "_skinning", 0.01);*/
+	VolumeRender render(&method->volume, false, false, true, 0.01);
+	begin = clock();
+	render.launch();
+	end = clock();
+	cout << "time for drawing tspline volume: " << (end - begin) / CLOCKS_PER_SEC << "s" << endl;
+	/*Window w;
+	w.launch();*/
 }
 
 void Test::test_circle_skinning()
 {
 	Window::viewer.data().point_size = 5.0f;
-	Window::viewer.data().line_width = 4.0f;
+	//Window::viewer.data().line_width = 4.0f;
 
 	vector<NURBSCurve> nurbs(4);
 	/*nurbs[0].loadNURBS("../out/nurbs/circle.cptw");
@@ -1614,11 +1619,11 @@ void Test::test_circle_skinning()
 	nurbs[2].draw(Window::viewer, false);
 	nurbs[3].draw(Window::viewer, false);
 	
-	/*NURBSSurface surface;
+	NURBSSurface surface;
 	surface.skinning(nurbs, Window::viewer);
 
-	surface.draw(Window::viewer, false);*/
-
+	surface.draw(Window::viewer, false);
+	surface.saveAsObj("../out/OBJ/circle_nurbs");
 	Window w;
 	w.launch();
 
@@ -1626,7 +1631,6 @@ void Test::test_circle_skinning()
 	//Skinning* method = new MinJaeMethod(nurbs, 20, 50);
 	////Skinning* method = new PiaMethod(nurbs, 100);
 	////Skinning* method = new NasriMethod(nurbs);
-	////Skinning* method = new OptMethod(nurbs);
 	////Skinning* method = new PiaMinJaeMethod(nurbs, 20, 1e-5);
 	////Skinning* method = new PiaNasriMethod(nurbs, 100);
 
@@ -1636,6 +1640,7 @@ void Test::test_circle_skinning()
 	//cout << "num of nodes: " << mesh->get_num() << endl;
 	//
 	////mesh->saveMesh("../out/tspline/simpleMesh4");
+	//mesh->saveAsObj("../out/OBJ/circle_minjae");
 	//MeshRender render(mesh);
 	//render.launch();
 
@@ -1704,15 +1709,6 @@ void Test::test_Array() {
 	A.output(cout);
 	cout << endl;
 }
-void Test::test_Integral() {
-	double a = 2.0;
-	auto lambda = [a](double u, double v)-> double {
-		return a*sin(u + v);
-	};
-	double res = OptMethod::integral(lambda);
-	cout << "ingegral: " << res << endl;
-	cout << "real: " << 2 * (2 * sin(1) - sin(2)) << endl;
-}
 
 void Test::test_Basis() {
 
@@ -1739,47 +1735,4 @@ void Test::test_Derivative() {
 
 	cout << "derivative basis: \n" << NURBSCurve::DersBasis(A.toVectorXd(), t) << endl;
 
-}
-double Test::myfunc(const std::vector<double> &x, std::vector<double> &grad, void *my_func_data)
-{
-	if (!grad.empty()) {
-		grad[0] = 0.0;
-		grad[1] = 0.5 / sqrt(x[1]);
-	}
-	return sqrt(x[1]);
-}
-
-double Test::myconstraint(const std::vector<double> &x, std::vector<double> &grad, void *data)
-{
-	my_constraint_data *d = reinterpret_cast<my_constraint_data*>(data);
-	double a = d->a, b = d->b;
-	if (!grad.empty()) {
-		grad[0] = 3 * a * (a*x[0] + b) * (a*x[0] + b);
-		grad[1] = -1.0;
-	}
-	return ((a*x[0] + b) * (a*x[0] + b) * (a*x[0] + b) - x[1]);
-}
-
-void Test::test_Nlopt() {
-	nlopt::opt opt(nlopt::LD_MMA, 2);
-	std::vector<double> lb(2);
-	lb[0] = -HUGE_VAL; lb[1] = 0;
-	opt.set_lower_bounds(lb);
-	opt.set_min_objective(myfunc, NULL);
-	my_constraint_data data[2] = { { 2,0 },{ -1,1 } };
-	opt.add_inequality_constraint(myconstraint, &data[0], 1e-8);
-	opt.add_inequality_constraint(myconstraint, &data[1], 1e-8);
-	opt.set_xtol_rel(1e-4);
-	std::vector<double> x(2);
-	x[0] = 1.234; x[1] = 5.678;
-	double minf;
-
-	try {
-		nlopt::result result = opt.optimize(x, minf);
-		std::cout << "found minimum at f(" << x[0] << "," << x[1] << ") = "
-			<< std::setprecision(10) << minf << std::endl;
-	}
-	catch (std::exception &e) {
-		std::cout << "nlopt failed: " << e.what() << std::endl;
-	}
 }

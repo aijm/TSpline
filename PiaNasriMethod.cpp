@@ -166,16 +166,17 @@ void PiaNasriMethod::calculate()
 	parameterize();
 	init();
 	insert();
-	sample_fitPoints_2();
+	sample_fitPoints_2(); // 生成引导线，并采样得到数据点
 	fitPoints = curve_points;
 	fitPoints.insert(fitPoints.end(), inter_points.begin(), inter_points.end());
 
 	update();
 	fit();
 	cout << error << " " << "update" << endl;
-
+	// lspia逼近引导线上采样得到的数据点
 	fit();
 	pia();
+	// 更新控制点坐标满足插值性
 	update();
 	cout << error << " " << "update" << endl;
 
